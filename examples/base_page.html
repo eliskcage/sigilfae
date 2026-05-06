@@ -24,12 +24,16 @@
     content:'▲';position:absolute;right:-30px;top:-40px;
     font-size:200px;color:rgba(255,215,0,0.04);pointer-events:none
   }
+  /* SIGILFAE empire signature: SQUARE QR — distinct from shortfactory kingdom triangle */
   .hdr-qr{
-    width:90px;height:80px;flex-shrink:0;
-    clip-path:polygon(50% 0,100% 100%,0 100%);
-    background:repeating-conic-gradient(from 0deg at 50% 50%,#000 0deg 14deg,#ffd700 14deg 28deg);
-    box-shadow:0 0 20px rgba(255,215,0,0.5);animation:hdrPulse 2s infinite
+    width:88px;height:88px;flex-shrink:0;
+    background:#000;border:2px solid #ffd700;border-radius:6px;
+    box-shadow:0 0 20px rgba(255,215,0,0.5);animation:hdrPulse 2s infinite;
+    display:grid;grid-template-columns:repeat(7,1fr);grid-template-rows:repeat(7,1fr);
+    padding:6px;gap:1px
   }
+  .hdr-qr i{display:block;background:#ffd700;border-radius:1px}
+  .hdr-qr i.off{background:transparent}
   @keyframes hdrPulse{0%,100%{box-shadow:0 0 20px rgba(255,215,0,0.5)}50%{box-shadow:0 0 32px rgba(255,235,112,0.7)}}
   .hdr-info{flex:1}
   .hdr-tag{font-size:10px;color:#888;letter-spacing:0.3em;margin-bottom:4px}
@@ -109,11 +113,11 @@
 <body>
 
 <div class="hdr">
-  <div class="hdr-qr"></div>
+  <div class="hdr-qr" id="hdrQr"></div>
   <div class="hdr-info">
-    <div class="hdr-tag">▲ YOUR BASE OF OPERATIONS</div>
+    <div class="hdr-tag">▲ YOUR BASE OF OPERATIONS · SIGILFAE □</div>
     <div class="hdr-soul" id="soulId">SF-LOADING</div>
-    <div class="hdr-sub">type your QR-string anywhere on the empire to return here · this page IS your idea, your fairy graph, your collected witnesses</div>
+    <div class="hdr-sub">type your QR-string anywhere on the empire to return here · this page IS your idea, your fairy graph, your collected witnesses · the <b style="color:var(--gold)">square</b> distinguishes the SIGILFAE base from a shortfactory kingdom-piece (which uses △)</div>
   </div>
   <div class="hdr-actions">
     <button onclick="copyShareUrl()">▲ SHARE URL</button>
@@ -206,6 +210,27 @@
 const params = new URLSearchParams(window.location.search);
 const qr = (params.get('qr') || localStorage.getItem('sf_tessera_active') || 'SF-NEWBASE').toUpperCase();
 document.getElementById('soulId').textContent = qr;
+
+// ─── Render the SIGILFAE square QR deterministically from the soul-id ─────
+function renderSquareQR(seed){
+  // Simple 7×7 deterministic pattern: hash the seed → 49 bits, render cells
+  let h = 0;
+  for (let i=0; i<seed.length; i++) h = (h * 31 + seed.charCodeAt(i)) | 0;
+  const cells = [];
+  // generate 49 deterministic on/off values via xorshift
+  let x = h || 1;
+  for (let i=0; i<49; i++){
+    x ^= x << 13; x ^= x >>> 17; x ^= x << 5;
+    cells.push((x & 1) === 1);
+  }
+  // Force the 3 finder corners (top-left, top-right, bottom-left) to be filled
+  // for QR-aesthetic. Position-based override.
+  const finderCells = [0,1,2,5,6,7,8,9,11,12,13, 14,18, 21,25, 28,29,30,32,33,34,35];
+  finderCells.forEach(i => { if (i < 49) cells[i] = true; });
+  const el = document.getElementById('hdrQr');
+  el.innerHTML = cells.map(on => `<i class="${on?'':'off'}"></i>`).join('');
+}
+renderSquareQR(qr);
 
 // Persist per-soul state in localStorage
 const STORE_KEY = 'sf_base_' + qr;

@@ -121,6 +121,21 @@
   }
   @keyframes qrPulse{0%,100%{box-shadow:0 0 12px #ffd700}50%{box-shadow:0 0 22px #ffeb70}}
 
+  /* SIGILFAE QUADRA · Square-QR chest (Q) — empire's signature shape, distinguishes from kingdom-piece */
+  .fairy .quadra-qr{
+    position:absolute;left:50%;top:32%;transform:translateX(-50%);
+    width:14px;height:14px;
+    background-image:
+      linear-gradient(0deg,transparent 33%,#ffd700 33%,#ffd700 66%,transparent 66%),
+      linear-gradient(90deg,transparent 33%,#ffd700 33%,#ffd700 66%,transparent 66%),
+      linear-gradient(45deg,#000 0%,#000 30%,#ffd700 30%,#ffd700 70%,#000 70%);
+    background-size:100% 100%,100% 100%,100% 100%;
+    background-color:#000;
+    border:1.5px solid #ffd700;
+    box-shadow:0 0 14px #ffd700;
+    animation:qrPulse 1.6s infinite ease-in-out
+  }
+
   /* SIGILFAE PANIS · biscuit fairy (b) — small biscuit on chest */
   .fairy .panis-biscuit{
     position:absolute;left:50%;top:34%;transform:translateX(-50%);
@@ -258,7 +273,8 @@
     <code>b</code> PANIS biscuit ·
     <code>j</code> OPERA jobs ·
     <code>q</code> APIS bee ·
-    <code style="color:#ffd700;border-color:#ffd700">t</code> <span style="color:#ffd700">TESSERA gate</span> ·
+    <code style="color:#ffd700;border-color:#ffd700">t</code> <span style="color:#ffd700">TESSERA △</span> ·
+    <code style="color:#ffd700;border-color:#ffd700">Q</code> <span style="color:#ffd700">QUADRA □</span> ·
     <code>-</code> edge ·
     <code>^</code> tree branch
     <br><span style="color:#aaa">click → cycle state · drag → move · POP earns blood · click APIS or TESSERA → opens QR-gate to your base-page</span>
@@ -290,7 +306,8 @@
         <span class="demo-pill" style="border-color:#d4a544;color:#d4a544" onclick="ghostType('b-b-b-b')">b-b-b-b<span class="sub">PANIS biscuits</span></span>
         <span class="demo-pill" onclick="ghostType('j-j-j')">j-j-j<span class="sub">OPERA jobs</span></span>
         <span class="demo-pill" style="border-color:#ffd700;color:#ffd700" onclick="ghostType('q-q-q')">q-q-q<span class="sub">APIS bees · click to gate</span></span>
-        <span class="demo-pill" style="border-color:#ffd700;color:#ffd700;background:rgba(255,215,0,0.08)" onclick="ghostType('t-t-t-t')">t-t-t-t<span class="sub">TESSERA gates · click</span></span>
+        <span class="demo-pill" style="border-color:#ffd700;color:#ffd700;background:rgba(255,215,0,0.08)" onclick="ghostType('t-t-t-t')">t-t-t-t<span class="sub">TESSERA △ · kingdom</span></span>
+        <span class="demo-pill" style="border-color:#ffd700;color:#ffd700;background:rgba(255,215,0,0.12)" onclick="ghostType('Q-Q-Q-Q')">Q-Q-Q-Q<span class="sub">QUADRA □ · sigilfae</span></span>
         <span class="demo-pill" style="border-color:#ffd700;color:#ffd700;background:rgba(255,215,0,0.05)" onclick="ghostType('.^. .^. .^.')">.^. .^. .^.<span class="sub">TREE · cascade-pop</span></span>
         <span class="demo-pill" style="border-color:#ffd700;color:#ffd700;background:rgba(255,215,0,0.05)" onclick="ghostType('s^j j^b j^,')">s^j j^b j^,<span class="sub">empire MONEY-tree</span></span>
       </div>
@@ -393,7 +410,7 @@ function setMode(m){
 //   s  ANIMA soul-bond  b  PANIS biscuit     j  OPERA jobs-list   q  APIS angry-bee
 //   -  2D edge
 //   ^  TREE branch (declares parent above the flanking nodes)
-const NODE_TOKENS = '.,sbjqt';
+const NODE_TOKENS = '.,sbjqtQ';
 function speciesOf(c){
   if (c === '.') return 'notae';
   if (c === ',') return 'pyxis';
@@ -402,12 +419,14 @@ function speciesOf(c){
   if (c === 'j') return 'opera';
   if (c === 'q') return 'apis';
   if (c === 't') return 'tessera';
+  if (c === 'Q') return 'quadra';
   return 'notae';
 }
 function parseShape(s){
   // detect tree mode (presence of ^)
   const treeMode = s.includes('^');
-  const tokens = s.replace(/[^.,sbjqt/^\-\s]/gi, '').split('').filter(c => c !== ' ');
+  // case-sensitive: keep upper Q distinct from lower q
+  const tokens = s.replace(/[^.,sbjqtQ/^\-\s]/g, '').split('').filter(c => c !== ' ');
   const nodes = [];      // {sp, z, row?}
   const edges = [];      // {a, b, z?, tree?}
   let pendingDash = false;
@@ -603,6 +622,7 @@ function spawnFairy(node, idx, x, y, opts={}){
   else if (sp === 'panis') chestHTML = '<div class="panis-biscuit"></div>';
   else if (sp === 'opera') chestHTML = '<div class="opera-list"></div>';
   else if (sp === 'tessera') chestHTML = '<div class="tessera-qr"></div>';
+  else if (sp === 'quadra') chestHTML = '<div class="quadra-qr"></div>';
   else if (isApis) chestHTML = '<div class="apis-stinger"></div>';
   else if (isPaymentRoot || isPaymentMid) chestHTML = '<div class="pent"></div>';
 
@@ -673,8 +693,8 @@ function attachInteractions(f){
       openTesseraGate(f);
       return;
     }
-    // For TESSERA, click directly opens its base-page (the QR is the password)
-    if (f.sp === 'tessera'){
+    // For TESSERA / QUADRA, click directly opens the QR-gate (the QR is the password)
+    if (f.sp === 'tessera' || f.sp === 'quadra'){
       e.stopPropagation();
       downPos = null;
       openTesseraGate(f);

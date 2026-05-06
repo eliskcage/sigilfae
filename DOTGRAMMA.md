@@ -13,7 +13,8 @@
 | `b` | PANIS | biscuit | fairy with biscuit on chest; affirmation / thanks / small-reward token |
 | `j` | OPERA | jobs-list | fairy with scroll on chest; bears a list of pending jobs |
 | `q` | APIS | quid-pro-quo / gate | angry-bee fairy with stinger; click opens TESSERA gate to a base-page |
-| `t` | TESSERA | password-and-page | golden Satoshi-QR-triangle chest; click → QR-input modal → base-of-operations page |
+| `t` | TESSERA | kingdom gate | golden Satoshi-QR-**triangle** chest; kingdom-piece system (shortfactory.shop/q/) |
+| `Q` | QUADRA | sigilfae gate | golden Satoshi-QR-**square** chest; SIGILFAE empire signature (distinct surface) |
 | `-` | (operator) | edge | draws an amber edge between previous and next node |
 | `^` | (operator) | tree branch | declares the flanking nodes are siblings under a shared parent above; activates TREE MODE |
 
