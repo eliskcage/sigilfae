@@ -205,6 +205,40 @@
     content:'🔒';position:absolute;top:-4px;right:-4px;font-size:10px;opacity:0.7
   }
 
+  /* CONTRACT MODE — fairy after `:` glows GREEN ("DECLARED") */
+  .fairy.contract .pent{
+    background:#52a86b !important;
+    box-shadow:0 0 18px #52a86b, 0 0 32px rgba(82,168,107,0.5) !important;
+    animation:contractPulse 1.4s infinite ease-in-out !important
+  }
+  @keyframes contractPulse{0%,100%{box-shadow:0 0 14px #52a86b}50%{box-shadow:0 0 26px #6ed080}}
+  .fairy.contract .pyxis-box,.fairy.contract .anima-qr,.fairy.contract .panis-biscuit,
+  .fairy.contract .opera-list,.fairy.contract .tessera-qr,.fairy.contract .quadra-qr{
+    border-color:#52a86b !important;box-shadow:0 0 12px #52a86b !important;filter:hue-rotate(80deg) brightness(1.1)
+  }
+  .fairy.contract.empire-side::before{
+    content:'EMPIRE';position:absolute;top:-14px;left:50%;transform:translateX(-50%);
+    font-size:8px;color:#52a86b;letter-spacing:0.3em;font-family:monospace;white-space:nowrap;text-shadow:0 0 6px rgba(82,168,107,0.6)
+  }
+  .fairy.contract.user-side::before{
+    content:'USER';position:absolute;top:-14px;left:50%;transform:translateX(-50%);
+    font-size:8px;color:#52a86b;letter-spacing:0.3em;font-family:monospace;white-space:nowrap;text-shadow:0 0 6px rgba(82,168,107,0.6)
+  }
+
+  /* Contract-bond line — clickable to swap payer */
+  .contract-bond-overlay{position:absolute;inset:0;pointer-events:none;z-index:8}
+  .contract-bond{cursor:pointer;pointer-events:auto;transition:all 0.2s}
+  .contract-bond:hover{filter:brightness(1.3)}
+  .contract-status{
+    position:absolute;top:14px;left:50%;transform:translateX(-50%);
+    background:rgba(0,0,0,0.85);border:1px solid #52a86b;border-radius:20px;
+    padding:6px 14px;font-size:10px;color:#52a86b;letter-spacing:0.16em;
+    z-index:9;font-family:monospace;display:none
+  }
+  .contract-status.show{display:block;animation:fadeIn 0.3s}
+  @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+  .contract-status b{color:#fff}
+
   /* Pop particles */
   .pop-particle{
     position:absolute;width:4px;height:4px;background:var(--amber-glow);
@@ -278,6 +312,7 @@
     <code>-</code> edge ·
     <code>^</code> tree branch
     <br><span style="color:#aaa">click → cycle state · drag → move · POP earns blood · click APIS or TESSERA → opens QR-gate to your base-page</span>
+    <br><span style="color:#52a86b;font-size:10px;letter-spacing:0.18em;opacity:0.65">[ <code style="color:#52a86b;border-color:#52a86b">:</code> for those who know · <code style="color:#52a86b;border-color:#52a86b">.NNNN</code> sets a countdown ]</span>
   </div>
 </div>
 
@@ -291,6 +326,7 @@
   <div class="stage" id="stage">
     <div class="shape-badge" id="shapeBadge">SHAPE: <b id="shapeName">none</b></div>
     <div class="blood-badge"><span class="v white"></span><span>WHITE: <b id="whiteCount">0</b></span></div>
+    <div class="contract-status" id="contractStatus">▲ DECLARED · <b id="contractDir">EMPIRE → USER</b> · click line to swap</div>
     <svg class="edges" id="edgesSvg"></svg>
   </div>
 
@@ -425,32 +461,52 @@ function speciesOf(c){
 function parseShape(s){
   // detect tree mode (presence of ^)
   const treeMode = s.includes('^');
+  // detect contract mode (presence of `:`)
+  const contractMode = s.includes(':');
+  // Extract time-anchors first: .<digits> = pay-by countdown in seconds
+  // e.g. '.8000-.9000' = "valid from +8000s, expires at +9000s, then self-delete"
+  const timeAnchors = [];
+  const cleaned = s.replace(/\.(\d+)/g, (m, n) => {
+    timeAnchors.push(parseInt(n, 10));
+    return '';   // strip from grammar tokens
+  });
   // case-sensitive: keep upper Q distinct from lower q
-  const tokens = s.replace(/[^.,sbjqtQ/^\-\s]/g, '').split('').filter(c => c !== ' ');
-  const nodes = [];      // {sp, z, row?}
-  const edges = [];      // {a, b, z?, tree?}
+  const tokens = cleaned.replace(/[^.,sbjqtQ/^:\-\s]/g, '').split('').filter(c => c !== ' ');
+  const nodes = [];      // {sp, z, row?, contract?, contractRole?}
+  const edges = [];      // {a, b, z?, tree?, contract?}
   let pendingDash = false;
   let pendingZ = 0;
   let zEdgePending = false;
-  let pendingBranch = false;  // ^ pending between two nodes
+  let pendingBranch = false;
+  let inContract = false;  // turns true after `:` is seen; subsequent nodes are contract-flagged
 
   for (let i=0; i<tokens.length; i++){
     const c = tokens[i];
+    if (c === ':'){
+      // `:` declares the two-node pact: top=EMPIRE, bottom=USER, vertical bond
+      const empireIdx = nodes.length;
+      nodes.push({sp:'notae', z:0, row:0, contract:true, contractRole:'empire'});
+      const userIdx = nodes.length;
+      nodes.push({sp:'notae', z:0, row:0, contract:true, contractRole:'user'});
+      edges.push({a: empireIdx, b: userIdx, contract:true});
+      inContract = true;
+      pendingDash = false; zEdgePending = false; pendingBranch = false;
+      continue;
+    }
     if (NODE_TOKENS.includes(c)){
       const newIdx = nodes.length;
-      nodes.push({sp: speciesOf(c), z: pendingZ, row: 0, branchPair: null});
+      nodes.push({sp: speciesOf(c), z: pendingZ, row: 0, branchPair: null, contract: inContract});
       pendingZ = 0;
       if (newIdx > 0){
         if (pendingBranch){
-          // mark these two as a branch-pair (siblings sharing a parent)
           nodes[newIdx-1].branchPair = newIdx;
           nodes[newIdx].branchPair = newIdx - 1;
           pendingBranch = false;
         } else if (zEdgePending){
-          edges.push({a: newIdx-1, b: newIdx, z: true});
+          edges.push({a: newIdx-1, b: newIdx, z: true, contract: inContract});
           zEdgePending = false;
         } else if (pendingDash){
-          edges.push({a: newIdx-1, b: newIdx, z: false});
+          edges.push({a: newIdx-1, b: newIdx, z: false, contract: inContract});
         }
       }
       pendingDash = false;
@@ -465,11 +521,20 @@ function parseShape(s){
   }
   let closed = false;
   if (pendingDash && nodes.length >= 2){
-    edges.push({a: nodes.length-1, b: 0, z: false}); closed = true;
+    edges.push({a: nodes.length-1, b: 0, z: false, contract: inContract}); closed = true;
   } else if (zEdgePending && nodes.length >= 2){
-    edges.push({a: nodes.length-1, b: 0, z: true}); closed = true;
+    edges.push({a: nodes.length-1, b: 0, z: true, contract: inContract}); closed = true;
   }
-  return {nodes, edges, closed, treeMode};
+  // Build time-anchor structure
+  let timing = null;
+  if (timeAnchors.length === 1){
+    timing = {start: 0, end: timeAnchors[0], expires: Date.now() + timeAnchors[0]*1000};
+  } else if (timeAnchors.length >= 2){
+    const [a, b] = timeAnchors;
+    const lo = Math.min(a, b), hi = Math.max(a, b);
+    timing = {start: lo, end: hi, expires: Date.now() + hi*1000};
+  }
+  return {nodes, edges, closed, treeMode, contractMode, timing};
 }
 
 // ─── Tree layout ──────────────────────────────────────────
@@ -604,6 +669,9 @@ function spawnFairy(node, idx, x, y, opts={}){
   if (purple) cls += ' purple';
   if (isApis) cls += ' apis';
   if (isPaymentRoot || isPaymentMid) cls += ' payment';
+  if (node.contract) cls += ' contract';
+  if (node.contractRole === 'empire') cls += ' empire-side';
+  if (node.contractRole === 'user') cls += ' user-side';
   el.className = cls;
   el.dataset.species = sp;
   el.dataset.z = node.z || 0;
@@ -649,6 +717,8 @@ function spawnFairy(node, idx, x, y, opts={}){
     rowLocked: !!opts.locked,
     claimed: !!opts.claimed,
     children: opts.children || [],
+    contract: !!node.contract,
+    contractRole: node.contractRole || null,
     rewardMultiplier: isPaymentRoot ? 100 : (isPaymentMid ? 25 : 1)
   };
   if (opts.locked) f.el.classList.add('row-locked');
@@ -877,6 +947,8 @@ function playPaymentSound(){
 }
 
 // ─── Edges ────────────────────────────────────────────────
+let payerDirection = 'empire-to-user';  // toggled by clicking the contract bond
+
 function drawEdges(edges){
   EDGES_SVG.innerHTML = `
     <defs>
@@ -889,6 +961,13 @@ function drawEdges(edges){
         <stop offset="0" stop-color="#9be0d4" stop-opacity="0.5"/>
         <stop offset="1" stop-color="#9be0d4" stop-opacity="0.9"/>
       </linearGradient>
+      <linearGradient id="edge-contract" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#52a86b" stop-opacity="0.8"/>
+        <stop offset="1" stop-color="#6ed080" stop-opacity="1"/>
+      </linearGradient>
+      <marker id="payer-arrow" viewBox="-5 -5 10 10" refX="0" refY="0" orient="auto" markerWidth="7" markerHeight="7">
+        <path d="M -4 -4 L 4 0 L -4 4 Z" fill="#6ed080"/>
+      </marker>
     </defs>
   `;
   edges.forEach(e => {
@@ -899,7 +978,28 @@ function drawEdges(edges){
     line.setAttribute('y1', a.y);
     line.setAttribute('x2', b.x);
     line.setAttribute('y2', b.y);
-    if (e.z){
+    if (e.contract){
+      line.setAttribute('stroke', 'url(#edge-contract)');
+      line.setAttribute('stroke-width', '3');
+      line.setAttribute('class', 'contract-bond');
+      // arrow indicates payer direction. Reverse the line if user-to-empire.
+      if (payerDirection === 'user-to-empire'){
+        line.setAttribute('x1', b.x); line.setAttribute('y1', b.y);
+        line.setAttribute('x2', a.x); line.setAttribute('y2', a.y);
+      }
+      line.setAttribute('marker-end', 'url(#payer-arrow)');
+      line.style.cursor = 'pointer';
+      line.addEventListener('click', () => swapPayer());
+      // Add a soft glow halo
+      const halo = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+      halo.setAttribute('x1', a.x); halo.setAttribute('y1', a.y);
+      halo.setAttribute('x2', b.x); halo.setAttribute('y2', b.y);
+      halo.setAttribute('stroke', '#52a86b');
+      halo.setAttribute('stroke-width', '8');
+      halo.setAttribute('opacity', '0.18');
+      halo.setAttribute('pointer-events', 'none');
+      EDGES_SVG.appendChild(halo);
+    } else if (e.z){
       line.setAttribute('stroke', 'url(#edge-z)');
       line.setAttribute('stroke-dasharray', '6 4');
       line.setAttribute('stroke-width', '2');
@@ -910,6 +1010,36 @@ function drawEdges(edges){
     line.setAttribute('stroke-linecap', 'round');
     EDGES_SVG.appendChild(line);
   });
+}
+
+function swapPayer(){
+  payerDirection = payerDirection === 'empire-to-user' ? 'user-to-empire' : 'empire-to-user';
+  // direction text is updated by the countdown ticker if a timing is active,
+  // otherwise update it directly
+  const dirEl = document.getElementById('contractDir');
+  if (dirEl && !activeTiming){
+    dirEl.textContent = payerDirection === 'empire-to-user' ? 'EMPIRE → USER' : 'USER → EMPIRE';
+  }
+  // Re-render edges with new direction
+  drawEdges(currentEdges);
+  // Visual pulse + sound
+  playPopSound();
+  showToast('▲ payer swapped · ' + (payerDirection === 'empire-to-user' ? 'EMPIRE pays USER' : 'USER pays EMPIRE'));
+}
+
+function contractSelfDelete(){
+  // Pop every contract-flagged fairy, then clear the textarea's contract portion.
+  fairies.filter(f => f.contract).forEach((f, i) => {
+    setTimeout(() => popFairy(f), i * 80);
+  });
+  // Strip from textarea: remove `:` and everything after, plus time-anchors
+  const cleaned = TEXTAREA.value.replace(/:.*$/, '').replace(/\.\d+/g, '').trim();
+  setTimeout(() => {
+    TEXTAREA.value = cleaned;
+    renderShape();
+    if (countdownInterval){ clearInterval(countdownInterval); countdownInterval = null; }
+    activeTiming = null;
+  }, 800);
 }
 
 let currentEdges = [];
@@ -938,12 +1068,38 @@ function killFairies(fromIdx){
   }
 }
 
+let activeTiming = null;
+let countdownInterval = null;
+
 function renderShape(){
   const s = TEXTAREA.value;
   const parsed = parseShape(s);
-  const {nodes, edges, closed, treeMode} = parsed;
+  const {nodes, edges, closed, treeMode, contractMode, timing} = parsed;
   // Show state-tags always when stage isn't crowded; hover-only when busy
   document.body.classList.toggle('show-tags', nodes.length <= 12);
+  // Toggle the contract status badge + start/stop countdown
+  const cs = document.getElementById('contractStatus');
+  const dirEl = document.getElementById('contractDir');
+  if (cs) cs.classList.toggle('show', !!contractMode);
+  // Stop any prior countdown
+  if (countdownInterval){ clearInterval(countdownInterval); countdownInterval = null; }
+  activeTiming = timing && contractMode ? timing : null;
+  if (activeTiming){
+    const tickCountdown = () => {
+      const remaining = Math.max(0, Math.floor((activeTiming.expires - Date.now())/1000));
+      const arrow = payerDirection === 'empire-to-user' ? 'EMPIRE → USER' : 'USER → EMPIRE';
+      if (dirEl) dirEl.textContent = `${arrow} · ⌛ ${remaining}s`;
+      if (remaining <= 0){
+        clearInterval(countdownInterval); countdownInterval = null;
+        // self-delete: pop all contract fairies + clear contract from textarea
+        showToast('▼ contract expired · self-deleting');
+        contractSelfDelete();
+        return;
+      }
+    };
+    tickCountdown();
+    countdownInterval = setInterval(tickCountdown, 1000);
+  }
   // Wipe everything when switching modes or content changes structurally
   killFairies(0);
   fairies = [];
@@ -967,7 +1123,27 @@ function renderShape(){
 function renderPolygonMode(nodes, edges, closed){
   const cx = STAGE_W()/2, cy = STAGE_H()/2;
   const R = Math.min(STAGE_W(), STAGE_H()) * 0.35;
-  const verts = polygonVertices(nodes.length, cx, cy, R);
+  // Special layout for contract mode: empire on top, user on bottom, attached
+  // nodes radiate outward from the user position (since user attaches their proof).
+  const empireIdx = nodes.findIndex(n => n.contractRole === 'empire');
+  const userIdx = nodes.findIndex(n => n.contractRole === 'user');
+  let verts;
+  if (empireIdx >= 0 && userIdx >= 0){
+    verts = new Array(nodes.length);
+    verts[empireIdx] = {x: cx, y: cy - R*0.6};
+    verts[userIdx]   = {x: cx, y: cy + R*0.6};
+    // Other nodes (attachments) → arc around user position
+    const attached = nodes.map((n,i) => i).filter(i => i !== empireIdx && i !== userIdx);
+    attached.forEach((idx, j) => {
+      const ang = (j / Math.max(1, attached.length - 1) || 0.5) * Math.PI - Math.PI/2;
+      const aR = R * 0.55;
+      verts[idx] = {x: cx + aR * Math.cos(ang) + R*0.4, y: cy + R*0.6 + aR * Math.sin(ang) * 0.55};
+      // Fallback to a tidier layout for single attachments: just to the right of user
+      if (attached.length === 1) verts[idx] = {x: cx + R*0.5, y: cy + R*0.6};
+    });
+  } else {
+    verts = polygonVertices(nodes.length, cx, cy, R);
+  }
   nodes.forEach((n, i) => {
     if (verts[i] && n.z > 0){
       verts[i].y -= n.z * 24;
@@ -975,6 +1151,7 @@ function renderPolygonMode(nodes, edges, closed){
     }
   });
   for (let i=0; i<nodes.length; i++){
+    if (!verts[i]) continue;
     spawnFairy(nodes[i], i, verts[i].x, verts[i].y);
   }
   currentEdges = edges;
