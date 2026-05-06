@@ -135,6 +135,13 @@
   @keyframes fj{0%{transform:translate(-50%,-50%) rotate(-3deg)}100%{transform:translate(-50%,-50%) rotate(3deg)}}
   .fairy.fiscus .pent{display:none}
 
+  /* LONG-HOLD pulse — visual feedback during 600ms swap-gesture */
+  .fairy.holding{transform:scale(1.15);transition:transform 0.2s}
+  .fairy.holding .pent,.fairy.holding .panis-biscuit,.fairy.holding .testis-pad,.fairy.holding .fiscus-pot,.fairy.holding .anima-qr,.fairy.holding .tessera-qr,.fairy.holding .quadra-qr,.fairy.holding .pyxis-box{
+    animation:holdRing 0.6s ease-out;
+  }
+  @keyframes holdRing{0%{box-shadow:0 0 0 0 rgba(82,168,107,0.6)}100%{box-shadow:0 0 0 32px rgba(82,168,107,0)}}
+
   /* CONTRACT MODE — green glow */
   .fairy.contract .pent{background:var(--green) !important;box-shadow:0 0 18px var(--green),0 0 28px rgba(82,168,107,0.5) !important;animation:cp 1.4s infinite ease-in-out !important}
   @keyframes cp{0%,100%{box-shadow:0 0 12px var(--green)}50%{box-shadow:0 0 22px var(--green-glow)}}
@@ -542,14 +549,39 @@ function spawnFairy(node, idx, x, y){
 
   requestAnimationFrame(() => { el.style.left = (x-18)+'px'; el.style.top = (y-27)+'px'; });
 
-  // click handler
+  // ─── Click → pay modal (if payer) · LONG-HOLD (600ms) → swap payer ───
+  let holdTimer = null;
+  let holdFired = false;
   el.addEventListener('pointerdown', e => {
+    holdFired = false;
+    if (f.contract){
+      // Start long-hold timer regardless of role — long-hold on ANY contract fairy swaps
+      el.classList.add('holding');
+      holdTimer = setTimeout(() => {
+        holdFired = true;
+        el.classList.remove('holding');
+        swapPayer();
+        if (navigator.vibrate) navigator.vibrate(40);
+        toast('▲ flow flipped via long-hold');
+      }, 600);
+    }
+  });
+  const cancelHold = () => {
+    el.classList.remove('holding');
+    if (holdTimer){ clearTimeout(holdTimer); holdTimer = null; }
+  };
+  el.addEventListener('pointerup', e => {
+    cancelHold();
+    if (holdFired){ holdFired = false; return; }
+    // Quick tap → pay flow if this fairy is the payer
     if (f.contract && f.contractRole){
       const isPayer = (payerDirection === 'empire-to-user' && f.contractRole === 'empire')
                    || (payerDirection === 'user-to-empire' && f.contractRole === 'user');
       if (isPayer){ e.stopPropagation(); openPay(f); return; }
     }
   });
+  el.addEventListener('pointerleave', cancelHold);
+  el.addEventListener('pointercancel', cancelHold);
 }
 
 function drawEdges(edges){
@@ -571,18 +603,30 @@ function drawEdges(edges){
       halo.setAttribute('stroke', '#52a86b'); halo.setAttribute('stroke-width', '8'); halo.setAttribute('opacity','0.18'); halo.setAttribute('pointer-events','none');
       EDGES.appendChild(halo);
       // direction-aware
-      if (payerDirection === 'user-to-empire'){
-        line.setAttribute('x1', b.x); line.setAttribute('y1', b.y);
-        line.setAttribute('x2', a.x); line.setAttribute('y2', a.y);
-      } else {
-        line.setAttribute('x1', a.x); line.setAttribute('y1', a.y);
-        line.setAttribute('x2', b.x); line.setAttribute('y2', b.y);
-      }
+      const x1 = payerDirection === 'user-to-empire' ? b.x : a.x;
+      const y1 = payerDirection === 'user-to-empire' ? b.y : a.y;
+      const x2 = payerDirection === 'user-to-empire' ? a.x : b.x;
+      const y2 = payerDirection === 'user-to-empire' ? a.y : b.y;
+      // Visible bond line
+      line.setAttribute('x1', x1); line.setAttribute('y1', y1);
+      line.setAttribute('x2', x2); line.setAttribute('y2', y2);
       line.setAttribute('stroke', 'url(#ec)');
       line.setAttribute('stroke-width', '3');
       line.setAttribute('marker-end', 'url(#arr)');
-      line.style.cursor = 'pointer';
-      line.addEventListener('click', () => swapPayer());
+      line.style.pointerEvents = 'stroke';
+      // INVISIBLE thick hit-target — finger-friendly tap zone
+      const hit = document.createElementNS('http://www.w3.org/2000/svg','line');
+      hit.setAttribute('x1', a.x); hit.setAttribute('y1', a.y);
+      hit.setAttribute('x2', b.x); hit.setAttribute('y2', b.y);
+      hit.setAttribute('stroke', 'rgba(82,168,107,0.001)');  // nearly transparent, still hittable
+      hit.setAttribute('stroke-width', '32');
+      hit.setAttribute('stroke-linecap', 'round');
+      hit.style.pointerEvents = 'stroke';
+      hit.style.cursor = 'pointer';
+      const swapHandler = (ev) => { ev.stopPropagation(); swapPayer(); };
+      hit.addEventListener('click', swapHandler);
+      hit.addEventListener('pointerdown', swapHandler);  // mobile fallback
+      EDGES.appendChild(hit);
     } else {
       line.setAttribute('x1', a.x); line.setAttribute('y1', a.y);
       line.setAttribute('x2', b.x); line.setAttribute('y2', b.y);
