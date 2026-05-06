@@ -12,7 +12,8 @@
 | `s` | ANIMA | soul-bond | fairy with user's SFT soul-QR on chest; declares blood-connection live |
 | `b` | PANIS | biscuit | fairy with biscuit on chest; affirmation / thanks / small-reward token |
 | `j` | OPERA | jobs-list | fairy with scroll on chest; bears a list of pending jobs |
-| `q` | APIS | quid-pro-quo | angry-bee fairy with stinger; pre-condition fairy demanding trade |
+| `q` | APIS | quid-pro-quo / gate | angry-bee fairy with stinger; click opens TESSERA gate to a base-page |
+| `t` | TESSERA | password-and-page | golden Satoshi-QR-triangle chest; click → QR-input modal → base-of-operations page |
 | `-` | (operator) | edge | draws an amber edge between previous and next node |
 | `^` | (operator) | tree branch | declares the flanking nodes are siblings under a shared parent above; activates TREE MODE |
 

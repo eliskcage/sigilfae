@@ -16,7 +16,8 @@ by review as variants qualify.
 | `s` | **SIGILFAE ANIMA** | canonical | NOTAE | UNKLE_ROAL_DAHL | 2026-05-06 | soul-bond declaration; QR chest icon; binds mesh to a real account |
 | `b` | **SIGILFAE PANIS** | canonical | NOTAE | UNKLE_ROAL_DAHL | 2026-05-06 | biscuit affirmation token; small biscuit chest |
 | `j` | **SIGILFAE OPERA** | canonical | NOTAE | UNKLE_ROAL_DAHL | 2026-05-06 | jobs-list bearer; scroll chest; click expands jobs |
-| `q` | **SIGILFAE APIS** | canonical | NOTAE | UNKLE_ROAL_DAHL | 2026-05-06 | angry-bee quid-pro-quo; striped body + red stinger; blocks until trade resolved |
+| `q` | **SIGILFAE APIS** | canonical | NOTAE | UNKLE_ROAL_DAHL | 2026-05-06 | angry-bee quid-pro-quo; striped body + red stinger; blocks until trade resolved; clicking opens TESSERA gate |
+| `t` | **SIGILFAE TESSERA** | canonical | NOTAE | UNKLE_DAVID_BOWIE | 2026-05-06 | Satoshi-QR-triangle chest; password-AND-page primitive; click → opens user's base-of-operations page |
 | `*` | SIGILFAE ASTRUM | proposed | NOTAE | (open) | — | proposed: 5-pointed pentagonal stars between nodes; tag-input |
 | `o` | SIGILFAE CIRCULUS | proposed | NOTAE | (open) | — | proposed: orbiting circular nodes; radio-toggle behaviour |
 | `~` | SIGILFAE UNDA | proposed | NOTAE | (open) | — | proposed: sine-wave edges; range-slider behaviour |
@@ -39,6 +40,7 @@ by review as variants qualify.
 | PANIS | 85 | 60 | 5 | 4 |
 | OPERA | 60 | 85 | 25 | 6 |
 | APIS | 75 | 70 | 40 | 5 |
+| TESSERA | 82 | 95 | 60 | 8 |
 | ASTRUM | — | — | — | — |
 | CIRCULUS | — | — | — | — |
 | UNDA | — | — | — | — |

@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>▲ YOUR BASE · empire base-of-operations</title>
+<style>
+  :root{
+    --bg:#0a0a0a; --fg:#e8e2d4; --amber:#d4a544; --amber-glow:#ffc04a;
+    --gold:#ffd700; --cream:#f3e8c8; --network:#b9a4f5;
+    --done:#52a86b; --shit:#c83030;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{background:#000;color:var(--fg);font-family:'Courier New',monospace;min-height:100vh}
+  body{padding:24px 20px;background:radial-gradient(ellipse at top,#1a1a1a 0%,#000 60%);max-width:1200px;margin:0 auto}
+
+  .hdr{
+    background:linear-gradient(135deg,rgba(255,215,0,0.08),rgba(212,165,68,0.04));
+    border:1px solid var(--gold);border-radius:14px;padding:24px;margin-bottom:24px;
+    display:flex;align-items:center;gap:24px;position:relative;overflow:hidden;
+    box-shadow:0 0 40px rgba(255,215,0,0.15)
+  }
+  .hdr::before{
+    content:'▲';position:absolute;right:-30px;top:-40px;
+    font-size:200px;color:rgba(255,215,0,0.04);pointer-events:none
+  }
+  .hdr-qr{
+    width:90px;height:80px;flex-shrink:0;
+    clip-path:polygon(50% 0,100% 100%,0 100%);
+    background:repeating-conic-gradient(from 0deg at 50% 50%,#000 0deg 14deg,#ffd700 14deg 28deg);
+    box-shadow:0 0 20px rgba(255,215,0,0.5);animation:hdrPulse 2s infinite
+  }
+  @keyframes hdrPulse{0%,100%{box-shadow:0 0 20px rgba(255,215,0,0.5)}50%{box-shadow:0 0 32px rgba(255,235,112,0.7)}}
+  .hdr-info{flex:1}
+  .hdr-tag{font-size:10px;color:#888;letter-spacing:0.3em;margin-bottom:4px}
+  .hdr-soul{font-size:24px;color:var(--gold);font-weight:bold;letter-spacing:0.18em;text-shadow:0 0 12px rgba(255,215,0,0.5);margin-bottom:6px}
+  .hdr-sub{font-size:11px;color:#aaa;font-family:Georgia,serif;font-style:italic;line-height:1.5}
+  .hdr-actions{display:flex;flex-direction:column;gap:6px}
+  .hdr-actions button{padding:8px 14px;background:#000;color:var(--gold);border:1px solid var(--gold);border-radius:4px;font-family:inherit;font-size:10px;letter-spacing:0.16em;cursor:pointer}
+  .hdr-actions button:hover{background:rgba(255,215,0,0.1)}
+
+  .grid{display:grid;grid-template-columns:1fr 380px;gap:20px}
+  @media (max-width:980px){.grid{grid-template-columns:1fr}}
+
+  .panel{background:#0d0d0d;border:1px solid #1a1a1a;border-radius:10px;padding:18px;margin-bottom:20px}
+  .panel-h{font-size:11px;color:var(--amber);letter-spacing:0.24em;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between}
+  .panel-h .meta{font-size:9px;color:#666;letter-spacing:0.1em}
+
+  .graph-frame{width:100%;height:520px;border:1px solid #222;border-radius:8px;background:#000;overflow:hidden}
+  .graph-frame iframe{width:100%;height:100%;border:none;display:block}
+
+  .video-frame{width:100%;aspect-ratio:16/9;background:#000;border:1px solid #222;border-radius:8px;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;cursor:pointer}
+  .video-frame::before{
+    content:'';position:absolute;inset:0;
+    background:radial-gradient(ellipse at center,rgba(255,215,0,0.08),transparent 70%)
+  }
+  .video-frame .placeholder{text-align:center;z-index:2;font-family:Georgia,serif;font-style:italic;color:#666}
+  .video-frame .placeholder b{color:var(--amber);display:block;font-size:14px;font-style:normal;margin-bottom:6px;letter-spacing:0.2em}
+  .video-frame iframe{width:100%;height:100%;border:none}
+
+  .form-area{display:flex;flex-direction:column;gap:10px}
+  .form-area input,.form-area textarea{
+    background:#000;border:1px solid #333;border-radius:6px;padding:10px 12px;
+    color:#fff;font-family:Georgia,serif;font-size:13px;line-height:1.4;font-style:italic
+  }
+  .form-area input:focus,.form-area textarea:focus{outline:none;border-color:var(--amber);box-shadow:0 0 12px rgba(212,165,68,0.3)}
+  .form-area label{font-size:9px;color:#888;letter-spacing:0.2em;margin-bottom:-6px}
+  .form-area button{padding:11px;background:var(--amber);color:#000;font-weight:bold;font-size:11px;letter-spacing:0.2em;border:none;cursor:pointer;border-radius:4px;font-family:inherit;text-transform:uppercase}
+
+  .pins{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px}
+  .pin{
+    background:#0a0a0a;border:1px solid #222;border-radius:8px;padding:12px;
+    cursor:pointer;text-align:center;transition:all 0.2s
+  }
+  .pin:hover{border-color:var(--amber);box-shadow:0 0 16px rgba(212,165,68,0.2)}
+  .pin .pin-qr{
+    width:50px;height:44px;margin:0 auto 8px;
+    clip-path:polygon(50% 0,100% 100%,0 100%);
+    background:repeating-conic-gradient(from 0deg at 50% 50%,#000 0deg 18deg,#d4a544 18deg 36deg);
+    opacity:0.85
+  }
+  .pin .pin-id{font-size:9px;color:var(--amber);letter-spacing:0.14em;font-weight:bold;margin-bottom:3px}
+  .pin .pin-label{font-size:9px;color:#888;line-height:1.3}
+
+  .add-pin{
+    border-style:dashed;border-color:rgba(212,165,68,0.4);
+    display:flex;align-items:center;justify-content:center;color:#666;
+    min-height:100px
+  }
+  .add-pin:hover{color:var(--amber);background:rgba(212,165,68,0.05)}
+
+  .vote-row{display:flex;gap:14px;margin-top:14px}
+  .vote-btn{
+    flex:1;padding:14px;font-family:inherit;font-size:11px;letter-spacing:0.3em;font-weight:bold;
+    border:1px solid;border-radius:8px;cursor:pointer;text-transform:uppercase;background:#000
+  }
+  .vote-btn.works{color:var(--done);border-color:var(--done)}
+  .vote-btn.works:hover{background:rgba(82,168,107,0.1);box-shadow:0 0 16px rgba(82,168,107,0.3)}
+  .vote-btn.shit{color:var(--shit);border-color:var(--shit)}
+  .vote-btn.shit:hover{background:rgba(200,48,48,0.1);box-shadow:0 0 16px rgba(200,48,48,0.3)}
+  .vote-counts{display:flex;justify-content:space-between;margin-top:8px;font-size:9px;color:#666;letter-spacing:0.16em}
+
+  .doctrine{font-size:10px;color:#666;line-height:1.6;letter-spacing:0.04em;margin-top:24px;padding:14px;border-top:1px dashed #1a1a1a}
+  .doctrine b{color:var(--amber)}
+
+  .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#000;border:1px solid var(--amber);padding:14px 22px;color:var(--amber);font-size:12px;letter-spacing:0.1em;z-index:99;box-shadow:0 0 30px rgba(212,165,68,0.4)}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <div class="hdr-qr"></div>
+  <div class="hdr-info">
+    <div class="hdr-tag">▲ YOUR BASE OF OPERATIONS</div>
+    <div class="hdr-soul" id="soulId">SF-LOADING</div>
+    <div class="hdr-sub">type your QR-string anywhere on the empire to return here · this page IS your idea, your fairy graph, your collected witnesses</div>
+  </div>
+  <div class="hdr-actions">
+    <button onclick="copyShareUrl()">▲ SHARE URL</button>
+    <button onclick="window.location.href='fairy_coder.html'">⟵ BACK</button>
+  </div>
+</div>
+
+<div class="grid">
+
+  <div>
+    <!-- Live fairy graph (the user's godmesh) -->
+    <div class="panel">
+      <div class="panel-h">
+        <span>▲ YOUR FAIRY GRAPH · live godmesh</span>
+        <span class="meta">edit in fairy_coder · changes auto-render here</span>
+      </div>
+      <div class="graph-frame">
+        <iframe id="graphFrame" src="fairy_coder.html?text=.%5E.%20.%5E.%20.%5E.&problem=YOUR%20IDEA"></iframe>
+      </div>
+    </div>
+
+    <!-- YouTube video -->
+    <div class="panel">
+      <div class="panel-h">
+        <span>▲ PROTOTYPE VIDEO</span>
+        <span class="meta">YouTube embed · paste a URL below</span>
+      </div>
+      <div class="video-frame" id="videoFrame">
+        <div class="placeholder">
+          <b>▼ NO VIDEO YET</b>
+          paste a YouTube URL in the form panel →<br>
+          <span style="color:#444;font-size:11px">to embed your prototype demo here</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Vote -->
+    <div class="panel">
+      <div class="panel-h">
+        <span>▲ EMPIRE VOTE · does your idea work?</span>
+        <span class="meta">visitors vote · soul score adjusts</span>
+      </div>
+      <div class="vote-row">
+        <button class="vote-btn works" onclick="vote('works')">▲ IT WORKS</button>
+        <button class="vote-btn shit" onclick="vote('shit')">▼ IT'S SHIT</button>
+      </div>
+      <div class="vote-counts">
+        <span><b id="voteWorks" style="color:var(--done)">0</b> works</span>
+        <span><b id="voteShit" style="color:var(--shit)">0</b> shit</span>
+      </div>
+    </div>
+  </div>
+
+  <div>
+    <!-- mcForm element -->
+    <div class="panel">
+      <div class="panel-h">▲ mcFORM · what your idea needs</div>
+      <div class="form-area">
+        <label>YOUR IDEA · one sentence</label>
+        <textarea id="formIdea" placeholder="describe the problem and your fix..." rows="3"></textarea>
+        <label>YOUTUBE URL (optional)</label>
+        <input id="formVideo" type="text" placeholder="https://youtube.com/watch?v=...">
+        <label>DOTGRAMMA · your fairy graph</label>
+        <input id="formGraph" type="text" placeholder=". , / s b j q t   ^ - = grammar">
+        <label>WHAT YOU NEED FROM THE EMPIRE</label>
+        <textarea id="formNeeds" placeholder="white blood · network · attention · feedback · funding..." rows="2"></textarea>
+        <button onclick="saveBase()">▲ SAVE BASE</button>
+      </div>
+    </div>
+
+    <!-- QR pins to other ideas -->
+    <div class="panel">
+      <div class="panel-h">▲ QR PINS · linked ideas</div>
+      <div class="pins" id="pins">
+        <div class="pin add-pin" onclick="addPin()">+ pin another idea</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="doctrine">
+  <b>THE BASE OF OPERATIONS:</b> the QR-string in your header is BOTH your identifier and your password. Share the URL — anyone can visit and vote/comment, but only you (or anyone you give the QR-string to) can edit. <b>Forget the string</b> = lose the base. Self-custody by typing.<br>
+  <b>LIVING FORM NETWORK:</b> every pin is a link to another base-page. The empire becomes a graph of inter-linked idea-hosts. Vote, fork (mint your own TESSERA), pin in.<br>
+  <b>YOUR FAIRY GRAPH</b> above is iframed from <code>fairy_coder.html</code> — type any DOTGRAMMA there and your base mirrors the change.
+</div>
+
+<script>
+// ─── Boot · pull QR from URL ─────────────────────────────
+const params = new URLSearchParams(window.location.search);
+const qr = (params.get('qr') || localStorage.getItem('sf_tessera_active') || 'SF-NEWBASE').toUpperCase();
+document.getElementById('soulId').textContent = qr;
+
+// Persist per-soul state in localStorage
+const STORE_KEY = 'sf_base_' + qr;
+function loadBase(){
+  const raw = localStorage.getItem(STORE_KEY);
+  if (!raw) return {idea:'', video:'', graph:'.^. .^. .^.', needs:'', pins:[], votes:{works:0, shit:0}};
+  try { return JSON.parse(raw); } catch(e){ return {idea:'', video:'', graph:'', needs:'', pins:[], votes:{works:0, shit:0}}; }
+}
+function saveState(state){
+  localStorage.setItem(STORE_KEY, JSON.stringify(state));
+}
+let state = loadBase();
+
+// Fill form fields
+document.getElementById('formIdea').value = state.idea || '';
+document.getElementById('formVideo').value = state.video || '';
+document.getElementById('formGraph').value = state.graph || '.^. .^. .^.';
+document.getElementById('formNeeds').value = state.needs || '';
+document.getElementById('voteWorks').textContent = state.votes.works || 0;
+document.getElementById('voteShit').textContent = state.votes.shit || 0;
+
+// Render iframe with the saved graph
+function refreshGraphFrame(){
+  const g = document.getElementById('formGraph').value || '.^. .^. .^.';
+  document.getElementById('graphFrame').src = 'fairy_coder.html?text=' + encodeURIComponent(g) + '&problem=' + encodeURIComponent(state.idea || qr);
+}
+refreshGraphFrame();
+
+// Render YouTube embed if URL present
+function renderVideo(){
+  const url = state.video || '';
+  const m = url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|v\/))([A-Za-z0-9_-]{11})/);
+  const frame = document.getElementById('videoFrame');
+  if (m){
+    frame.innerHTML = `<iframe src="https://www.youtube.com/embed/${m[1]}" allowfullscreen></iframe>`;
+  } else {
+    frame.innerHTML = `<div class="placeholder"><b>▼ NO VIDEO YET</b>paste a YouTube URL in the form panel →<br><span style="color:#444;font-size:11px">to embed your prototype demo here</span></div>`;
+  }
+}
+renderVideo();
+
+// Render QR pins
+function renderPins(){
+  const el = document.getElementById('pins');
+  const pinsHtml = state.pins.map((p, i) => `
+    <div class="pin" onclick="openPin('${p.qr}')">
+      <div class="pin-qr"></div>
+      <div class="pin-id">${p.qr}</div>
+      <div class="pin-label">${p.label || 'idea'}</div>
+    </div>
+  `).join('');
+  el.innerHTML = pinsHtml + `<div class="pin add-pin" onclick="addPin()">+ pin another idea</div>`;
+}
+renderPins();
+
+// ─── Actions ───
+function saveBase(){
+  state.idea  = document.getElementById('formIdea').value;
+  state.video = document.getElementById('formVideo').value;
+  state.graph = document.getElementById('formGraph').value;
+  state.needs = document.getElementById('formNeeds').value;
+  saveState(state);
+  refreshGraphFrame();
+  renderVideo();
+  toast('▲ base saved · refresh-safe');
+}
+
+function vote(kind){
+  state.votes[kind] = (state.votes[kind] || 0) + 1;
+  saveState(state);
+  document.getElementById('vote' + (kind === 'works' ? 'Works' : 'Shit')).textContent = state.votes[kind];
+  toast(kind === 'works' ? '▲ vote · WORKS' : '▼ vote · SHIT');
+}
+
+function addPin(){
+  const qrIn = prompt('Paste QR-string of the idea you want to pin:', 'SF-XXXXXXXX');
+  if (!qrIn) return;
+  const label = prompt('Optional label:', 'their idea');
+  state.pins.push({qr: qrIn.toUpperCase(), label: label || 'idea'});
+  saveState(state);
+  renderPins();
+  toast('▲ pinned: ' + qrIn);
+}
+
+function openPin(pinQr){
+  window.location.href = 'base_page.html?qr=' + encodeURIComponent(pinQr);
+}
+
+function copyShareUrl(){
+  const url = window.location.origin + window.location.pathname + '?qr=' + qr;
+  navigator.clipboard.writeText(url).then(() => toast('▲ URL copied to clipboard'));
+}
+
+function toast(msg){
+  const t = document.createElement('div');
+  t.className = 'toast';
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 1800);
+}
+
+console.log('▲ BASE-OF-OPERATIONS · soul:', qr);
+console.log('▲ data persists in localStorage[' + STORE_KEY + ']');
+</script>
+
+</body>
+</html>
