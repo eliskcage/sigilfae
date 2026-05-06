@@ -1035,6 +1035,32 @@ function render(){
   const banner = document.getElementById('studioBanner');
   if (banner) banner.style.display = isComplex ? 'block' : 'none';
 
+  // ─── AUTO-CLOSE POLYGON ──────────────────────────────────────────────
+  // Dan: "the head node is now a : instead of a . so u need to let the
+  // shapes know if : is declaired u can still make a link to it."
+  // The parser swallows colons + dots upfront and never wires dashes into
+  // perimeter edges — so the polygon vertices land correctly but the shape
+  // doesn't visually close (Y instead of triangle, etc.). Fix: add the
+  // missing adjacent-vertex edges here so the polygon ALWAYS closes.
+  //   · contract mode: close only between empire+users (ancillary species
+  //     stay on their own attachment lines)
+  //   · non-contract:  close the full N-gon over all nodes
+  const _hasEdge = (a, b) => edges.some(e => (e.a === a && e.b === b) || (e.a === b && e.b === a));
+  if (contractMode){
+    if (empIdx >= 0 && userIndices.length >= 2){
+      const polyOrder = [empIdx, ...userIndices];
+      for (let j = 0; j < polyOrder.length; j++){
+        const a = polyOrder[j], b = polyOrder[(j+1) % polyOrder.length];
+        if (!_hasEdge(a, b)) edges.push({a, b, contract: true, polygon: true});
+      }
+    }
+  } else if (nodes.length >= 3){
+    for (let i = 0; i < nodes.length; i++){
+      const next = (i + 1) % nodes.length;
+      if (!_hasEdge(i, next)) edges.push({a: i, b: next, polygon: true});
+    }
+  }
+
   nodes.forEach((n,i) => spawnFairy(n, i, verts[i].x, verts[i].y));
   currentEdges = edges;
   drawEdges(edges);
