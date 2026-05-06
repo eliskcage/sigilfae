@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>THE :VARIETY · contract demo · mobile</title>
+<style>
+  :root{
+    --bg:#0a0a0a; --fg:#e8e2d4; --amber:#d4a544; --amber-glow:#ffc04a;
+    --cream:#f3e8c8; --network:#b9a4f5;
+    --green:#52a86b; --green-glow:#6ed080;
+    --gold:#ffd700; --red:#d4243f;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{background:#000;color:var(--fg);font-family:ui-monospace,'Consolas','Menlo',monospace;min-height:100vh;overflow-x:hidden}
+  body{background:radial-gradient(ellipse at top,#1a1a1a 0%,#000 60%);padding:20px 0;display:flex;flex-direction:column;align-items:center;gap:14px}
+
+  .page-h{text-align:center;color:var(--green);font-size:11px;letter-spacing:0.32em;text-transform:uppercase}
+  .page-h .crown{font-size:18px;letter-spacing:0.5em;display:block;margin-bottom:6px}
+  .page-h .sub{font-size:9px;color:#666;letter-spacing:0.18em;margin-top:6px;font-style:italic}
+
+  /* ──────── PHONE FRAME ──────── */
+  .phone{
+    width:380px;max-width:96vw;
+    height:760px;max-height:90vh;
+    background:#000;
+    border:8px solid #1a1a1a;border-radius:38px;
+    box-shadow:0 12px 40px rgba(0,0,0,0.7),inset 0 0 0 1px rgba(255,255,255,0.04);
+    overflow:hidden;position:relative;display:flex;flex-direction:column
+  }
+  .statusbar{
+    height:24px;background:#000;display:flex;justify-content:space-between;
+    align-items:center;padding:0 18px;font-size:10px;color:#aaa;flex-shrink:0
+  }
+  .topbar{
+    background:#0a0a0a;padding:8px 14px;border-bottom:1px solid #222;
+    display:flex;align-items:center;justify-content:space-between;gap:8px;flex-shrink:0
+  }
+  .topbar .glyph{color:var(--green);font-size:16px}
+  .topbar .title{font-size:10px;letter-spacing:0.2em;color:#bbb;flex:1}
+  .topbar .blood{font-size:10px;color:var(--amber);font-family:monospace}
+  .topbar .blood .v{display:inline-block;width:6px;height:9px;border-radius:50% 50% 50% 50% / 70% 70% 30% 30%;background:linear-gradient(180deg,#fff,#dcd8c8);margin-right:3px;vertical-align:middle}
+  .topbar .black-mark{color:var(--red);margin-left:6px}
+
+  /* ──────── STAGE ──────── */
+  .stage{
+    flex:1;background:radial-gradient(ellipse at center,rgba(82,168,107,0.08) 0%,transparent 70%),linear-gradient(180deg,#0d0d0d,#000);
+    position:relative;overflow:hidden;
+    background-image:repeating-linear-gradient(0deg,transparent 0,transparent 3px,rgba(255,255,255,0.012) 3px,rgba(255,255,255,0.012) 4px)
+  }
+  .stage svg.edges{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+
+  /* contract status — top-centre of phone */
+  .contract-status{
+    position:absolute;top:8px;left:50%;transform:translateX(-50%);
+    background:rgba(0,0,0,0.92);border:1.5px solid var(--green);border-radius:16px;
+    padding:6px 14px;font-size:9px;color:var(--green);letter-spacing:0.16em;
+    z-index:9;font-family:monospace;display:none;
+    box-shadow:0 0 20px rgba(82,168,107,0.4);text-align:center;line-height:1.4
+  }
+  .contract-status.show{display:block;animation:fadeIn 0.3s}
+  .contract-status.urgent{border-color:var(--red);color:var(--red);animation:urgentPulse 0.7s infinite}
+  @keyframes fadeIn{from{opacity:0;transform:translate(-50%,-6px)}to{opacity:1;transform:translate(-50%,0)}}
+  @keyframes urgentPulse{0%,100%{box-shadow:0 0 18px rgba(212,36,63,0.4)}50%{box-shadow:0 0 30px rgba(212,36,63,0.8)}}
+  @keyframes contractFlash{0%,100%{transform:translateX(-50%) scale(1);box-shadow:0 0 20px rgba(82,168,107,0.4)}50%{transform:translateX(-50%) scale(1.06);box-shadow:0 0 40px rgba(110,208,128,0.9)}}
+  .contract-status .ctdwn{display:block;font-size:18px;font-weight:bold;color:var(--green-glow);margin-top:3px;letter-spacing:0.16em;text-shadow:0 0 10px rgba(110,208,128,0.5)}
+  .contract-status.urgent .ctdwn{color:#ff5050;text-shadow:0 0 14px rgba(255,80,80,0.6)}
+  .contract-status .swap-hint{font-size:8px;color:#888;letter-spacing:0.12em;display:block;margin-top:3px}
+
+  /* ──────── FAIRY ──────── */
+  .fairy{position:absolute;width:36px;height:54px;will-change:transform,left,top;
+    transition:left 0.5s cubic-bezier(0.34,1.56,0.64,1),top 0.5s cubic-bezier(0.34,1.56,0.64,1);
+    cursor:pointer;user-select:none;touch-action:none}
+  .fairy .body{position:absolute;left:50%;top:18%;transform:translateX(-50%);width:18px;height:30px;background:linear-gradient(180deg,var(--cream),#d8c89a);border-radius:50% 50% 40% 40%;border:1px solid rgba(0,0,0,0.4)}
+  .fairy .head{position:absolute;left:50%;top:0;transform:translateX(-50%);width:14px;height:14px;background:var(--cream);border-radius:50%;border:1px solid rgba(0,0,0,0.3)}
+  .fairy .eye{position:absolute;top:5px;width:1.8px;height:1.8px;background:#000;border-radius:50%}
+  .fairy .eye.l{left:4px}.fairy .eye.r{right:4px}
+  .fairy .pent{position:absolute;left:50%;top:38%;transform:translateX(-50%);width:7px;height:7px;background:var(--amber);clip-path:polygon(50% 0,100% 38%,82% 100%,18% 100%,0 38%);box-shadow:0 0 10px var(--amber-glow);animation:pp 2s infinite ease-in-out}
+  @keyframes pp{0%,100%{box-shadow:0 0 8px var(--amber-glow)}50%{box-shadow:0 0 14px var(--amber-glow)}}
+  .fairy .wing{position:absolute;top:24%;width:16px;height:24px;background:rgba(255,255,255,0.18);border:1px solid rgba(255,255,255,0.3);border-radius:50% 50% 50% 50% / 60% 60% 40% 40%;animation:wf 0.4s infinite alternate}
+  .fairy .wing.l{left:-10px;transform:rotate(-22deg)}
+  .fairy .wing.r{right:-10px;transform:rotate(22deg) scaleX(-1)}
+  @keyframes wf{0%{filter:brightness(1)}100%{filter:brightness(1.3)}}
+  .fairy.bob{animation:bb 2.4s ease-in-out infinite}
+  @keyframes bb{0%,100%{margin-top:0}50%{margin-top:-5px}}
+  .fairy.purple .body{background:linear-gradient(180deg,#d8c8f5,#a890d8)}
+  .fairy.purple .head{background:#d8c8f5}
+  .fairy.purple .pent{background:var(--network);box-shadow:0 0 10px var(--network)}
+  .fairy.purple .wing{background:rgba(185,164,245,0.2);border-color:rgba(185,164,245,0.4)}
+
+  /* CHEST ICONS · all the species */
+  .fairy .pyxis-box{position:absolute;left:50%;top:32%;transform:translateX(-50%);width:14px;height:14px;border:1.5px solid var(--network);background:rgba(185,164,245,0.15);box-shadow:0 0 8px var(--network);border-radius:1px;display:flex;align-items:flex-end;justify-content:center}
+  .fairy .pyxis-box::before{content:'';position:absolute;left:50%;top:2px;transform:translateX(-50%);width:0;height:0;border-left:3px solid transparent;border-right:3px solid transparent;border-bottom:4px solid var(--network)}
+  .fairy .pyxis-box::after{content:'';position:absolute;left:50%;top:6px;transform:translateX(-50%);width:1.5px;height:5px;background:var(--network)}
+
+  .fairy .anima-qr{position:absolute;left:50%;top:34%;transform:translateX(-50%);width:13px;height:11px;clip-path:polygon(50% 0,100% 100%,0 100%);background:repeating-conic-gradient(from 0deg at 50% 50%,#000 0deg 18deg,#7e6cff 18deg 36deg);box-shadow:0 0 10px #7e6cff}
+  .fairy .panis-biscuit{position:absolute;left:50%;top:34%;transform:translateX(-50%);width:12px;height:8px;border-radius:50%;background:radial-gradient(ellipse at 50% 30%,#e8c578,#a87330);box-shadow:0 0 6px #d4a544,inset 0 -1px 1px rgba(0,0,0,0.3);border:0.5px solid #6b4a1a}
+  .fairy .tessera-qr{position:absolute;left:50%;top:32%;transform:translateX(-50%);width:15px;height:13px;clip-path:polygon(50% 0,100% 100%,0 100%);background:repeating-conic-gradient(from 0deg at 50% 50%,#000 0deg 14deg,#ffd700 14deg 28deg);box-shadow:0 0 14px #ffd700;animation:qrp 1.6s infinite ease-in-out}
+  .fairy .quadra-qr{position:absolute;left:50%;top:32%;transform:translateX(-50%);width:14px;height:14px;background:#000;border:1.5px solid #ffd700;box-shadow:0 0 14px #ffd700;background-image:repeating-linear-gradient(0deg,#ffd700 0 1px,transparent 1px 4px),repeating-linear-gradient(90deg,#ffd700 0 1px,transparent 1px 4px);animation:qrp 1.6s infinite ease-in-out}
+  @keyframes qrp{0%,100%{box-shadow:0 0 12px #ffd700}50%{box-shadow:0 0 20px #ffeb70}}
+  .fairy.apis .body{background:repeating-linear-gradient(90deg,#ffd700 0,#ffd700 4px,#1a1a1a 4px,#1a1a1a 7px) !important}
+  .fairy.apis .head{background:#ffd700}
+  .fairy .apis-stinger{position:absolute;left:50%;bottom:6%;transform:translateX(-50%);width:0;height:0;border-left:3px solid transparent;border-right:3px solid transparent;border-top:8px solid var(--red);filter:drop-shadow(0 0 4px var(--red))}
+  .fairy.apis .pent{display:none}
+  .fairy.apis{animation:angry 0.18s infinite alternate}
+  @keyframes angry{0%{transform:translate(-1px,0)}100%{transform:translate(1px,0)}}
+
+  /* TESTIS — witness · :variety */
+  .fairy.testis .body{background:linear-gradient(180deg,#dfe2d4,#a8a89a) !important}
+  .fairy.testis .head{background:#dfe2d4}
+  .fairy .testis-pad{position:absolute;left:50%;top:33%;transform:translateX(-50%);width:11px;height:13px;background:#fffbef;border:1px solid #888;border-radius:1px;background-image:linear-gradient(180deg,transparent 0,transparent 2px,#888 2px,#888 2.4px,transparent 2.4px,transparent 4.5px,#888 4.5px,#888 4.9px,transparent 4.9px,transparent 7px,#888 7px,#888 7.4px,transparent 7.4px,transparent 9.5px,#888 9.5px,#888 9.9px,transparent 9.9px,transparent 11px);box-shadow:0 0 4px rgba(255,255,255,0.4)}
+  .fairy.testis .pent{display:none}
+  .fairy.testis::after{content:'✎';position:absolute;left:80%;top:30%;font-size:9px;color:#888;animation:tw 1.6s ease-in-out infinite}
+  @keyframes tw{0%,100%{transform:translateX(0) rotate(-15deg)}50%{transform:translateX(-3px) rotate(-25deg)}}
+
+  /* FISCUS — escrow · :variety */
+  .fairy.fiscus .body{background:linear-gradient(180deg,#a87330,#5a3818) !important;border:1px solid #2a1a08 !important}
+  .fairy.fiscus .head{background:#a87330}
+  .fairy .fiscus-pot{position:absolute;left:50%;top:32%;transform:translateX(-50%);width:15px;height:13px;background:radial-gradient(ellipse at 50% 30%,#d4a544 0%,#a87330 80%);border:1px solid #5a3818;border-radius:0 0 50% 50% / 0 0 30% 30%;box-shadow:0 0 8px rgba(212,165,68,0.6),inset 0 -2px 2px rgba(0,0,0,0.3)}
+  .fairy .fiscus-pot::before{content:'';position:absolute;left:-2px;right:-2px;top:-2px;height:3px;background:#5a3818;border-radius:2px}
+  .fairy .fiscus-pot::after{content:'$';position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);color:#ffd700;font-size:8px;font-weight:bold;text-shadow:0 0 4px rgba(255,215,0,0.8);animation:fj 0.8s ease-in-out infinite alternate}
+  @keyframes fj{0%{transform:translate(-50%,-50%) rotate(-3deg)}100%{transform:translate(-50%,-50%) rotate(3deg)}}
+  .fairy.fiscus .pent{display:none}
+
+  /* CONTRACT MODE — green glow */
+  .fairy.contract .pent{background:var(--green) !important;box-shadow:0 0 18px var(--green),0 0 28px rgba(82,168,107,0.5) !important;animation:cp 1.4s infinite ease-in-out !important}
+  @keyframes cp{0%,100%{box-shadow:0 0 12px var(--green)}50%{box-shadow:0 0 22px var(--green-glow)}}
+  .fairy.contract .pyxis-box,.fairy.contract .anima-qr,.fairy.contract .panis-biscuit,
+  .fairy.contract .tessera-qr,.fairy.contract .quadra-qr{
+    border-color:var(--green) !important;box-shadow:0 0 12px var(--green) !important;filter:hue-rotate(80deg) brightness(1.1)
+  }
+  .fairy.contract.empire-side::before{content:'EMPIRE';position:absolute;top:-12px;left:50%;transform:translateX(-50%);font-size:7px;color:var(--green);letter-spacing:0.28em;font-family:monospace;white-space:nowrap}
+  .fairy.contract.user-side::before{content:'USER';position:absolute;top:-12px;left:50%;transform:translateX(-50%);font-size:7px;color:var(--green);letter-spacing:0.28em;font-family:monospace;white-space:nowrap}
+
+  /* DRAWER — bottom controls */
+  .drawer{
+    background:#0a0a0a;border-top:1px solid #222;padding:10px 12px 14px;flex-shrink:0
+  }
+  .drawer textarea{
+    width:100%;background:#000;border:1px solid #333;border-radius:4px;padding:8px 10px;
+    color:var(--green);font-family:monospace;font-size:14px;line-height:1.4;resize:none;
+    outline:none;letter-spacing:0.12em;height:42px
+  }
+  .drawer textarea:focus{border-color:var(--green);box-shadow:0 0 12px rgba(82,168,107,0.3)}
+  .pill-row{display:flex;gap:5px;overflow-x:auto;margin-top:8px;padding-bottom:4px;scrollbar-width:none}
+  .pill-row::-webkit-scrollbar{display:none}
+  .pill{flex-shrink:0;padding:7px 11px;background:#000;border:1px solid var(--green);border-radius:14px;color:var(--green);cursor:pointer;font-family:monospace;font-size:11px;letter-spacing:0.06em;white-space:nowrap;font-weight:bold}
+  .pill:active{background:rgba(82,168,107,0.18)}
+  .pill .sub{display:block;font-size:7px;color:#888;letter-spacing:0.12em;font-weight:normal;margin-top:1px;text-transform:uppercase}
+  .pill.full{background:rgba(82,168,107,0.12);border-color:var(--green-glow)}
+  .actions{display:flex;gap:6px;margin-top:8px}
+  .action-btn{flex:1;padding:8px;background:#1a1a1a;color:#aaa;border:1px solid #333;border-radius:4px;font-family:inherit;font-size:9px;letter-spacing:0.16em;cursor:pointer;text-transform:uppercase}
+  .action-btn:active{background:#222}
+  .action-btn.primary{background:linear-gradient(180deg,var(--green-glow),var(--green));color:#000;border-color:var(--green);font-weight:bold}
+
+  /* PAY MODAL */
+  .pay-overlay{display:none;position:absolute;inset:0;background:rgba(0,0,0,0.92);z-index:50;align-items:center;justify-content:center;padding:14px}
+  .pay-overlay.show{display:flex}
+  .pay-card{background:#0a0a0a;border:2px solid var(--green);border-radius:12px;width:100%;padding:18px;font-family:monospace;color:var(--fg);box-shadow:0 0 40px rgba(82,168,107,0.4);position:relative}
+  .pay-card .x{position:absolute;top:6px;right:12px;cursor:pointer;color:#888;font-size:20px}
+  .pay-card .h{text-align:center;font-size:12px;color:var(--green);letter-spacing:0.32em;margin-bottom:4px}
+  .pay-card .h2{text-align:center;font-size:9px;color:#aaa;letter-spacing:0.14em;font-style:italic;margin-bottom:14px;font-family:Georgia,serif}
+  .pay-opt{display:flex;align-items:center;gap:10px;padding:9px;background:#0d0d0d;border:1px solid #1a1a1a;border-radius:5px;cursor:pointer;font-family:inherit;text-align:left;color:#e8e2d4;width:100%;margin-bottom:6px}
+  .pay-opt:active{border-color:var(--green);background:rgba(82,168,107,0.08)}
+  .pay-glyph{width:28px;height:28px;border-radius:4px;display:flex;align-items:center;justify-content:center;font-family:monospace;font-size:14px;font-weight:bold;flex-shrink:0}
+  .pay-info{flex:1;font-size:10px;line-height:1.3}
+  .pay-info b{color:#fff;font-size:11px;display:block;margin-bottom:1px;letter-spacing:0.06em}
+  .pay-info .pay-sub{color:#888;font-size:9px}
+
+  /* TOAST */
+  .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#000;border:1px solid var(--green);padding:10px 16px;color:var(--green);font-size:11px;letter-spacing:0.1em;z-index:99;box-shadow:0 0 24px rgba(82,168,107,0.4);font-family:monospace;animation:tIn 0.25s}
+  @keyframes tIn{from{opacity:0;transform:translate(-50%,8px)}to{opacity:1;transform:translate(-50%,0)}}
+
+  .pop-particle{position:absolute;width:4px;height:4px;background:var(--amber-glow);border-radius:50%;box-shadow:0 0 6px var(--amber-glow);pointer-events:none;animation:po 0.8s ease-out forwards}
+  @keyframes po{0%{opacity:1;transform:translate(0,0) scale(1)}100%{opacity:0;transform:translate(var(--tx,0),var(--ty,0)) scale(0.2)}}
+
+  /* responsive: scale phone slightly down on narrow screens */
+  @media (max-width:420px){
+    body{padding:10px 0}
+    .phone{border-width:6px;border-radius:30px;height:88vh}
+    .page-h{font-size:10px}
+  }
+</style>
+</head>
+<body>
+
+<div class="page-h">
+  <span class="crown">▲ ▲ ▲</span>
+  THE :VARIETY · contract demo
+  <div class="sub">click any pill · feel it on your phone</div>
+</div>
+
+<div class="phone">
+  <div class="statusbar"><span>14:24</span><span>▲ ●●●●● 5G</span></div>
+  <div class="topbar">
+    <span class="glyph">▲</span>
+    <span class="title">SIGILFAE :VARIETY</span>
+    <span class="blood">
+      <span class="v"></span><b id="whiteCnt">0</b>
+      <span class="black-mark">●<b id="blackCnt">0</b></span>
+    </span>
+  </div>
+
+  <div class="stage" id="stage">
+    <div class="contract-status" id="cstatus">
+      ▲ DECLARED · <b id="cdir">EMPIRE → USER</b>
+      <span class="ctdwn" id="cctdn" style="display:none">⌛ —</span>
+      <span class="swap-hint">tap line to swap · tap paying fairy to PAY</span>
+    </div>
+    <svg class="edges" id="edges"></svg>
+  </div>
+
+  <div class="drawer">
+    <textarea id="txt" spellcheck="false" placeholder=":variety syntax · e.g. :w-e-s-Q.0030">:</textarea>
+    <div class="pill-row" id="pills"></div>
+    <div class="actions">
+      <button class="action-btn" onclick="clearAll()">CLEAR</button>
+      <button class="action-btn primary" onclick="walkDemo()">▶ WALK ALL</button>
+    </div>
+  </div>
+
+  <!-- PAY MODAL -->
+  <div class="pay-overlay" id="payOverlay">
+    <div class="pay-card">
+      <span class="x" onclick="closePay()">×</span>
+      <div class="h">▲ HOW DO YOU PAY ▲</div>
+      <div class="h2" id="payH2">choose one — attach to the contract</div>
+      <button class="pay-opt" onclick="payVia('Q','QUADRA · square base-QR')">
+        <span class="pay-glyph" style="background:#000;border:2px solid #ffd700;color:#ffd700">Q</span>
+        <span class="pay-info"><b>QUADRA — your SIGILFAE base</b><span class="pay-sub">empire-side identity + funds</span></span>
+      </button>
+      <button class="pay-opt" onclick="payVia('t','TESSERA · triangle kingdom-QR')">
+        <span class="pay-glyph" style="background:#000;border:2px solid #ffd700;clip-path:polygon(50% 10%,90% 90%,10% 90%);color:#ffd700">t</span>
+        <span class="pay-info"><b>TESSERA — kingdom-piece QR</b><span class="pay-sub">shortfactory.shop kingdom identity</span></span>
+      </button>
+      <button class="pay-opt" onclick="payVia('b','PANIS · biscuit')">
+        <span class="pay-glyph" style="background:radial-gradient(ellipse at 30% 30%,#e8c578,#a87330);color:#fff;border:1px solid #6b4a1a">b</span>
+        <span class="pay-info"><b>PANIS — send a biscuit</b><span class="pay-sub">small affirmation token</span></span>
+      </button>
+      <button class="pay-opt" onclick="payVia('s','ANIMA · soul-bond')">
+        <span class="pay-glyph" style="background:#000;border:2px solid #7e6cff;color:#7e6cff">s</span>
+        <span class="pay-info"><b>ANIMA — connect SFT soul</b><span class="pay-sub">highest-tier commitment</span></span>
+      </button>
+      <button class="pay-opt" onclick="payVia(',','PYXIS · upload file')">
+        <span class="pay-glyph" style="background:rgba(185,164,245,0.15);border:2px solid #b9a4f5;color:#b9a4f5">,</span>
+        <span class="pay-info"><b>PYXIS — attach a file</b><span class="pay-sub">proof / contract / asset</span></span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+// THE :VARIETY · stripped-down mobile demo · contracts only
+// ═══════════════════════════════════════════════════════════════
+
+const stage  = document.getElementById('stage');
+const TXT    = document.getElementById('txt');
+const EDGES  = document.getElementById('edges');
+const cstatus= document.getElementById('cstatus');
+const cdir   = document.getElementById('cdir');
+const cctdn  = document.getElementById('cctdn');
+
+let fairies = [];
+let activeTiming = null;
+let countdownInterval = null;
+let payerDirection = 'empire-to-user';
+let contractPaid = false;
+let wasInContract = false;
+let currentEdges = [];
+
+let whiteBlood = parseInt(localStorage.getItem('sf_demo_white') || '0', 10);
+let blackMarks = parseInt(localStorage.getItem('sf_demo_black') || '0', 10);
+function refreshStats(){
+  document.getElementById('whiteCnt').textContent = whiteBlood;
+  document.getElementById('blackCnt').textContent = blackMarks;
+}
+refreshStats();
+
+// ─── DEMO PILLS ───
+const PILLS = [
+  {s:':',                kind:'BARE PACT',   sub:'empire ↔ user'},
+  {s:':b.0015',          kind:'BISCUIT',     sub:'biscuit deal · 15s'},
+  {s:':s-Q.0020',        kind:'SOUL+BASE',   sub:'soul + base · 20s'},
+  {s:':w-b.0020',        kind:'WITNESSED',   sub:'witness biscuit · 20s'},
+  {s:':e-s.0025',        kind:'ESCROWED',    sub:'escrow soul · 25s'},
+  {s:':w-e-s-Q.0030',    kind:'FULL DEAL',   sub:'witness+escrow+soul+base · 30s', full:true},
+  {s:':e-Q.0020',        kind:'ESCROW BASE', sub:'escrow + base · 20s'},
+  {s:':w-w-b.0025',      kind:'2 WITNESSES', sub:'two scribes + biscuit'},
+  {s:':b-b-b.0010',      kind:'TRIPLE TIP',  sub:'three biscuits · 10s'},
+];
+function renderPills(){
+  const row = document.getElementById('pills');
+  row.innerHTML = PILLS.map(p =>
+    `<button class="pill ${p.full?'full':''}" onclick="ghostType('${p.s}')"><span>${p.s}</span><span class="sub">${p.kind} · ${p.sub}</span></button>`
+  ).join('');
+}
+renderPills();
+
+function ghostType(s){
+  TXT.value = '';
+  let i = 0;
+  const tick = () => {
+    if (i >= s.length) return;
+    TXT.value += s[i]; i++;
+    render();
+    setTimeout(tick, 75);
+  };
+  tick();
+}
+
+function clearAll(){ TXT.value = ''; render(); }
+
+let demoIdx = 0;
+function walkDemo(){
+  const p = PILLS[demoIdx % PILLS.length];
+  demoIdx++;
+  ghostType(p.s);
+}
+
+TXT.addEventListener('input', render);
+
+// ─── PARSER ───
+const NODE_TOKENS = '.,sbjqtQwe';
+function speciesOf(c){
+  return ({'.':'notae',',':'pyxis','s':'anima','b':'panis','j':'opera','q':'apis','t':'tessera','Q':'quadra','w':'testis','e':'fiscus'})[c] || 'notae';
+}
+function parseShape(s){
+  const contractMode = s.includes(':');
+  const timeAnchors = [];
+  const cleaned = s.replace(/\.(\d+)/g, (m, n) => { timeAnchors.push(parseInt(n,10)); return ''; });
+  const tokens = cleaned.replace(/[^.,sbjqtQwe:\-\s]/g,'').split('').filter(c => c !== ' ');
+  const nodes = []; const edges = [];
+  let pendingDash = false; let inContract = false;
+  for (let i=0; i<tokens.length; i++){
+    const c = tokens[i];
+    if (c === ':'){
+      const empIdx = nodes.length; nodes.push({sp:'notae',contract:true,contractRole:'empire'});
+      const usrIdx = nodes.length; nodes.push({sp:'notae',contract:true,contractRole:'user'});
+      edges.push({a:empIdx,b:usrIdx,contract:true});
+      inContract = true; pendingDash = false; continue;
+    }
+    if (NODE_TOKENS.includes(c)){
+      const idx = nodes.length;
+      nodes.push({sp:speciesOf(c),contract:inContract});
+      if (idx > 0 && pendingDash){
+        edges.push({a:idx-1,b:idx,contract:inContract});
+      }
+      pendingDash = false;
+    } else if (c === '-'){
+      pendingDash = true;
+    }
+  }
+  let timing = null;
+  if (timeAnchors.length){
+    const max = Math.max(...timeAnchors);
+    timing = {end: max, expires: Date.now() + max*1000};
+  }
+  return {nodes, edges, contractMode, timing};
+}
+
+// ─── RENDER ───
+function render(){
+  const {nodes, edges, contractMode, timing} = parseShape(TXT.value);
+  // reset paid state on fresh contract
+  if (contractMode && !wasInContract) contractPaid = false;
+  if (!contractMode) contractPaid = false;
+  wasInContract = !!contractMode;
+
+  cstatus.classList.toggle('show', !!contractMode);
+  if (countdownInterval){ clearInterval(countdownInterval); countdownInterval = null; }
+  activeTiming = (timing && contractMode) ? timing : null;
+
+  if (activeTiming){
+    cctdn.style.display = 'block'; cctdn.style.opacity = '1';
+    const fmt = s => s>=3600 ? `${Math.floor(s/3600)}h ${String(Math.floor((s%3600)/60)).padStart(2,'0')}m` : s>=60 ? `${Math.floor(s/60)}m ${String(s%60).padStart(2,'0')}s` : `${s}s`;
+    const tick = () => {
+      if (!activeTiming) return;
+      const r = Math.max(0, Math.floor((activeTiming.expires - Date.now())/1000));
+      cdir.textContent = payerDirection === 'empire-to-user' ? 'EMPIRE → USER' : 'USER → EMPIRE';
+      cctdn.textContent = '⌛ ' + fmt(r);
+      cstatus.classList.toggle('urgent', r <= 30);
+      if (r <= 0){ clearInterval(countdownInterval); countdownInterval = null; toast('▼ contract expired · self-deleting'); selfDelete(); }
+    };
+    tick();
+    countdownInterval = setInterval(tick, 250);
+    cstatus.style.animation = 'none';
+    void cstatus.offsetHeight;
+    cstatus.style.animation = 'fadeIn 0.3s, contractFlash 0.6s 2';
+  } else {
+    cctdn.style.display = 'none';
+    cstatus.classList.remove('urgent');
+  }
+
+  // wipe
+  fairies.forEach(f => f.el.remove());
+  fairies = [];
+  EDGES.innerHTML = '';
+
+  if (nodes.length === 0) return;
+
+  // layout
+  const W = stage.clientWidth, H = stage.clientHeight;
+  const cx = W/2, cy = H/2;
+  const empIdx = nodes.findIndex(n => n.contractRole === 'empire');
+  const usrIdx = nodes.findIndex(n => n.contractRole === 'user');
+  const verts = new Array(nodes.length);
+  if (empIdx >= 0 && usrIdx >= 0){
+    verts[empIdx] = {x:cx, y:cy - H*0.22};
+    verts[usrIdx] = {x:cx, y:cy + H*0.22};
+    const others = nodes.map((n,i)=>i).filter(i => i!==empIdx && i!==usrIdx);
+    const testis = others.filter(i => nodes[i].sp === 'testis');
+    const fiscus = others.filter(i => nodes[i].sp === 'fiscus');
+    const rest   = others.filter(i => nodes[i].sp !== 'testis' && nodes[i].sp !== 'fiscus');
+    fiscus.forEach((idx,j) => { verts[idx] = {x: cx + (j - (fiscus.length-1)/2) * 30, y: cy}; });
+    testis.forEach((idx,j) => { verts[idx] = {x: cx - W*0.28 - j*22, y: cy + (j%2 ? H*0.05 : -H*0.05)}; });
+    rest.forEach((idx,j) => {
+      const angle = rest.length === 1 ? 0 : (j/(rest.length-1)) * Math.PI - Math.PI/2;
+      const aR = W*0.18;
+      verts[idx] = {x: cx + aR * Math.cos(angle) + W*0.18, y: cy + H*0.22 + aR * Math.sin(angle) * 0.55};
+      if (rest.length === 1) verts[idx] = {x: cx + W*0.22, y: cy + H*0.22};
+    });
+  } else {
+    nodes.forEach((n,i) => { verts[i] = {x: cx + (i - (nodes.length-1)/2) * 36, y: cy}; });
+  }
+
+  nodes.forEach((n,i) => spawnFairy(n, i, verts[i].x, verts[i].y));
+  currentEdges = edges;
+  drawEdges(edges);
+}
+
+function spawnFairy(node, idx, x, y){
+  const el = document.createElement('div');
+  const sp = node.sp;
+  const isApis = sp === 'apis';
+  let cls = 'fairy bob';
+  if (sp === 'pyxis' || sp === 'panis' || idx % 3 === 1) cls += ' purple';
+  if (isApis) cls += ' apis';
+  if (sp === 'testis') cls += ' testis';
+  if (sp === 'fiscus') cls += ' fiscus';
+  if (node.contract) cls += ' contract';
+  if (node.contractRole === 'empire') cls += ' empire-side';
+  if (node.contractRole === 'user') cls += ' user-side';
+  el.className = cls;
+
+  let chest = '<div class="pent"></div>';
+  if (sp === 'pyxis')   chest = '<div class="pyxis-box"></div>';
+  if (sp === 'anima')   chest = '<div class="anima-qr"></div>';
+  if (sp === 'panis')   chest = '<div class="panis-biscuit"></div>';
+  if (sp === 'tessera') chest = '<div class="tessera-qr"></div>';
+  if (sp === 'quadra')  chest = '<div class="quadra-qr"></div>';
+  if (sp === 'testis')  chest = '<div class="testis-pad"></div>';
+  if (sp === 'fiscus')  chest = '<div class="fiscus-pot"></div>';
+  if (isApis)           chest = '<div class="apis-stinger"></div>';
+
+  el.innerHTML = `<div class="wing l"></div><div class="wing r"></div><div class="body"></div><div class="head"><div class="eye l"></div><div class="eye r"></div></div>${chest}`;
+  el.style.left = (x - 18) + 'px';
+  el.style.top  = (stage.clientHeight + 30) + 'px';
+  stage.appendChild(el);
+  const f = {el, idx, sp, x, y, contract: node.contract, contractRole: node.contractRole, state:'open'};
+  fairies.push(f);
+
+  requestAnimationFrame(() => { el.style.left = (x-18)+'px'; el.style.top = (y-27)+'px'; });
+
+  // click handler
+  el.addEventListener('pointerdown', e => {
+    if (f.contract && f.contractRole){
+      const isPayer = (payerDirection === 'empire-to-user' && f.contractRole === 'empire')
+                   || (payerDirection === 'user-to-empire' && f.contractRole === 'user');
+      if (isPayer){ e.stopPropagation(); openPay(f); return; }
+    }
+  });
+}
+
+function drawEdges(edges){
+  EDGES.innerHTML = `
+    <defs>
+      <linearGradient id="ec" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#52a86b" stop-opacity="0.85"/><stop offset="1" stop-color="#6ed080" stop-opacity="1"/></linearGradient>
+      <linearGradient id="eg" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#d4a544" stop-opacity="0.4"/><stop offset="0.5" stop-color="#ffc04a" stop-opacity="1"/><stop offset="1" stop-color="#d4a544" stop-opacity="0.4"/></linearGradient>
+      <marker id="arr" viewBox="-5 -5 10 10" refX="0" refY="0" orient="auto" markerWidth="7" markerHeight="7"><path d="M -4 -4 L 4 0 L -4 4 Z" fill="#6ed080"/></marker>
+    </defs>
+  `;
+  edges.forEach(e => {
+    const a = fairies[e.a], b = fairies[e.b];
+    if (!a || !b) return;
+    const line = document.createElementNS('http://www.w3.org/2000/svg','line');
+    if (e.contract){
+      const halo = document.createElementNS('http://www.w3.org/2000/svg','line');
+      halo.setAttribute('x1', a.x); halo.setAttribute('y1', a.y);
+      halo.setAttribute('x2', b.x); halo.setAttribute('y2', b.y);
+      halo.setAttribute('stroke', '#52a86b'); halo.setAttribute('stroke-width', '8'); halo.setAttribute('opacity','0.18'); halo.setAttribute('pointer-events','none');
+      EDGES.appendChild(halo);
+      // direction-aware
+      if (payerDirection === 'user-to-empire'){
+        line.setAttribute('x1', b.x); line.setAttribute('y1', b.y);
+        line.setAttribute('x2', a.x); line.setAttribute('y2', a.y);
+      } else {
+        line.setAttribute('x1', a.x); line.setAttribute('y1', a.y);
+        line.setAttribute('x2', b.x); line.setAttribute('y2', b.y);
+      }
+      line.setAttribute('stroke', 'url(#ec)');
+      line.setAttribute('stroke-width', '3');
+      line.setAttribute('marker-end', 'url(#arr)');
+      line.style.cursor = 'pointer';
+      line.addEventListener('click', () => swapPayer());
+    } else {
+      line.setAttribute('x1', a.x); line.setAttribute('y1', a.y);
+      line.setAttribute('x2', b.x); line.setAttribute('y2', b.y);
+      line.setAttribute('stroke', 'url(#eg)'); line.setAttribute('stroke-width', '2.5');
+    }
+    line.setAttribute('stroke-linecap','round');
+    EDGES.appendChild(line);
+  });
+}
+
+function swapPayer(){
+  payerDirection = payerDirection === 'empire-to-user' ? 'user-to-empire' : 'empire-to-user';
+  drawEdges(currentEdges);
+  toast('▲ payer swapped · ' + (payerDirection === 'empire-to-user' ? 'EMPIRE pays USER' : 'USER pays EMPIRE'));
+}
+
+// ─── PAY ───
+function openPay(payer){
+  document.getElementById('payH2').textContent = `paying as ${payer.contractRole === 'empire' ? 'EMPIRE-side' : 'USER-side'} · choose how`;
+  document.getElementById('payOverlay').classList.add('show');
+}
+function closePay(){ document.getElementById('payOverlay').classList.remove('show'); }
+function payVia(token, label){
+  const cur = TXT.value;
+  const colonIdx = cur.lastIndexOf(':');
+  const after = cur.slice(colonIdx + 1);
+  const timeMatch = after.match(/(\.\d+(-\.\d+)?)\s*$/);
+  const trailingTime = timeMatch ? timeMatch[0] : '';
+  const afterNoTime = trailingTime ? after.slice(0, -trailingTime.length) : after;
+  const sep = afterNoTime.trim().length > 0 ? '-' : '';
+  TXT.value = cur.slice(0, colonIdx + 1) + afterNoTime + sep + token + trailingTime;
+  render();
+  closePay();
+  contractPaid = true;
+  whiteBlood += 3; localStorage.setItem('sf_demo_white', String(whiteBlood)); refreshStats();
+  toast('▲ paid via ' + label + ' · contract honoured');
+  // bond stroke amber → gold visually
+  EDGES.querySelectorAll('line[stroke="url(#ec)"]').forEach(l => l.setAttribute('stroke', '#ffd700'));
+}
+
+// ─── SELF-DELETE ───
+function selfDelete(){
+  if (contractPaid){
+    fairies.filter(f => f.contract).forEach(f => {
+      f.el.classList.remove('contract');
+      f.el.style.filter = 'hue-rotate(28deg) brightness(1.1) saturate(1.3)';
+    });
+    whiteBlood += 5; localStorage.setItem('sf_demo_white', String(whiteBlood));
+    toast('♛ DEAL HONOURED · +5 white');
+    refreshStats();
+    TXT.value = TXT.value.replace(/\.\d+/g,'').replace(/:/, '·').trim();
+  } else {
+    fairies.filter(f => f.contract).forEach((f,i) => {
+      setTimeout(() => {
+        f.el.style.filter = 'grayscale(1) brightness(0.5)';
+        // burst dark
+        for (let p=0; p<10; p++){
+          const part = document.createElement('div');
+          part.className = 'pop-particle';
+          part.style.background = '#444'; part.style.boxShadow = '0 0 6px #444';
+          const ang = (p/10)*Math.PI*2;
+          part.style.setProperty('--tx', (Math.cos(ang)*40)+'px');
+          part.style.setProperty('--ty', (Math.sin(ang)*40)+'px');
+          part.style.left = f.x+'px'; part.style.top = f.y+'px';
+          stage.appendChild(part);
+          setTimeout(()=> part.remove(), 800);
+        }
+        f.el.style.opacity = '0';
+        setTimeout(() => f.el.remove(), 400);
+      }, i*80);
+    });
+    blackMarks += 1; localStorage.setItem('sf_demo_black', String(blackMarks));
+    toast('▼ DEAL COLLAPSED · +1 BLACK MARK · others may proceed');
+    refreshStats();
+    setTimeout(() => { TXT.value = TXT.value.replace(/:.*$/,'').replace(/\.\d+/g,'').trim(); render(); }, 1200);
+  }
+  if (countdownInterval){ clearInterval(countdownInterval); countdownInterval = null; }
+  activeTiming = null;
+  contractPaid = false;
+}
+
+// ─── TOAST ───
+function toast(msg){
+  const t = document.createElement('div');
+  t.className = 'toast'; t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 2000);
+}
+
+// init
+render();
+console.log('▲ THE :VARIETY · mobile contract demo · click any pill');
+</script>
+
+</body>
+</html>
