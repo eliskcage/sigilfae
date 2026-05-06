@@ -1,5 +1,10 @@
 # THE SIGILFAE · DOTGRAMMA · The Godmesh
 
+![The system describing itself](media/king-genealogy.png)
+
+> *36 leaf-fairies under 18 mid-tier locked parents under one ♛ PAYMENT FAIRY at the apex.
+> The empire's genealogy, rendered by the empire's own tool.*
+
 > **An open-source species of empire fairies who speak a 2D form animation language.**
 > The empire's visual descriptor for organising work. Funny as its nature.
 >

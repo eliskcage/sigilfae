@@ -191,9 +191,12 @@
   }
 
   /* State indicator badge under each fairy */
-  .state-tag{position:absolute;bottom:-18px;left:50%;transform:translateX(-50%);font-size:8px;letter-spacing:0.16em;color:#888;font-family:monospace;pointer-events:none;white-space:nowrap}
-  .fairy.in-progress .state-tag{color:var(--in-progress)}
-  .fairy.complete .state-tag{color:var(--done)}
+  .state-tag{position:absolute;bottom:-18px;left:50%;transform:translateX(-50%);font-size:8px;letter-spacing:0.16em;color:#888;font-family:monospace;pointer-events:none;white-space:nowrap;opacity:0;transition:opacity 0.2s}
+  .fairy:hover .state-tag{opacity:1;z-index:30}
+  .fairy.in-progress .state-tag{color:var(--in-progress);opacity:1}
+  .fairy.complete .state-tag{color:var(--done);opacity:1}
+  /* Show always when stage isn't crowded — controlled via body class */
+  body.show-tags .state-tag{opacity:1}
 
   /* hidden file input attached to PYXIS fairies */
   .pyxis-input{display:none}
@@ -869,6 +872,8 @@ function renderShape(){
   const s = TEXTAREA.value;
   const parsed = parseShape(s);
   const {nodes, edges, closed, treeMode} = parsed;
+  // Show state-tags always when stage isn't crowded; hover-only when busy
+  document.body.classList.toggle('show-tags', nodes.length <= 12);
   // Wipe everything when switching modes or content changes structurally
   killFairies(0);
   fairies = [];
