@@ -365,8 +365,10 @@ const PILLS = [
   {s:':w-b.0030',        kind:'WITNESSED',   sub:'witness biscuit · 30s'},
   {s:':e-s.0045',        kind:'ESCROWED',    sub:'escrow soul · 45s'},
   {s:':w-e-s-Q.0060',    kind:'FULL DEAL',   sub:'witness+escrow+soul+base · 60s', full:true},
+  {s:'::b.0030',         kind:'2-WAY SPLIT', sub:'2 users split biscuit · 30s'},
+  {s:':::b.0045',        kind:'3-WAY SPLIT', sub:'3 users split biscuit · 45s'},
+  {s:'::w-b.0030',       kind:'SPLIT+WIT',   sub:'2 users + witness · 30s'},
   {s:':e-Q.0045',        kind:'ESCROW BASE', sub:'escrow + base · 45s'},
-  {s:':w-w-b.0030',      kind:'2 WITNESSES', sub:'two scribes + biscuit · 30s'},
   {s:':b-b-b.0030',      kind:'TRIPLE TIP',  sub:'three biscuits · 30s'},
 ];
 function renderPills(){
@@ -408,23 +410,31 @@ function speciesOf(c){
 function parseShape(s){
   const contractMode = s.includes(':');
   const timeAnchors = [];
-  // Only extract as time-anchor if the parsed value is > 0.
-  // This prevents mid-typing destructs (e.g., user types '.0' on the way to '.0030').
   const cleaned = s.replace(/\.(\d+)/g, (m, n) => {
     const v = parseInt(n, 10);
     if (v > 0){ timeAnchors.push(v); return ''; }
-    return m;  // leave 0-valued anchors in place; they get stripped by the token filter below
+    return m;
   });
   const tokens = cleaned.replace(/[^.,sbjqtQwe:\-\s]/g,'').split('').filter(c => c !== ' ');
   const nodes = []; const edges = [];
   let pendingDash = false; let inContract = false;
-  for (let i=0; i<tokens.length; i++){
+  let i = 0;
+  while (i < tokens.length){
     const c = tokens[i];
     if (c === ':'){
-      const empIdx = nodes.length; nodes.push({sp:'notae',contract:true,contractRole:'empire'});
-      const usrIdx = nodes.length; nodes.push({sp:'notae',contract:true,contractRole:'user'});
-      edges.push({a:empIdx,b:usrIdx,contract:true});
-      inContract = true; pendingDash = false; continue;
+      // Consecutive colons → split bill: count = N users + 1 empire
+      let colonCount = 0;
+      while (tokens[i] === ':'){ colonCount++; i++; }
+      const userCount = colonCount;  // 1 colon → 1 user · 2 colons → 2 users · etc.
+      const empIdx = nodes.length;
+      nodes.push({sp:'notae',contract:true,contractRole:'empire'});
+      for (let u=0; u<userCount; u++){
+        const uIdx = nodes.length;
+        nodes.push({sp:'notae',contract:true,contractRole:'user',userSubIdx:u,userTotal:userCount});
+        edges.push({a:empIdx,b:uIdx,contract:true});
+      }
+      inContract = true; pendingDash = false;
+      continue;
     }
     if (NODE_TOKENS.includes(c)){
       const idx = nodes.length;
@@ -436,6 +446,7 @@ function parseShape(s){
     } else if (c === '-'){
       pendingDash = true;
     }
+    i++;
   }
   let timing = null;
   if (timeAnchors.length){
@@ -510,22 +521,31 @@ function render(){
   const W = stage.clientWidth, H = stage.clientHeight;
   const cx = W/2, cy = H/2;
   const empIdx = nodes.findIndex(n => n.contractRole === 'empire');
-  const usrIdx = nodes.findIndex(n => n.contractRole === 'user');
+  const userIndices = nodes.map((n,i) => n.contractRole === 'user' ? i : -1).filter(i => i >= 0);
   const verts = new Array(nodes.length);
-  if (empIdx >= 0 && usrIdx >= 0){
+  if (empIdx >= 0 && userIndices.length > 0){
     verts[empIdx] = {x:cx, y:cy - H*0.22};
-    verts[usrIdx] = {x:cx, y:cy + H*0.22};
-    const others = nodes.map((n,i)=>i).filter(i => i!==empIdx && i!==usrIdx);
+    // Fan out users horizontally at the bottom — N users equally spaced
+    const userY = cy + H*0.22;
+    const userSpread = Math.min(W*0.6, userIndices.length * 60);
+    userIndices.forEach((uIdx, j) => {
+      const t = userIndices.length === 1 ? 0.5 : j / (userIndices.length - 1);
+      const x = cx - userSpread/2 + t * userSpread;
+      verts[uIdx] = {x, y: userY};
+    });
+    const others = nodes.map((n,i)=>i).filter(i => i!==empIdx && !userIndices.includes(i));
     const testis = others.filter(i => nodes[i].sp === 'testis');
     const fiscus = others.filter(i => nodes[i].sp === 'fiscus');
     const rest   = others.filter(i => nodes[i].sp !== 'testis' && nodes[i].sp !== 'fiscus');
     fiscus.forEach((idx,j) => { verts[idx] = {x: cx + (j - (fiscus.length-1)/2) * 30, y: cy}; });
-    testis.forEach((idx,j) => { verts[idx] = {x: cx - W*0.28 - j*22, y: cy + (j%2 ? H*0.05 : -H*0.05)}; });
+    testis.forEach((idx,j) => { verts[idx] = {x: cx - W*0.32 - j*22, y: cy + (j%2 ? H*0.05 : -H*0.05)}; });
     rest.forEach((idx,j) => {
+      // Attached pay-options arc to the right of the rightmost user
+      const lastUserX = userIndices.length > 0 ? verts[userIndices[userIndices.length-1]].x : cx;
+      const aR = W*0.16;
       const angle = rest.length === 1 ? 0 : (j/(rest.length-1)) * Math.PI - Math.PI/2;
-      const aR = W*0.18;
-      verts[idx] = {x: cx + aR * Math.cos(angle) + W*0.18, y: cy + H*0.22 + aR * Math.sin(angle) * 0.55};
-      if (rest.length === 1) verts[idx] = {x: cx + W*0.22, y: cy + H*0.22};
+      verts[idx] = {x: lastUserX + aR + j*8, y: userY + aR * Math.sin(angle) * 0.55};
+      if (rest.length === 1) verts[idx] = {x: lastUserX + W*0.13, y: userY};
     });
   } else {
     nodes.forEach((n,i) => { verts[i] = {x: cx + (i - (nodes.length-1)/2) * 36, y: cy}; });
@@ -593,11 +613,12 @@ function spawnFairy(node, idx, x, y){
   el.addEventListener('pointerup', e => {
     cancelHold();
     if (holdFired){ holdFired = false; return; }
-    // Quick tap → pay flow if this fairy is the payer
+    // Quick tap → pay flow if this fairy is on the paying side.
+    // For multi-user split bills (::), ANY user can tap to pay for the group.
     if (f.contract && f.contractRole){
-      const isPayer = (payerDirection === 'empire-to-user' && f.contractRole === 'empire')
-                   || (payerDirection === 'user-to-empire' && f.contractRole === 'user');
-      if (isPayer){ e.stopPropagation(); openPay(f); return; }
+      const empirePays = payerDirection === 'empire-to-user' && f.contractRole === 'empire';
+      const userPays = payerDirection === 'user-to-empire' && f.contractRole === 'user';
+      if (empirePays || userPays){ e.stopPropagation(); openPay(f); return; }
     }
   });
   el.addEventListener('pointerleave', cancelHold);
