@@ -241,6 +241,7 @@
   .contract-status.urgent{border-color:#d4243f;color:#d4243f;animation:urgentPulse 0.8s infinite}
   @keyframes fadeIn{from{opacity:0;transform:translate(-50%,-8px)}to{opacity:1;transform:translate(-50%,0)}}
   @keyframes urgentPulse{0%,100%{box-shadow:0 0 24px rgba(212,36,63,0.4)}50%{box-shadow:0 0 40px rgba(212,36,63,0.8)}}
+  @keyframes contractFlash{0%,100%{transform:translateX(-50%) scale(1);box-shadow:0 0 24px rgba(82,168,107,0.4)}50%{transform:translateX(-50%) scale(1.05);box-shadow:0 0 60px rgba(110,208,128,0.9)}}
   .contract-status b{color:#fff;letter-spacing:0.2em}
   .contract-status .ctdwn{display:block;font-size:24px;font-weight:bold;color:#6ed080;margin-top:6px;letter-spacing:0.18em;text-shadow:0 0 12px rgba(110,208,128,0.6)}
   .contract-status.urgent .ctdwn{color:#ff5050;text-shadow:0 0 16px rgba(255,80,80,0.6)}
@@ -332,7 +333,7 @@
 
   <div class="stage" id="stage">
     <div class="shape-badge" id="shapeBadge">SHAPE: <b id="shapeName">none</b></div>
-    <div class="blood-badge"><span class="v white"></span><span>WHITE: <b id="whiteCount">0</b></span></div>
+    <div class="blood-badge"><span class="v white"></span><span>WHITE: <b id="whiteCount">0</b></span> · <span style="color:#d4243f">●</span> <span style="color:#d4243f">BLACK: <b id="blackCount" style="color:#d4243f">0</b></span></div>
     <div class="contract-status" id="contractStatus">
       ▲ DECLARED · <b id="contractDir">EMPIRE → USER</b>
       <span class="ctdwn" id="contractCountdown" style="display:none">⌛ —</span>
@@ -1118,15 +1119,12 @@ function payViaToken(token, label){
   // Append the chosen token to the textarea after the contract operator
   // so the contract grammar grows visibly with the user's commitment.
   const cur = TEXTAREA.value;
-  // If there's already content after `:`, attach with `-`
   const colonIdx = cur.lastIndexOf(':');
   let updated;
   if (colonIdx === -1){
-    // No `:` found — shouldn't happen since pay modal opens only in contract mode
     updated = cur + ':' + token;
   } else {
     const after = cur.slice(colonIdx + 1);
-    // Strip time-anchors before appending the token (they stay at the end)
     const timeMatch = after.match(/(\.\d+(-\.\d+)?)\s*$/);
     const trailingTime = timeMatch ? timeMatch[0] : '';
     const afterNoTime = trailingTime ? after.slice(0, -trailingTime.length) : after;
@@ -1136,28 +1134,60 @@ function payViaToken(token, label){
   TEXTAREA.value = updated;
   renderShape();
   closePayModal();
+  // ─── MARK CONTRACT AS PAID (rubberband doctrine: payer keeps proof on settle)
+  contractPaid = true;
   // Sound + toast
   playPopSound();
-  showToast('▲ paid via ' + label);
+  showToast('▲ paid via ' + label + ' · contract honoured · payer keeps the proof');
   // White blood reward for committing
   whiteBlood += 3;
   localStorage.setItem('sf_godmesh_white', String(whiteBlood));
   updateStats();
+  // Visually transition contract bonds amber → gold (settled)
+  EDGES_SVG.querySelectorAll('.contract-bond').forEach(bond => {
+    bond.style.transition = 'stroke 0.6s';
+    bond.setAttribute('stroke', '#ffd700');
+  });
 }
 
 function contractSelfDelete(){
-  // Pop every contract-flagged fairy, then clear the textarea's contract portion.
-  fairies.filter(f => f.contract).forEach((f, i) => {
-    setTimeout(() => popFairy(f), i * 80);
-  });
-  // Strip from textarea: remove `:` and everything after, plus time-anchors
-  const cleaned = TEXTAREA.value.replace(/:.*$/, '').replace(/\.\d+/g, '').trim();
-  setTimeout(() => {
+  // RUBBERBAND DOCTRINE — two outcomes:
+  //  PAID   → fairies turn gold + STAY · "deal honoured" · +5 white
+  //  UNPAID → fairies pop dark · BLACK MARK on payer · contract collapses
+  if (contractPaid){
+    // HONOURED: gold them, leave them on stage, mark settled in textarea
+    fairies.filter(f => f.contract).forEach(f => {
+      f.el.classList.remove('contract');
+      f.el.style.filter = 'hue-rotate(28deg) brightness(1.1) saturate(1.3)';
+      const tag = f.el.querySelector('.state-tag');
+      if (tag){ tag.textContent = '♛ honoured'; tag.style.color = '#ffd700'; }
+    });
+    whiteBlood += 5;
+    localStorage.setItem('sf_godmesh_white', String(whiteBlood));
+    updateStats();
+    showToast('♛ DEAL HONOURED · +5 white · payer keeps the proof');
+    // Strip the time-anchor and the colon (contract is settled, not pending)
+    const cleaned = TEXTAREA.value.replace(/\.\d+/g, '').replace(/:/, '·').trim();
     TEXTAREA.value = cleaned;
-    renderShape();
-    if (countdownInterval){ clearInterval(countdownInterval); countdownInterval = null; }
-    activeTiming = null;
-  }, 800);
+  } else {
+    // COLLAPSED: dark pops, black mark on payer
+    fairies.filter(f => f.contract).forEach((f, i) => {
+      setTimeout(() => {
+        f.el.style.filter = 'grayscale(1) brightness(0.5)';
+        popFairy(f);
+      }, i * 80);
+    });
+    blackMarks += 1;
+    localStorage.setItem('sf_godmesh_blackmarks', String(blackMarks));
+    showToast('▼ DEAL COLLAPSED · contract self-deleted · +1 BLACK MARK on payer · others may proceed');
+    updateStats();
+    // Strip from textarea
+    const cleaned = TEXTAREA.value.replace(/:.*$/, '').replace(/\.\d+/g, '').trim();
+    setTimeout(() => { TEXTAREA.value = cleaned; renderShape(); }, 1200);
+  }
+  if (countdownInterval){ clearInterval(countdownInterval); countdownInterval = null; }
+  activeTiming = null;
+  contractPaid = false;  // reset for next contract
 }
 
 let currentEdges = [];
@@ -1188,6 +1218,9 @@ function killFairies(fromIdx){
 
 let activeTiming = null;
 let countdownInterval = null;
+let contractPaid = false;
+let wasInContract = false;
+let blackMarks = parseInt(localStorage.getItem('sf_godmesh_blackmarks') || '0', 10);
 
 function renderShape(){
   const s = TEXTAREA.value;
@@ -1198,24 +1231,33 @@ function renderShape(){
   // Toggle the contract status badge + start/stop countdown
   const cs = document.getElementById('contractStatus');
   const dirEl = document.getElementById('contractDir');
+  // Reset paid-state on fresh contract (false→true transition)
+  if (contractMode && !wasInContract) contractPaid = false;
+  if (!contractMode) contractPaid = false;
+  wasInContract = !!contractMode;
   if (cs) cs.classList.toggle('show', !!contractMode);
   // Stop any prior countdown
   if (countdownInterval){ clearInterval(countdownInterval); countdownInterval = null; }
   activeTiming = timing && contractMode ? timing : null;
   const ctdEl = document.getElementById('contractCountdown');
   if (activeTiming){
-    if (ctdEl) ctdEl.style.display = '';
+    if (ctdEl){
+      // Force visibility — clear inline display:none AND remove any cache
+      ctdEl.style.display = 'block';
+      ctdEl.style.opacity = '1';
+    }
+    console.log('[CONTRACT] countdown engaged · expires in ' + Math.floor((activeTiming.expires-Date.now())/1000) + 's');
     const fmt = (s) => {
       if (s >= 3600){ const h = Math.floor(s/3600), m = Math.floor((s%3600)/60), sec = s%60; return `${h}h ${String(m).padStart(2,'0')}m ${String(sec).padStart(2,'0')}s`; }
       if (s >= 60){ const m = Math.floor(s/60), sec = s%60; return `${m}m ${String(sec).padStart(2,'0')}s`; }
       return `${s}s`;
     };
     const tickCountdown = () => {
+      if (!activeTiming) return;  // bailout if cleared
       const remaining = Math.max(0, Math.floor((activeTiming.expires - Date.now())/1000));
       const arrow = payerDirection === 'empire-to-user' ? 'EMPIRE → USER' : 'USER → EMPIRE';
       if (dirEl) dirEl.textContent = arrow;
       if (ctdEl) ctdEl.textContent = '⌛ ' + fmt(remaining);
-      // Urgency: under 30 seconds → red pulse
       if (cs) cs.classList.toggle('urgent', remaining <= 30);
       if (remaining <= 0){
         clearInterval(countdownInterval); countdownInterval = null;
@@ -1225,12 +1267,18 @@ function renderShape(){
       }
     };
     tickCountdown();
-    // tick every 200ms when close, every 1000ms otherwise
-    const initialRem = Math.max(0, Math.floor((activeTiming.expires - Date.now())/1000));
-    countdownInterval = setInterval(tickCountdown, initialRem <= 60 ? 200 : 1000);
+    // ALWAYS 250ms tick — keeps display lively at any range
+    countdownInterval = setInterval(tickCountdown, 250);
+    // Flash the badge on first engagement so it's impossible to miss
+    if (cs){
+      cs.style.animation = 'none';
+      void cs.offsetHeight;  // force reflow
+      cs.style.animation = 'fadeIn 0.3s, contractFlash 0.6s 2';
+    }
   } else if (ctdEl){
     ctdEl.style.display = 'none';
     if (cs) cs.classList.remove('urgent');
+    if (countdownInterval){ clearInterval(countdownInterval); countdownInterval = null; }
   }
   // Wipe everything when switching modes or content changes structurally
   killFairies(0);
@@ -1330,6 +1378,8 @@ function updateStats(){
   document.getElementById('whiteCount').textContent = whiteBlood;
   document.getElementById('whiteStat').textContent = whiteBlood;
   document.getElementById('completeCount').textContent = completeCount;
+  const blackEl = document.getElementById('blackCount');
+  if (blackEl) blackEl.textContent = blackMarks;
 }
 
 TEXTAREA.addEventListener('input', () => renderShape());
