@@ -15,6 +15,19 @@
   html,body{background:#000;color:var(--fg);font-family:ui-monospace,'Consolas','Menlo',monospace;min-height:100vh;overflow-x:hidden}
   body{background:radial-gradient(ellipse at top,#1a1a1a 0%,#000 60%);padding:20px 0;display:flex;flex-direction:column;align-items:center;gap:14px}
 
+  /* MOBILE FULLSCREEN — drop the desktop phone-frame chrome on real phones */
+  @media (max-width: 600px){
+    html,body{min-height:100dvh;height:100dvh;overflow:hidden}
+    body{padding:0;gap:0;background:#000}
+    .page-h{display:none}
+    .phone{
+      width:100% !important; max-width:100% !important;
+      height:100dvh !important; max-height:100dvh !important;
+      border:0 !important; border-radius:0 !important; box-shadow:none !important
+    }
+    .statusbar{display:none}
+  }
+
   .page-h{text-align:center;color:var(--green);font-size:11px;letter-spacing:0.32em;text-transform:uppercase}
   .page-h .crown{font-size:18px;letter-spacing:0.5em;display:block;margin-bottom:6px}
   .page-h .sub{font-size:9px;color:#666;letter-spacing:0.18em;margin-top:6px;font-style:italic}
@@ -700,10 +713,18 @@ function parseShape(s){
   while (i < tokens.length){
     const c = tokens[i];
     if (c === ':'){
-      // Consecutive colons → split bill: count = N users + 1 empire
+      // Two notations supported (smart contract infers from headcount):
+      //   COLON  shorthand: `:` = 1 user · `::` = 2 users · `:::` = 3 users …
+      //   DOT    explicit:  `:.-.` = 2 users · `:.-.-.` = 3 users · dashes decorative
+      // Mixing is fine — userCount = max(colonCount, dotCount). Both notations
+      // produce identical contracts for the same headcount.
       let colonCount = 0;
       while (tokens[i] === ':'){ colonCount++; i++; }
-      const userCount = colonCount;
+      let dotCount = 0;
+      for (let k = i; k < tokens.length; k++){
+        if (tokens[k] === '.') dotCount++;
+      }
+      const userCount = Math.max(colonCount, dotCount);
       const empIdx = nodes.length;
       nodes.push({sp:'notae',contract:true,contractRole:'empire'});
       for (let u=0; u<userCount; u++){
@@ -720,12 +741,17 @@ function parseShape(s){
       continue;
     }
     if (NODE_TOKENS.includes(c)){
-      const idx = nodes.length;
-      nodes.push({sp:speciesOf(c),contract:inContract});
-      if (idx > 0 && pendingDash){
-        edges.push({a:idx-1,b:idx,contract:inContract});
+      // Dots in contract mode were already counted as users — skip (don't double-spawn)
+      if (inContract && c === '.'){
+        pendingDash = false;
+      } else {
+        const idx = nodes.length;
+        nodes.push({sp:speciesOf(c),contract:inContract});
+        if (idx > 0 && pendingDash){
+          edges.push({a:idx-1,b:idx,contract:inContract});
+        }
+        pendingDash = false;
       }
-      pendingDash = false;
     } else if (c === '-'){
       pendingDash = true;
     }
