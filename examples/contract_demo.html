@@ -67,6 +67,20 @@
   .contract-status.urgent .ctdwn{color:#ff5050;text-shadow:0 0 14px rgba(255,80,80,0.6)}
   .contract-status .swap-hint{font-size:8px;color:#888;letter-spacing:0.12em;display:block;margin-top:3px}
 
+  /* P2 INVITE PANEL — appears below contract status when pending users exist */
+  .invite-panel{
+    position:absolute;top:78px;left:50%;transform:translateX(-50%);
+    background:rgba(0,0,0,0.92);border:1.5px dashed #ffc04a;border-radius:12px;
+    padding:10px 14px;z-index:8;font-family:monospace;text-align:center;
+    box-shadow:0 0 24px rgba(255,193,74,0.3);min-width:280px
+  }
+  .invite-h{font-size:10px;color:#ffc04a;letter-spacing:0.18em;margin-bottom:3px}
+  .invite-h b{color:#fff}
+  .invite-sub{font-size:8px;color:#888;letter-spacing:0.12em;font-style:italic;font-family:Georgia,serif;margin-bottom:8px}
+  .invite-btns{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:5px}
+  .link-btn{padding:8px 4px;background:#000;border:1px solid #ffc04a;color:#ffc04a;font-family:inherit;font-size:9px;letter-spacing:0.08em;border-radius:4px;cursor:pointer;font-weight:bold}
+  .link-btn:active{background:rgba(255,193,74,0.18)}
+
   /* ──────── FAIRY ──────── */
   .fairy{position:absolute;width:36px;height:54px;will-change:transform,left,top;
     transition:left 0.5s cubic-bezier(0.34,1.56,0.64,1),top 0.5s cubic-bezier(0.34,1.56,0.64,1);
@@ -144,6 +158,20 @@
     animation:holdRing 0.6s ease-out;
   }
   @keyframes holdRing{0%{box-shadow:0 0 0 0 rgba(82,168,107,0.6)}100%{box-shadow:0 0 0 32px rgba(82,168,107,0)}}
+
+  /* PENDING fairy · awaiting Player 2+ link · dashed outline + greyed */
+  .fairy.pending{filter:grayscale(0.65) brightness(0.45);opacity:0.65}
+  .fairy.pending::before{
+    content:'';position:absolute;inset:-4px;
+    border:2px dashed rgba(255,193,74,0.7);border-radius:50%;
+    animation:pendingPulse 1.4s ease-in-out infinite;pointer-events:none
+  }
+  @keyframes pendingPulse{0%,100%{opacity:0.7;transform:scale(1)}50%{opacity:1;transform:scale(1.1)}}
+  .fairy.pending::after{
+    content:'? P2';position:absolute;bottom:-12px;left:50%;transform:translateX(-50%);
+    font-size:8px;color:#ffc04a;letter-spacing:0.2em;font-family:monospace;white-space:nowrap;
+    text-shadow:0 0 6px rgba(255,193,74,0.6)
+  }
 
   /* CONTRACT MODE — green glow */
   .fairy.contract .pent{background:var(--green) !important;box-shadow:0 0 18px var(--green),0 0 28px rgba(82,168,107,0.5) !important;animation:cp 1.4s infinite ease-in-out !important}
@@ -230,6 +258,16 @@
       ▲ DECLARED · <b id="cdir">EMPIRE → USER</b>
       <span class="ctdwn" id="cctdn" style="display:none">⌛ —</span>
       <span class="swap-hint">tap line to swap · tap paying fairy to PAY</span>
+    </div>
+    <div class="invite-panel" id="invitePanel" style="display:none">
+      <div class="invite-h">▼ <b>PLAYER 2</b> INVITE · <span id="inviteTimer">2m 00s</span></div>
+      <div class="invite-sub">link within 2 min or contract resets to nothing</div>
+      <div class="invite-btns">
+        <button class="link-btn" onclick="linkP2('QR')">▲ QR</button>
+        <button class="link-btn" onclick="linkP2('biscuit')">b BISCUIT</button>
+        <button class="link-btn" onclick="linkP2('phone')">☎ PHONE</button>
+        <button class="link-btn" onclick="linkP2('email')">@ EMAIL</button>
+      </div>
     </div>
     <svg class="edges" id="edges"></svg>
   </div>
@@ -349,7 +387,12 @@ let currentEdges = [];
 let whiteBlood = parseInt(localStorage.getItem('sf_demo_white') || '0', 10);
 let blackMarks = parseInt(localStorage.getItem('sf_demo_black') || '0', 10);
 let empireTreasury = parseInt(localStorage.getItem('sf_empire_treasury') || '0', 10);
-let pendingLoadAmount = 0;  // captured during pay flow before commit
+let pendingLoadAmount = 0;
+// ─── P2 invite state ───────────────────────────────────────────
+let p2Linked = false;            // becomes true once anyone links via QR/biscuit/phone/email
+let p2InviteStartedAt = 0;
+let p2InviteInterval = null;
+const P2_INVITE_SECS = 120;      // 2 minutes
 function refreshStats(){
   document.getElementById('whiteCnt').textContent = whiteBlood;
   document.getElementById('blackCnt').textContent = blackMarks;
@@ -425,12 +468,17 @@ function parseShape(s){
       // Consecutive colons → split bill: count = N users + 1 empire
       let colonCount = 0;
       while (tokens[i] === ':'){ colonCount++; i++; }
-      const userCount = colonCount;  // 1 colon → 1 user · 2 colons → 2 users · etc.
+      const userCount = colonCount;
       const empIdx = nodes.length;
       nodes.push({sp:'notae',contract:true,contractRole:'empire'});
       for (let u=0; u<userCount; u++){
         const uIdx = nodes.length;
-        nodes.push({sp:'notae',contract:true,contractRole:'user',userSubIdx:u,userTotal:userCount});
+        nodes.push({
+          sp:'notae',contract:true,contractRole:'user',
+          userSubIdx:u,userTotal:userCount,
+          // P1 (the originator) is committed; P2+ are PENDING until linked
+          pending: u > 0 && !p2Linked
+        });
         edges.push({a:empIdx,b:uIdx,contract:true});
       }
       inContract = true; pendingDash = false;
@@ -459,14 +507,48 @@ function parseShape(s){
 // ─── RENDER ───
 function render(){
   const {nodes, edges, contractMode, timing} = parseShape(TXT.value);
-  // reset paid state on fresh contract
-  if (contractMode && !wasInContract) contractPaid = false;
-  if (!contractMode) contractPaid = false;
+  // reset paid + p2 state on fresh contract
+  if (contractMode && !wasInContract){
+    contractPaid = false;
+    p2Linked = false;
+  }
+  if (!contractMode){
+    contractPaid = false;
+    p2Linked = false;
+    if (p2InviteInterval){ clearInterval(p2InviteInterval); p2InviteInterval = null; }
+  }
   wasInContract = !!contractMode;
+
+  // Detect if any node is pending — if so, show invite panel + freeze main timer
+  const hasPending = nodes.some(n => n.pending);
+  const invitePanel = document.getElementById('invitePanel');
+  invitePanel.style.display = hasPending ? 'block' : 'none';
+  if (hasPending && !p2InviteInterval){
+    p2InviteStartedAt = Date.now();
+    const tickInvite = () => {
+      const remaining = Math.max(0, P2_INVITE_SECS - Math.floor((Date.now() - p2InviteStartedAt)/1000));
+      const m = Math.floor(remaining/60);
+      const s = remaining % 60;
+      const el = document.getElementById('inviteTimer');
+      if (el) el.textContent = `${m}m ${String(s).padStart(2,'0')}s`;
+      if (remaining <= 0){
+        clearInterval(p2InviteInterval); p2InviteInterval = null;
+        toast('▼ Player 2 didn\'t link · contract reset to nothing');
+        TXT.value = '';
+        render();
+      }
+    };
+    tickInvite();
+    p2InviteInterval = setInterval(tickInvite, 1000);
+  }
+  if (!hasPending && p2InviteInterval){
+    clearInterval(p2InviteInterval); p2InviteInterval = null;
+  }
 
   cstatus.classList.toggle('show', !!contractMode);
   if (countdownInterval){ clearInterval(countdownInterval); countdownInterval = null; }
-  activeTiming = (timing && contractMode) ? timing : null;
+  // Main contract countdown is FROZEN while waiting for P2 to link
+  activeTiming = (timing && contractMode && !hasPending) ? timing : null;
 
   if (activeTiming){
     cctdn.style.display = 'block'; cctdn.style.opacity = '1';
@@ -568,6 +650,7 @@ function spawnFairy(node, idx, x, y){
   if (node.contract) cls += ' contract';
   if (node.contractRole === 'empire') cls += ' empire-side';
   if (node.contractRole === 'user') cls += ' user-side';
+  if (node.pending) cls += ' pending';
   el.className = cls;
 
   let chest = '<div class="pent"></div>';
@@ -869,6 +952,32 @@ function spawnGoldStream(fromX, fromY, toX, toY, color){
       setTimeout(() => p.remove(), 800);
     }, i*60);
   }
+}
+
+// ─── P2 link-up handler · 4 channels, all simulate the same outcome ───
+function linkP2(channel){
+  if (p2Linked) return;
+  p2Linked = true;
+  if (p2InviteInterval){ clearInterval(p2InviteInterval); p2InviteInterval = null; }
+  toast(`▲ Player 2 linked via ${channel.toUpperCase()} · contract activates`);
+  // Re-render so pending users become active and main timer starts
+  render();
+  // Visual flourish: gold sparkle particles around the now-active fairies
+  fairies.filter(f => f.contractRole === 'user').forEach(f => {
+    for (let i=0; i<8; i++){
+      setTimeout(() => {
+        const p = document.createElement('div');
+        p.className = 'pop-particle';
+        p.style.background = '#ffd700'; p.style.boxShadow = '0 0 8px #ffd700';
+        const ang = (i/8)*Math.PI*2;
+        p.style.setProperty('--tx', (Math.cos(ang)*30)+'px');
+        p.style.setProperty('--ty', (Math.sin(ang)*30)+'px');
+        p.style.left = f.x+'px'; p.style.top = f.y+'px';
+        stage.appendChild(p);
+        setTimeout(() => p.remove(), 800);
+      }, i*40);
+    }
+  });
 }
 
 // continuous-stream single particle for pay-as-you-go visual
