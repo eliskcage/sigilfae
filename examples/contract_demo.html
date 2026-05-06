@@ -250,10 +250,22 @@
       <span class="v"></span><b id="whiteCnt">0</b>
       <span class="black-mark">●<b id="blackCnt">0</b></span>
       <span style="color:#ffd700;margin-left:6px;letter-spacing:0.1em">▲ <b id="treasuryCnt" style="color:#ffd700">£0</b></span>
+      <span style="color:#52a86b;margin-left:6px;cursor:pointer" onclick="openLeaderboard()" title="leaderboard">🏆<b id="winsCnt" style="color:#52a86b">0</b></span>
     </span>
   </div>
 
   <div class="stage" id="stage">
+    <video id="bgVideo" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;display:none" autoplay muted playsinline></video>
+    <canvas id="bgFreeze" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;display:none"></canvas>
+    <div id="winOverlay" style="position:absolute;inset:0;display:none;align-items:center;justify-content:center;flex-direction:column;background:radial-gradient(circle,rgba(82,168,107,0.4),rgba(0,0,0,0.85));z-index:30;color:#ffd700;text-align:center;font-family:monospace">
+      <div style="font-size:48px;color:#ffd700;text-shadow:0 0 30px #ffd700;animation:winPulse 0.6s ease-out infinite alternate">♛ WIN ♛</div>
+      <div id="winScore" style="font-size:18px;color:#fff;letter-spacing:0.2em;margin-top:14px">SCORE: 0</div>
+      <div id="winBreakdown" style="font-size:11px;color:#aaa;letter-spacing:0.14em;margin-top:8px;line-height:1.6"></div>
+      <button onclick="closeWin()" style="margin-top:24px;padding:10px 22px;background:linear-gradient(180deg,#ffeb70,#ffd700);color:#000;border:none;border-radius:6px;font-family:inherit;font-size:11px;letter-spacing:0.24em;font-weight:bold;cursor:pointer">▲ NEXT GAME</button>
+    </div>
+    <style>
+      @keyframes winPulse{0%{transform:scale(1);text-shadow:0 0 20px #ffd700}100%{transform:scale(1.08);text-shadow:0 0 40px #ffeb70}}
+    </style>
     <div class="contract-status" id="cstatus">
       ▲ DECLARED · <b id="cdir">EMPIRE → USER</b>
       <span class="ctdwn" id="cctdn" style="display:none">⌛ —</span>
@@ -277,7 +289,22 @@
     <div class="pill-row" id="pills"></div>
     <div class="actions">
       <button class="action-btn" onclick="clearAll()">CLEAR</button>
-      <button class="action-btn primary" onclick="walkDemo()">▶ WALK ALL</button>
+      <button class="action-btn" onclick="toggleCamera()" id="camBtn">📷 SNAP</button>
+      <button class="action-btn primary" onclick="walkDemo()">▶ WALK</button>
+    </div>
+  </div>
+
+  <!-- LEADERBOARD MODAL -->
+  <div class="pay-overlay" id="lbOverlay">
+    <div class="pay-card" style="max-width:320px">
+      <span class="x" onclick="closeLeaderboard()">×</span>
+      <div class="h">🏆 LEADERBOARD</div>
+      <div class="h2">most complex contracts honoured</div>
+      <div id="lbList" style="margin-top:12px;max-height:300px;overflow-y:auto"></div>
+      <div style="font-size:9px;color:#666;letter-spacing:0.06em;margin-top:14px;text-align:center;line-height:1.6;border-top:1px dashed #333;padding-top:10px">
+        ▲ <b style="color:var(--green)">DAILY</b> game · come back · beat your high score · top wins shareable as art<br>
+        <span style="color:#444">leaderboard local for now · empire-wide deferred</span>
+      </div>
     </div>
   </div>
 
@@ -387,6 +414,70 @@ let currentEdges = [];
 let whiteBlood = parseInt(localStorage.getItem('sf_demo_white') || '0', 10);
 let blackMarks = parseInt(localStorage.getItem('sf_demo_black') || '0', 10);
 let empireTreasury = parseInt(localStorage.getItem('sf_empire_treasury') || '0', 10);
+let winCount = parseInt(localStorage.getItem('sf_demo_wins') || '0', 10);
+function getLeaderboard(){ try { return JSON.parse(localStorage.getItem('sf_demo_lb') || '[]'); } catch(e){ return []; } }
+function setLeaderboard(arr){ localStorage.setItem('sf_demo_lb', JSON.stringify(arr.slice(0, 50))); }
+
+// ─── SOUND PALETTE · all dopamine triggers ───────────────────
+let _ac = null;
+function ac(){ if (!_ac) _ac = new (window.AudioContext || window.webkitAudioContext)(); return _ac; }
+function tone(freq, dur, type='sine', vol=0.06, t0Add=0, detune=0){
+  const c = ac(); const t0 = c.currentTime + t0Add;
+  const osc = c.createOscillator(); const g = c.createGain();
+  osc.type = type; osc.frequency.value = freq; if (detune) osc.detune.value = detune;
+  g.gain.setValueAtTime(0, t0);
+  g.gain.linearRampToValueAtTime(vol, t0 + 0.012);
+  g.gain.exponentialRampToValueAtTime(0.001, t0 + dur);
+  osc.connect(g).connect(c.destination);
+  osc.start(t0); osc.stop(t0 + dur + 0.05);
+}
+function sweep(f1, f2, dur, type='triangle', vol=0.06, t0Add=0){
+  const c = ac(); const t0 = c.currentTime + t0Add;
+  const osc = c.createOscillator(); const g = c.createGain();
+  osc.type = type;
+  osc.frequency.setValueAtTime(f1, t0);
+  osc.frequency.exponentialRampToValueAtTime(Math.max(f2,1), t0 + dur);
+  g.gain.setValueAtTime(0, t0);
+  g.gain.linearRampToValueAtTime(vol, t0 + 0.02);
+  g.gain.exponentialRampToValueAtTime(0.001, t0 + dur);
+  osc.connect(g).connect(c.destination);
+  osc.start(t0); osc.stop(t0 + dur + 0.05);
+}
+function playSound(name){
+  switch(name){
+    case 'declare':   sweep(220, 440, 0.25, 'triangle', 0.07); tone(660, 0.10, 'sine', 0.04, 0.1); break;
+    case 'swap':      tone(440, 0.08, 'square', 0.05); tone(660, 0.10, 'triangle', 0.04, 0.05); break;
+    case 'stake':     // thumbprint scan + ascending arpeggio
+                      [330, 440, 550, 660].forEach((f,i) => tone(f, 0.10, 'triangle', 0.05, i*0.06));
+                      break;
+    case 'link-qr':   tone(880, 0.08, 'triangle', 0.07); tone(1320, 0.10, 'sine', 0.05, 0.05); break;
+    case 'link-biscuit': tone(660, 0.18, 'sine', 0.06); tone(990, 0.16, 'triangle', 0.04, 0.04); break;
+    case 'link-phone': tone(350, 0.14, 'sine', 0.05); tone(440, 0.14, 'sine', 0.05, 0.04); break;
+    case 'link-email': tone(880, 0.10, 'triangle', 0.05); tone(1100, 0.12, 'sine', 0.04, 0.05); break;
+    case 'pay-open':  sweep(330, 660, 0.16, 'sine', 0.05); break;
+    case 'pay':       sweep(660, 990, 0.20, 'triangle', 0.06); tone(165, 0.20, 'sine', 0.05); break;
+    case 'honour':    [523, 659, 784, 988, 1175, 1397].forEach((f,i) => tone(f, 0.18, i%2 ? 'sine' : 'triangle', 0.06, i*0.07)); break;
+    case 'collapse':  sweep(440, 110, 0.5, 'sawtooth', 0.06); break;
+    case 'win':       playWinFanfare(); break;
+    case 'pop':       tone(440, 0.10, 'triangle', 0.05); tone(880, 0.08, 'sine', 0.04, 0.04); break;
+    case 'reset':     sweep(220, 110, 0.4, 'sine', 0.05); break;
+  }
+}
+function playWinFanfare(){
+  // Empire fanfare song · 5-7s of multiple voices, ascending then resolving
+  const c = ac();
+  const t0 = c.currentTime;
+  // Voice 1: bass arpeggio
+  [130.81, 164.81, 196, 261.63, 196, 164.81].forEach((f,i) => tone(f, 0.4, 'sine', 0.05, i*0.18));
+  // Voice 2: melody
+  [523, 659, 784, 1047, 988, 1175, 1397, 1047].forEach((f,i) => tone(f, 0.3, 'triangle', 0.06, i*0.18 + 0.2));
+  // Voice 3: sparkle harmonics
+  [1568, 2093, 2349, 2637].forEach((f,i) => tone(f, 0.2, 'sine', 0.025, i*0.22 + 0.5));
+  // Big finale chord
+  setTimeout(() => {
+    [261.63, 392, 523, 659, 783.99, 1046.5].forEach(f => tone(f, 1.4, 'triangle', 0.04, 0));
+  }, 1800);
+}
 let pendingLoadAmount = 0;
 // ─── P2 invite state ───────────────────────────────────────────
 let p2Linked = false;            // becomes true once anyone links via QR/biscuit/phone/email
@@ -397,8 +488,127 @@ function refreshStats(){
   document.getElementById('whiteCnt').textContent = whiteBlood;
   document.getElementById('blackCnt').textContent = blackMarks;
   document.getElementById('treasuryCnt').textContent = '£' + empireTreasury.toLocaleString();
+  document.getElementById('winsCnt').textContent = winCount;
 }
 refreshStats();
+
+// ─── CAMERA SNAPSHOT · z:0 background, contract on top ───
+let camStream = null;
+let camFrozen = false;
+async function toggleCamera(){
+  const v = document.getElementById('bgVideo');
+  const cv = document.getElementById('bgFreeze');
+  const btn = document.getElementById('camBtn');
+  if (!camStream){
+    try {
+      camStream = await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}});
+      v.srcObject = camStream;
+      v.style.display = 'block'; cv.style.display = 'none'; camFrozen = false;
+      btn.textContent = '📸 SNAP IT';
+      tone(660, 0.08, 'sine', 0.05);
+    } catch(e){ toast('▼ camera denied — check permissions'); }
+  } else if (!camFrozen){
+    // Snap: freeze the current video frame to a canvas
+    cv.width = v.videoWidth || 480; cv.height = v.videoHeight || 640;
+    const ctx = cv.getContext('2d');
+    ctx.drawImage(v, 0, 0, cv.width, cv.height);
+    v.style.display = 'none'; cv.style.display = 'block';
+    camStream.getTracks().forEach(t => t.stop());
+    camStream = null; camFrozen = true;
+    btn.textContent = '✕ CLEAR';
+    playSound('pay');
+    toast('▲ snapped · contract overlays on top');
+  } else {
+    cv.style.display = 'none'; camFrozen = false;
+    btn.textContent = '📷 SNAP';
+    toast('snapshot cleared');
+  }
+}
+
+// ─── LEADERBOARD ───
+function openLeaderboard(){
+  const overlay = document.getElementById('lbOverlay');
+  const list = document.getElementById('lbList');
+  const lb = getLeaderboard().sort((a,b) => b.score - a.score);
+  if (lb.length === 0){
+    list.innerHTML = '<div style="text-align:center;color:#666;font-size:11px;padding:20px;font-style:italic">no wins yet · honour a contract to enter the leaderboard</div>';
+  } else {
+    list.innerHTML = lb.slice(0,10).map((w,i) => `
+      <div style="display:flex;align-items:center;gap:10px;padding:8px 10px;background:rgba(255,215,0,0.04);border:1px solid rgba(255,215,0,0.2);border-radius:5px;margin-bottom:5px;font-family:monospace">
+        <span style="color:#ffd700;font-size:14px;font-weight:bold;width:28px">#${i+1}</span>
+        <span style="flex:1;font-size:11px;color:#ddd;letter-spacing:0.04em">${w.string.slice(0,24)}${w.string.length>24?'…':''}</span>
+        <span style="color:#52a86b;font-size:12px;font-weight:bold;letter-spacing:0.1em">${w.score}pt</span>
+      </div>
+    `).join('');
+  }
+  overlay.classList.add('show');
+}
+function closeLeaderboard(){ document.getElementById('lbOverlay').classList.remove('show'); }
+
+// ─── WIN DETECTION + SCORE ───
+function computeComplexity(stringSnapshot){
+  const {nodes, edges} = parseShape(stringSnapshot);
+  const userCount = nodes.filter(n => n.contractRole === 'user').length;
+  const speciesCounts = {};
+  nodes.forEach(n => { if (!n.contractRole) speciesCounts[n.sp] = (speciesCounts[n.sp]||0) + 1; });
+  let score = 0;
+  const breakdown = [];
+  // base: 5 per node
+  score += nodes.length * 5;
+  breakdown.push(`${nodes.length} nodes × 5 = ${nodes.length*5}`);
+  // species bonuses
+  if (speciesCounts.testis){ const v = speciesCounts.testis * 15; score += v; breakdown.push(`${speciesCounts.testis} witness × 15 = ${v}`); }
+  if (speciesCounts.fiscus){ const v = speciesCounts.fiscus * 20; score += v; breakdown.push(`${speciesCounts.fiscus} escrow × 20 = ${v}`); }
+  if (speciesCounts.panis) { const v = speciesCounts.panis * 8;  score += v; breakdown.push(`${speciesCounts.panis} biscuit × 8 = ${v}`); }
+  if (speciesCounts.anima) { const v = speciesCounts.anima * 10; score += v; breakdown.push(`${speciesCounts.anima} soul × 10 = ${v}`); }
+  if (speciesCounts.quadra){ const v = speciesCounts.quadra * 12; score += v; breakdown.push(`${speciesCounts.quadra} QUADRA × 12 = ${v}`); }
+  if (speciesCounts.tessera){ const v = speciesCounts.tessera * 12; score += v; breakdown.push(`${speciesCounts.tessera} TESSERA × 12 = ${v}`); }
+  // multi-user multiplier
+  if (userCount > 1){ const m = userCount; score = Math.round(score * m); breakdown.push(`× ${m} (split-${m}-way)`); }
+  // loaded biscuits bonus
+  const loaded = fairies.filter(f => f.loadedAmount).reduce((s,f) => s + f.loadedAmount, 0);
+  if (loaded > 0){ score += loaded; breakdown.push(`+ £${loaded} loaded`); }
+  return {score, breakdown};
+}
+
+function triggerWin(stringSnapshot){
+  const {score, breakdown} = computeComplexity(stringSnapshot);
+  winCount += 1;
+  localStorage.setItem('sf_demo_wins', String(winCount));
+  // Save to leaderboard
+  const lb = getLeaderboard();
+  lb.push({string: stringSnapshot, score, ts: new Date().toISOString()});
+  setLeaderboard(lb);
+  refreshStats();
+  // Show win overlay
+  const overlay = document.getElementById('winOverlay');
+  document.getElementById('winScore').textContent = `SCORE: ${score}`;
+  document.getElementById('winBreakdown').innerHTML = breakdown.join('<br>');
+  overlay.style.display = 'flex';
+  // Play fanfare
+  playSound('win');
+  // Confetti burst
+  for (let i=0; i<60; i++){
+    setTimeout(() => {
+      const p = document.createElement('div');
+      p.className = 'pop-particle';
+      p.style.background = ['#ffd700','#ffeb70','#52a86b','#fff'][i%4];
+      const ang = Math.random()*Math.PI*2;
+      const dist = 80 + Math.random()*120;
+      p.style.setProperty('--tx', (Math.cos(ang)*dist)+'px');
+      p.style.setProperty('--ty', (Math.sin(ang)*dist)+'px');
+      p.style.left = '50%'; p.style.top = '50%';
+      stage.appendChild(p);
+      setTimeout(() => p.remove(), 1200);
+    }, i*30);
+  }
+}
+
+function closeWin(){
+  document.getElementById('winOverlay').style.display = 'none';
+  TXT.value = '';
+  render();
+}
 
 // ─── DEMO PILLS ───
 const PILLS = [
@@ -545,6 +755,8 @@ function render(){
     clearInterval(p2InviteInterval); p2InviteInterval = null;
   }
 
+  // Play declare sound on contract-mode transition false→true
+  if (contractMode && !cstatus.classList.contains('show')){ playSound('declare'); }
   cstatus.classList.toggle('show', !!contractMode);
   if (countdownInterval){ clearInterval(countdownInterval); countdownInterval = null; }
   // Main contract countdown is FROZEN while waiting for P2 to link
@@ -764,6 +976,7 @@ function drawEdges(edges){
 function swapPayer(){
   payerDirection = payerDirection === 'empire-to-user' ? 'user-to-empire' : 'empire-to-user';
   drawEdges(currentEdges);
+  playSound('swap');
   toast('▲ payer swapped · ' + (payerDirection === 'empire-to-user' ? 'EMPIRE pays USER' : 'USER pays EMPIRE'));
 }
 
@@ -771,6 +984,7 @@ function swapPayer(){
 function openPay(payer){
   document.getElementById('payH2').textContent = `paying as ${payer.contractRole === 'empire' ? 'EMPIRE-side' : 'USER-side'} · choose how`;
   document.getElementById('payOverlay').classList.add('show');
+  playSound('pay-open');
 }
 function closePay(){ document.getElementById('payOverlay').classList.remove('show'); }
 function payVia(token, label){
@@ -802,6 +1016,7 @@ function runThumbprintScan(amount){
   amtEl.textContent = `loading £${amount} · hold steady`;
   status.textContent = '▲ scanning...';
   overlay.classList.add('show');
+  playSound('stake');
   // 2 scan cycles ≈ 2.8s, then verify, then close & attach
   setTimeout(() => { status.textContent = '▲ verified · sealing...'; status.style.color = 'var(--green-glow)'; }, 1800);
   setTimeout(() => {
@@ -839,6 +1054,7 @@ function attachPaymentToken(token, label, amount){
     contractPaid = true;
     whiteBlood += 3; localStorage.setItem('sf_demo_white', String(whiteBlood)); refreshStats();
     toast('▲ paid via ' + label + ' · contract honoured');
+    playSound('pay');
     // bond stroke amber → gold visually
     EDGES.querySelectorAll('line[stroke="url(#ec)"]').forEach(l => l.setAttribute('stroke', '#ffd700'));
   }
@@ -854,6 +1070,7 @@ function selfDelete(){
 
   if (contractPaid){
     // ─── HONOURED · any unstreamed remainder releases to receiver ───
+    const winningString = TXT.value;  // capture before mutation
     fairies.filter(f => f.contract).forEach(f => {
       f.el.classList.remove('contract');
       f.el.style.filter = 'hue-rotate(28deg) brightness(1.1) saturate(1.3)';
@@ -866,6 +1083,9 @@ function selfDelete(){
       toast('♛ DEAL HONOURED · +5 white');
     }
     refreshStats();
+    playSound('honour');
+    // ─── TRIGGER WIN OVERLAY · score + leaderboard + fanfare ───
+    setTimeout(() => triggerWin(winningString), 600);
     TXT.value = TXT.value.replace(/\.\d+/g,'').replace(/:/, '·').trim();
   } else {
     // ─── COLLAPSED · ONLY UNSTREAMED capital forfeits ───
@@ -925,6 +1145,7 @@ function selfDelete(){
       }, i*80);
     });
     blackMarks += 1; localStorage.setItem('sf_demo_black', String(blackMarks));
+    playSound('collapse');
     if (totalLoaded > 0){
       toast(`▼ COLLAPSED · streamed £${totalStreamed} kept · unstreamed £${totalUnstreamed}: empire +£${toEmpire} / wronged +£${toWronged} · +1 BLACK MARK`);
     } else {
@@ -959,6 +1180,7 @@ function linkP2(channel){
   if (p2Linked) return;
   p2Linked = true;
   if (p2InviteInterval){ clearInterval(p2InviteInterval); p2InviteInterval = null; }
+  playSound('link-' + channel);
   toast(`▲ Player 2 linked via ${channel.toUpperCase()} · contract activates`);
   // Re-render so pending users become active and main timer starts
   render();
