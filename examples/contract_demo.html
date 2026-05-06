@@ -95,6 +95,19 @@
 
   .fairy .anima-qr{position:absolute;left:50%;top:34%;transform:translateX(-50%);width:13px;height:11px;clip-path:polygon(50% 0,100% 100%,0 100%);background:repeating-conic-gradient(from 0deg at 50% 50%,#000 0deg 18deg,#7e6cff 18deg 36deg);box-shadow:0 0 10px #7e6cff}
   .fairy .panis-biscuit{position:absolute;left:50%;top:34%;transform:translateX(-50%);width:12px;height:8px;border-radius:50%;background:radial-gradient(ellipse at 50% 30%,#e8c578,#a87330);box-shadow:0 0 6px #d4a544,inset 0 -1px 1px rgba(0,0,0,0.3);border:0.5px solid #6b4a1a}
+  /* LOADED biscuit — gold-filled core + £ amount overlay */
+  .fairy.loaded .panis-biscuit{
+    background:radial-gradient(ellipse at 50% 30%,#fff8c8 0%,#ffd700 40%,#a87330 90%);
+    box-shadow:0 0 14px #ffd700,inset 0 -1px 2px rgba(0,0,0,0.3);
+    animation:loadedShimmer 1.6s ease-in-out infinite
+  }
+  @keyframes loadedShimmer{0%,100%{box-shadow:0 0 12px #ffd700,inset 0 -1px 2px rgba(0,0,0,0.3)}50%{box-shadow:0 0 22px #ffeb70,inset 0 -1px 2px rgba(0,0,0,0.3)}}
+  .fairy.loaded::after{
+    content:attr(data-loaded);position:absolute;bottom:-14px;left:50%;transform:translateX(-50%);
+    font-size:9px;color:#ffd700;font-weight:bold;letter-spacing:0.06em;font-family:monospace;
+    text-shadow:0 0 6px rgba(255,215,0,0.6);white-space:nowrap;
+    background:rgba(0,0,0,0.7);padding:1px 5px;border-radius:6px;border:0.5px solid #ffd700
+  }
   .fairy .tessera-qr{position:absolute;left:50%;top:32%;transform:translateX(-50%);width:15px;height:13px;clip-path:polygon(50% 0,100% 100%,0 100%);background:repeating-conic-gradient(from 0deg at 50% 50%,#000 0deg 14deg,#ffd700 14deg 28deg);box-shadow:0 0 14px #ffd700;animation:qrp 1.6s infinite ease-in-out}
   .fairy .quadra-qr{position:absolute;left:50%;top:32%;transform:translateX(-50%);width:14px;height:14px;background:#000;border:1.5px solid #ffd700;box-shadow:0 0 14px #ffd700;background-image:repeating-linear-gradient(0deg,#ffd700 0 1px,transparent 1px 4px),repeating-linear-gradient(90deg,#ffd700 0 1px,transparent 1px 4px);animation:qrp 1.6s infinite ease-in-out}
   @keyframes qrp{0%,100%{box-shadow:0 0 12px #ffd700}50%{box-shadow:0 0 20px #ffeb70}}
@@ -198,6 +211,7 @@
     <span class="blood">
       <span class="v"></span><b id="whiteCnt">0</b>
       <span class="black-mark">●<b id="blackCnt">0</b></span>
+      <span style="color:#ffd700;margin-left:6px;letter-spacing:0.1em">▲ <b id="treasuryCnt" style="color:#ffd700">£0</b></span>
     </span>
   </div>
 
@@ -218,6 +232,59 @@
       <button class="action-btn primary" onclick="walkDemo()">▶ WALK ALL</button>
     </div>
   </div>
+
+  <!-- LOAD AMOUNT + THUMBPRINT MODAL -->
+  <div class="pay-overlay" id="loadOverlay">
+    <div class="pay-card">
+      <span class="x" onclick="closeLoad()">×</span>
+      <div class="h">▲ LOAD THE BISCUIT ▲</div>
+      <div class="h2">how much capital are you committing?<br>thumbprint locks it into escrow</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:10px">
+        <button class="pay-opt" style="justify-content:center;padding:14px;display:flex" onclick="loadAmount(10)"><b style="color:#ffd700;font-size:14px;letter-spacing:0.1em">£10</b></button>
+        <button class="pay-opt" style="justify-content:center;padding:14px;display:flex" onclick="loadAmount(50)"><b style="color:#ffd700;font-size:14px;letter-spacing:0.1em">£50</b></button>
+        <button class="pay-opt" style="justify-content:center;padding:14px;display:flex" onclick="loadAmount(100)"><b style="color:#ffd700;font-size:14px;letter-spacing:0.1em">£100</b></button>
+      </div>
+      <button class="pay-opt" style="justify-content:center;padding:10px;display:flex" onclick="loadAmount(prompt('Enter amount in £:','25'))"><span style="color:#aaa;font-size:11px;letter-spacing:0.16em">CUSTOM AMOUNT…</span></button>
+      <div style="font-size:9px;color:#666;letter-spacing:0.06em;margin-top:12px;text-align:center;line-height:1.5">
+        ▲ <b style="color:var(--green)">HONEST DEAL</b>: capital releases as agreed.<br>
+        ▼ <b style="color:var(--red)">SOURED DEAL</b>: empire keeps 51%, wronged party 49%, you get nothing.<br>
+        thumbprint = your seal · only the rubberband releases it.
+      </div>
+    </div>
+  </div>
+
+  <!-- THUMBPRINT CAPTURE MODAL -->
+  <div class="pay-overlay" id="thumbOverlay">
+    <div class="pay-card" style="padding:24px;text-align:center;max-width:280px">
+      <div class="h">▲ THUMBPRINT ▲</div>
+      <div class="h2" id="thumbAmount">scanning · hold steady</div>
+      <div style="position:relative;width:120px;height:140px;margin:14px auto;border:2px solid var(--green);border-radius:14px;overflow:hidden;background:#0a0a0a">
+        <!-- Stylised fingerprint pattern -->
+        <svg viewBox="0 0 80 100" style="width:100%;height:100%">
+          <defs>
+            <pattern id="fp" x="0" y="0" width="80" height="100" patternUnits="userSpaceOnUse">
+              <g fill="none" stroke="#ffd700" stroke-width="1" opacity="0.55">
+                <path d="M 40 10 Q 18 14 14 35 Q 12 60 26 78 Q 30 84 36 86"/>
+                <path d="M 40 18 Q 24 22 22 38 Q 20 58 30 72 Q 34 78 40 80"/>
+                <path d="M 40 26 Q 30 30 28 42 Q 26 56 34 66 Q 38 72 44 72"/>
+                <path d="M 40 34 Q 36 38 36 46 Q 36 54 40 60"/>
+                <path d="M 40 18 Q 56 22 58 38 Q 60 58 50 72 Q 46 78 40 80"/>
+                <path d="M 40 26 Q 50 30 52 42 Q 54 56 46 66 Q 42 72 40 72"/>
+                <path d="M 40 34 Q 44 38 44 46 Q 44 54 40 60"/>
+              </g>
+            </pattern>
+          </defs>
+          <rect x="0" y="0" width="80" height="100" fill="url(#fp)"/>
+        </svg>
+        <!-- Scan line -->
+        <div id="thumbScanLine" style="position:absolute;left:-2px;right:-2px;top:0;height:3px;background:linear-gradient(90deg,transparent,#ffd700,transparent);box-shadow:0 0 14px #ffd700;animation:thumbScan 1.4s ease-in-out 2"></div>
+      </div>
+      <div style="font-size:10px;color:var(--green);letter-spacing:0.16em;font-family:monospace" id="thumbStatus">▲ verifying...</div>
+    </div>
+  </div>
+  <style>
+    @keyframes thumbScan{0%{top:0}50%{top:calc(100% - 3px)}100%{top:0}}
+  </style>
 
   <!-- PAY MODAL -->
   <div class="pay-overlay" id="payOverlay">
@@ -271,9 +338,12 @@ let currentEdges = [];
 
 let whiteBlood = parseInt(localStorage.getItem('sf_demo_white') || '0', 10);
 let blackMarks = parseInt(localStorage.getItem('sf_demo_black') || '0', 10);
+let empireTreasury = parseInt(localStorage.getItem('sf_empire_treasury') || '0', 10);
+let pendingLoadAmount = 0;  // captured during pay flow before commit
 function refreshStats(){
   document.getElementById('whiteCnt').textContent = whiteBlood;
   document.getElementById('blackCnt').textContent = blackMarks;
+  document.getElementById('treasuryCnt').textContent = '£' + empireTreasury.toLocaleString();
 }
 refreshStats();
 
@@ -536,6 +606,44 @@ function openPay(payer){
 }
 function closePay(){ document.getElementById('payOverlay').classList.remove('show'); }
 function payVia(token, label){
+  // PANIS biscuits open the load-amount flow instead of paying directly.
+  // The biscuit must be loaded with capital + thumbprint-locked first.
+  if (token === 'b'){
+    closePay();
+    document.getElementById('loadOverlay').classList.add('show');
+    return;
+  }
+  // Other tokens — direct attach
+  attachPaymentToken(token, label, 0);
+}
+
+function closeLoad(){ document.getElementById('loadOverlay').classList.remove('show'); }
+
+function loadAmount(amount){
+  amount = parseInt(amount, 10);
+  if (!amount || amount <= 0){ toast('▼ invalid amount'); return; }
+  pendingLoadAmount = amount;
+  closeLoad();
+  runThumbprintScan(amount);
+}
+
+function runThumbprintScan(amount){
+  const overlay = document.getElementById('thumbOverlay');
+  const status = document.getElementById('thumbStatus');
+  const amtEl = document.getElementById('thumbAmount');
+  amtEl.textContent = `loading £${amount} · hold steady`;
+  status.textContent = '▲ scanning...';
+  overlay.classList.add('show');
+  // 2 scan cycles ≈ 2.8s, then verify, then close & attach
+  setTimeout(() => { status.textContent = '▲ verified · sealing...'; status.style.color = 'var(--green-glow)'; }, 1800);
+  setTimeout(() => {
+    overlay.classList.remove('show');
+    status.style.color = ''; status.textContent = '▲ verifying...';
+    attachPaymentToken('b', 'PANIS · biscuit loaded with £' + amount, amount);
+  }, 2800);
+}
+
+function attachPaymentToken(token, label, amount){
   const cur = TXT.value;
   const colonIdx = cur.lastIndexOf(':');
   const after = cur.slice(colonIdx + 1);
@@ -545,30 +653,85 @@ function payVia(token, label){
   const sep = afterNoTime.trim().length > 0 ? '-' : '';
   TXT.value = cur.slice(0, colonIdx + 1) + afterNoTime + sep + token + trailingTime;
   render();
-  closePay();
   contractPaid = true;
   whiteBlood += 3; localStorage.setItem('sf_demo_white', String(whiteBlood)); refreshStats();
   toast('▲ paid via ' + label + ' · contract honoured');
+  // If token was a biscuit with loaded capital, mark the newest biscuit fairy
+  if (token === 'b' && amount > 0){
+    const lastBisc = fairies.filter(f => f.sp === 'panis').slice(-1)[0];
+    if (lastBisc){
+      lastBisc.loadedAmount = amount;
+      lastBisc.el.classList.add('loaded');
+      lastBisc.el.dataset.loaded = '£' + amount;
+    }
+  }
   // bond stroke amber → gold visually
   EDGES.querySelectorAll('line[stroke="url(#ec)"]').forEach(l => l.setAttribute('stroke', '#ffd700'));
 }
 
 // ─── SELF-DELETE ───
 function selfDelete(){
+  // Sum loaded capital from any loaded biscuits in the contract
+  const loadedFairies = fairies.filter(f => f.loadedAmount && f.contract);
+  const totalLoaded = loadedFairies.reduce((s, f) => s + (f.loadedAmount || 0), 0);
+
   if (contractPaid){
+    // ─── HONOURED · capital releases as agreed ───
     fairies.filter(f => f.contract).forEach(f => {
       f.el.classList.remove('contract');
       f.el.style.filter = 'hue-rotate(28deg) brightness(1.1) saturate(1.3)';
     });
     whiteBlood += 5; localStorage.setItem('sf_demo_white', String(whiteBlood));
-    toast('♛ DEAL HONOURED · +5 white');
+    if (totalLoaded > 0){
+      toast(`♛ HONOURED · £${totalLoaded} released · +5 white`);
+      // Visual: gold particles from each loaded biscuit (released to receiver)
+      loadedFairies.forEach(f => spawnGoldStream(f.x, f.y, stage.clientWidth/2, stage.clientHeight - 40, '#ffd700'));
+    } else {
+      toast('♛ DEAL HONOURED · +5 white');
+    }
     refreshStats();
     TXT.value = TXT.value.replace(/\.\d+/g,'').replace(/:/, '·').trim();
   } else {
+    // ─── COLLAPSED · capital forfeits per rubberband doctrine ───
+    let toEmpire = 0, toWronged = 0;
+    if (totalLoaded > 0){
+      toEmpire = Math.round(totalLoaded * 0.51);
+      toWronged = totalLoaded - toEmpire;
+      empireTreasury += toEmpire;
+      whiteBlood += toWronged;  // wronged party (the user being demo'd) gets the 49% as compensation
+      localStorage.setItem('sf_empire_treasury', String(empireTreasury));
+      localStorage.setItem('sf_demo_white', String(whiteBlood));
+    }
     fairies.filter(f => f.contract).forEach((f,i) => {
       setTimeout(() => {
+        // Gold particles flowing FROM loaded biscuits to (a) empire treasury indicator, (b) wronged party
+        if (f.loadedAmount){
+          // 51% to empire (toward top-right where treasury counter is)
+          for (let k=0; k<6; k++){
+            const part = document.createElement('div');
+            part.className = 'pop-particle';
+            part.style.background = '#ffd700'; part.style.boxShadow = '0 0 8px #ffd700';
+            part.style.setProperty('--tx', (stage.clientWidth - f.x - 40)+'px');
+            part.style.setProperty('--ty', (-f.y + 20)+'px');
+            part.style.left = f.x+'px'; part.style.top = f.y+'px';
+            stage.appendChild(part);
+            setTimeout(()=> part.remove(), 800);
+          }
+          // 49% to wronged party (downward / bottom)
+          for (let k=0; k<5; k++){
+            const part = document.createElement('div');
+            part.className = 'pop-particle';
+            part.style.background = '#52a86b'; part.style.boxShadow = '0 0 8px #52a86b';
+            const ang = Math.PI/2 + (Math.random()-0.5)*0.5;
+            part.style.setProperty('--tx', (Math.cos(ang)*60)+'px');
+            part.style.setProperty('--ty', (Math.sin(ang)*60)+'px');
+            part.style.left = f.x+'px'; part.style.top = f.y+'px';
+            stage.appendChild(part);
+            setTimeout(()=> part.remove(), 800);
+          }
+        }
+        // Defaulter fairy darkens + pops
         f.el.style.filter = 'grayscale(1) brightness(0.5)';
-        // burst dark
         for (let p=0; p<10; p++){
           const part = document.createElement('div');
           part.className = 'pop-particle';
@@ -585,13 +748,33 @@ function selfDelete(){
       }, i*80);
     });
     blackMarks += 1; localStorage.setItem('sf_demo_black', String(blackMarks));
-    toast('▼ DEAL COLLAPSED · +1 BLACK MARK · others may proceed');
+    if (totalLoaded > 0){
+      toast(`▼ COLLAPSED · empire +£${toEmpire} · wronged +£${toWronged} · +1 BLACK MARK`);
+    } else {
+      toast('▼ DEAL COLLAPSED · +1 BLACK MARK · others may proceed');
+    }
     refreshStats();
     setTimeout(() => { TXT.value = TXT.value.replace(/:.*$/,'').replace(/\.\d+/g,'').trim(); render(); }, 1200);
   }
   if (countdownInterval){ clearInterval(countdownInterval); countdownInterval = null; }
   activeTiming = null;
   contractPaid = false;
+}
+
+// gold-stream particles for honour transfer
+function spawnGoldStream(fromX, fromY, toX, toY, color){
+  for (let i=0; i<8; i++){
+    setTimeout(() => {
+      const p = document.createElement('div');
+      p.className = 'pop-particle';
+      p.style.background = color; p.style.boxShadow = '0 0 8px ' + color;
+      p.style.setProperty('--tx', (toX - fromX) + 'px');
+      p.style.setProperty('--ty', (toY - fromY) + 'px');
+      p.style.left = fromX + 'px'; p.style.top = fromY + 'px';
+      stage.appendChild(p);
+      setTimeout(() => p.remove(), 800);
+    }, i*60);
+  }
 }
 
 // ─── TOAST ───
