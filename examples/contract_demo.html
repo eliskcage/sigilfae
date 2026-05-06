@@ -279,15 +279,15 @@ refreshStats();
 
 // ─── DEMO PILLS ───
 const PILLS = [
-  {s:':',                kind:'BARE PACT',   sub:'empire ↔ user'},
-  {s:':b.0015',          kind:'BISCUIT',     sub:'biscuit deal · 15s'},
-  {s:':s-Q.0020',        kind:'SOUL+BASE',   sub:'soul + base · 20s'},
-  {s:':w-b.0020',        kind:'WITNESSED',   sub:'witness biscuit · 20s'},
-  {s:':e-s.0025',        kind:'ESCROWED',    sub:'escrow soul · 25s'},
-  {s:':w-e-s-Q.0030',    kind:'FULL DEAL',   sub:'witness+escrow+soul+base · 30s', full:true},
-  {s:':e-Q.0020',        kind:'ESCROW BASE', sub:'escrow + base · 20s'},
-  {s:':w-w-b.0025',      kind:'2 WITNESSES', sub:'two scribes + biscuit'},
-  {s:':b-b-b.0010',      kind:'TRIPLE TIP',  sub:'three biscuits · 10s'},
+  {s:':',                kind:'BARE PACT',   sub:'empire ↔ user · no expiry'},
+  {s:':b.0030',          kind:'BISCUIT',     sub:'biscuit deal · 30s'},
+  {s:':s-Q.0045',        kind:'SOUL+BASE',   sub:'soul + base · 45s'},
+  {s:':w-b.0030',        kind:'WITNESSED',   sub:'witness biscuit · 30s'},
+  {s:':e-s.0045',        kind:'ESCROWED',    sub:'escrow soul · 45s'},
+  {s:':w-e-s-Q.0060',    kind:'FULL DEAL',   sub:'witness+escrow+soul+base · 60s', full:true},
+  {s:':e-Q.0045',        kind:'ESCROW BASE', sub:'escrow + base · 45s'},
+  {s:':w-w-b.0030',      kind:'2 WITNESSES', sub:'two scribes + biscuit · 30s'},
+  {s:':b-b-b.0030',      kind:'TRIPLE TIP',  sub:'three biscuits · 30s'},
 ];
 function renderPills(){
   const row = document.getElementById('pills');
