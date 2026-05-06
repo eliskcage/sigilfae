@@ -231,13 +231,20 @@
   .contract-bond:hover{filter:brightness(1.3)}
   .contract-status{
     position:absolute;top:14px;left:50%;transform:translateX(-50%);
-    background:rgba(0,0,0,0.85);border:1px solid #52a86b;border-radius:20px;
-    padding:6px 14px;font-size:10px;color:#52a86b;letter-spacing:0.16em;
-    z-index:9;font-family:monospace;display:none
+    background:rgba(0,0,0,0.9);border:2px solid #52a86b;border-radius:24px;
+    padding:10px 22px;font-size:12px;color:#52a86b;letter-spacing:0.18em;
+    z-index:9;font-family:monospace;display:none;
+    box-shadow:0 0 24px rgba(82,168,107,0.4);
+    text-align:center;line-height:1.5;min-width:300px
   }
   .contract-status.show{display:block;animation:fadeIn 0.3s}
-  @keyframes fadeIn{from{opacity:0}to{opacity:1}}
-  .contract-status b{color:#fff}
+  .contract-status.urgent{border-color:#d4243f;color:#d4243f;animation:urgentPulse 0.8s infinite}
+  @keyframes fadeIn{from{opacity:0;transform:translate(-50%,-8px)}to{opacity:1;transform:translate(-50%,0)}}
+  @keyframes urgentPulse{0%,100%{box-shadow:0 0 24px rgba(212,36,63,0.4)}50%{box-shadow:0 0 40px rgba(212,36,63,0.8)}}
+  .contract-status b{color:#fff;letter-spacing:0.2em}
+  .contract-status .ctdwn{display:block;font-size:24px;font-weight:bold;color:#6ed080;margin-top:6px;letter-spacing:0.18em;text-shadow:0 0 12px rgba(110,208,128,0.6)}
+  .contract-status.urgent .ctdwn{color:#ff5050;text-shadow:0 0 16px rgba(255,80,80,0.6)}
+  .contract-status .swap-hint{font-size:9px;color:#888;letter-spacing:0.14em;display:block;margin-top:4px}
 
   /* Pop particles */
   .pop-particle{
@@ -326,7 +333,11 @@
   <div class="stage" id="stage">
     <div class="shape-badge" id="shapeBadge">SHAPE: <b id="shapeName">none</b></div>
     <div class="blood-badge"><span class="v white"></span><span>WHITE: <b id="whiteCount">0</b></span></div>
-    <div class="contract-status" id="contractStatus">▲ DECLARED · <b id="contractDir">EMPIRE → USER</b> · click line to swap</div>
+    <div class="contract-status" id="contractStatus">
+      ▲ DECLARED · <b id="contractDir">EMPIRE → USER</b>
+      <span class="ctdwn" id="contractCountdown" style="display:none">⌛ —</span>
+      <span class="swap-hint">click bond-line to swap payer · click paying fairy to PAY</span>
+    </div>
     <svg class="edges" id="edgesSvg"></svg>
   </div>
 
@@ -381,6 +392,58 @@
 </div>
 
 <audio id="popSound" preload="auto"></audio>
+
+<!-- ─── PAY MODAL · click the paying fairy to settle the contract ─── -->
+<div id="payModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:200;align-items:center;justify-content:center;padding:20px">
+  <div style="background:#0a0a0a;border:2px solid #52a86b;border-radius:14px;max-width:480px;width:100%;padding:28px;box-shadow:0 0 60px rgba(82,168,107,0.4);position:relative;font-family:monospace;color:#e8e2d4">
+    <div onclick="closePayModal()" style="position:absolute;top:10px;right:14px;cursor:pointer;color:#888;font-size:24px">×</div>
+    <div style="text-align:center;margin-bottom:18px">
+      <div style="font-size:14px;color:#52a86b;letter-spacing:0.4em;margin-bottom:6px">▲ HOW DO YOU PAY ▲</div>
+      <div style="font-size:11px;color:#aaa;letter-spacing:0.14em;font-style:italic;font-family:Georgia,serif" id="payModalSide">choose one — attach to the contract</div>
+    </div>
+    <div style="display:grid;gap:10px">
+      <button class="pay-opt" onclick="payViaToken('Q', 'QUADRA · square QR base')">
+        <span class="pay-glyph" style="background:#000;border:2px solid #ffd700;color:#ffd700">Q</span>
+        <span class="pay-info"><b>QUADRA — your SIGILFAE base-QR</b><br><span class="pay-sub">attaches your empire-side identity + funds</span></span>
+      </button>
+      <button class="pay-opt" onclick="payViaToken('t', 'TESSERA · triangle kingdom QR')">
+        <span class="pay-glyph" style="background:#000;border:2px solid #ffd700;clip-path:polygon(50% 10%,90% 90%,10% 90%);color:#ffd700">t</span>
+        <span class="pay-info"><b>TESSERA — your kingdom-piece QR</b><br><span class="pay-sub">attaches your shortfactory.shop kingdom identity</span></span>
+      </button>
+      <button class="pay-opt" onclick="payViaToken('b', 'PANIS · biscuit')">
+        <span class="pay-glyph" style="background:radial-gradient(ellipse at 30% 30%,#e8c578,#a87330);color:#fff;border:1px solid #6b4a1a">b</span>
+        <span class="pay-info"><b>PANIS — send a biscuit</b><br><span class="pay-sub">small affirmation token · empire's thanks-currency</span></span>
+      </button>
+      <button class="pay-opt" onclick="payViaToken('s', 'ANIMA · soul-bond')">
+        <span class="pay-glyph" style="background:#000;border:2px solid #7e6cff;color:#7e6cff">s</span>
+        <span class="pay-info"><b>ANIMA — connect your SFT soul-file</b><br><span class="pay-sub">declares blood-bond live · highest-tier commitment</span></span>
+      </button>
+      <button class="pay-opt" onclick="payViaToken(',', 'PYXIS · upload file')">
+        <span class="pay-glyph" style="background:rgba(185,164,245,0.15);border:2px solid #b9a4f5;color:#b9a4f5">,</span>
+        <span class="pay-info"><b>PYXIS — attach a file</b><br><span class="pay-sub">upload form · proof / contract / asset</span></span>
+      </button>
+    </div>
+    <div style="font-size:10px;color:#666;letter-spacing:0.06em;margin-top:18px;text-align:center;line-height:1.5">
+      each option appends a token to the contract grammar in your textarea.<br>
+      the fairy materialises green — your commitment becomes visible to the bond.
+    </div>
+  </div>
+</div>
+<style>
+  .pay-opt{
+    display:flex;align-items:center;gap:14px;padding:12px;background:#0d0d0d;
+    border:1px solid #1a1a1a;border-radius:6px;cursor:pointer;font-family:inherit;
+    text-align:left;color:#e8e2d4;transition:all 0.15s
+  }
+  .pay-opt:hover{border-color:#52a86b;box-shadow:0 0 16px rgba(82,168,107,0.2);transform:translateY(-1px)}
+  .pay-glyph{
+    width:36px;height:36px;border-radius:5px;display:flex;align-items:center;justify-content:center;
+    font-family:monospace;font-size:16px;font-weight:bold;flex-shrink:0
+  }
+  .pay-info{flex:1;font-size:11px;line-height:1.4;letter-spacing:0.06em}
+  .pay-info b{color:#fff;font-size:12px;display:block;margin-bottom:2px;letter-spacing:0.1em}
+  .pay-info .pay-sub{color:#888;font-size:10px}
+</style>
 
 <!-- ─── TESSERA QR-GATE MODAL ─── -->
 <div id="tesseraModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:200;align-items:center;justify-content:center;padding:20px">
@@ -770,6 +833,19 @@ function attachInteractions(f){
       openTesseraGate(f);
       return;
     }
+    // ─── For the PAYING fairy in a contract, click opens the PAY MODAL.
+    // Whichever side the arrow points AT is the receiver; the other side pays.
+    if (f.contract && f.contractRole){
+      // payerDirection 'empire-to-user' means EMPIRE pays USER, so empire-side is the payer
+      const isPayer = (payerDirection === 'empire-to-user' && f.contractRole === 'empire')
+                   || (payerDirection === 'user-to-empire' && f.contractRole === 'user');
+      if (isPayer){
+        e.stopPropagation();
+        downPos = null;
+        openPayModal(f);
+        return;
+      }
+    }
   });
   f.el.addEventListener('pointermove', e => {
     if (!downPos) return;
@@ -1027,6 +1103,48 @@ function swapPayer(){
   showToast('▲ payer swapped · ' + (payerDirection === 'empire-to-user' ? 'EMPIRE pays USER' : 'USER pays EMPIRE'));
 }
 
+// ─── Pay modal · click paying fairy → choose how to settle ───────
+function openPayModal(payerFairy){
+  const m = document.getElementById('payModal');
+  const sideText = document.getElementById('payModalSide');
+  const role = payerFairy.contractRole === 'empire' ? 'EMPIRE-side' : 'USER-side';
+  if (sideText) sideText.textContent = `you are paying as the ${role} · choose how`;
+  m.style.display = 'flex';
+}
+function closePayModal(){
+  document.getElementById('payModal').style.display = 'none';
+}
+function payViaToken(token, label){
+  // Append the chosen token to the textarea after the contract operator
+  // so the contract grammar grows visibly with the user's commitment.
+  const cur = TEXTAREA.value;
+  // If there's already content after `:`, attach with `-`
+  const colonIdx = cur.lastIndexOf(':');
+  let updated;
+  if (colonIdx === -1){
+    // No `:` found — shouldn't happen since pay modal opens only in contract mode
+    updated = cur + ':' + token;
+  } else {
+    const after = cur.slice(colonIdx + 1);
+    // Strip time-anchors before appending the token (they stay at the end)
+    const timeMatch = after.match(/(\.\d+(-\.\d+)?)\s*$/);
+    const trailingTime = timeMatch ? timeMatch[0] : '';
+    const afterNoTime = trailingTime ? after.slice(0, -trailingTime.length) : after;
+    const sep = afterNoTime.trim().length > 0 ? '-' : '';
+    updated = cur.slice(0, colonIdx + 1) + afterNoTime + sep + token + trailingTime;
+  }
+  TEXTAREA.value = updated;
+  renderShape();
+  closePayModal();
+  // Sound + toast
+  playPopSound();
+  showToast('▲ paid via ' + label);
+  // White blood reward for committing
+  whiteBlood += 3;
+  localStorage.setItem('sf_godmesh_white', String(whiteBlood));
+  updateStats();
+}
+
 function contractSelfDelete(){
   // Pop every contract-flagged fairy, then clear the textarea's contract portion.
   fairies.filter(f => f.contract).forEach((f, i) => {
@@ -1084,21 +1202,35 @@ function renderShape(){
   // Stop any prior countdown
   if (countdownInterval){ clearInterval(countdownInterval); countdownInterval = null; }
   activeTiming = timing && contractMode ? timing : null;
+  const ctdEl = document.getElementById('contractCountdown');
   if (activeTiming){
+    if (ctdEl) ctdEl.style.display = '';
+    const fmt = (s) => {
+      if (s >= 3600){ const h = Math.floor(s/3600), m = Math.floor((s%3600)/60), sec = s%60; return `${h}h ${String(m).padStart(2,'0')}m ${String(sec).padStart(2,'0')}s`; }
+      if (s >= 60){ const m = Math.floor(s/60), sec = s%60; return `${m}m ${String(sec).padStart(2,'0')}s`; }
+      return `${s}s`;
+    };
     const tickCountdown = () => {
       const remaining = Math.max(0, Math.floor((activeTiming.expires - Date.now())/1000));
       const arrow = payerDirection === 'empire-to-user' ? 'EMPIRE → USER' : 'USER → EMPIRE';
-      if (dirEl) dirEl.textContent = `${arrow} · ⌛ ${remaining}s`;
+      if (dirEl) dirEl.textContent = arrow;
+      if (ctdEl) ctdEl.textContent = '⌛ ' + fmt(remaining);
+      // Urgency: under 30 seconds → red pulse
+      if (cs) cs.classList.toggle('urgent', remaining <= 30);
       if (remaining <= 0){
         clearInterval(countdownInterval); countdownInterval = null;
-        // self-delete: pop all contract fairies + clear contract from textarea
         showToast('▼ contract expired · self-deleting');
         contractSelfDelete();
         return;
       }
     };
     tickCountdown();
-    countdownInterval = setInterval(tickCountdown, 1000);
+    // tick every 200ms when close, every 1000ms otherwise
+    const initialRem = Math.max(0, Math.floor((activeTiming.expires - Date.now())/1000));
+    countdownInterval = setInterval(tickCountdown, initialRem <= 60 ? 200 : 1000);
+  } else if (ctdEl){
+    ctdEl.style.display = 'none';
+    if (cs) cs.classList.remove('urgent');
   }
   // Wipe everything when switching modes or content changes structurally
   killFairies(0);
