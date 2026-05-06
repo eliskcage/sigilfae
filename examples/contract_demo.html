@@ -328,7 +328,13 @@ function speciesOf(c){
 function parseShape(s){
   const contractMode = s.includes(':');
   const timeAnchors = [];
-  const cleaned = s.replace(/\.(\d+)/g, (m, n) => { timeAnchors.push(parseInt(n,10)); return ''; });
+  // Only extract as time-anchor if the parsed value is > 0.
+  // This prevents mid-typing destructs (e.g., user types '.0' on the way to '.0030').
+  const cleaned = s.replace(/\.(\d+)/g, (m, n) => {
+    const v = parseInt(n, 10);
+    if (v > 0){ timeAnchors.push(v); return ''; }
+    return m;  // leave 0-valued anchors in place; they get stripped by the token filter below
+  });
   const tokens = cleaned.replace(/[^.,sbjqtQwe:\-\s]/g,'').split('').filter(c => c !== ' ');
   const nodes = []; const edges = [];
   let pendingDash = false; let inContract = false;
@@ -374,13 +380,17 @@ function render(){
   if (activeTiming){
     cctdn.style.display = 'block'; cctdn.style.opacity = '1';
     const fmt = s => s>=3600 ? `${Math.floor(s/3600)}h ${String(Math.floor((s%3600)/60)).padStart(2,'0')}m` : s>=60 ? `${Math.floor(s/60)}m ${String(s%60).padStart(2,'0')}s` : `${s}s`;
+    // Grace period: don't fire self-delete within the first 600ms of timing creation.
+    // Prevents instant-destruct when ghost-typing reaches a partial number momentarily.
+    const startedAt = Date.now();
     const tick = () => {
       if (!activeTiming) return;
       const r = Math.max(0, Math.floor((activeTiming.expires - Date.now())/1000));
       cdir.textContent = payerDirection === 'empire-to-user' ? 'EMPIRE → USER' : 'USER → EMPIRE';
       cctdn.textContent = '⌛ ' + fmt(r);
       cstatus.classList.toggle('urgent', r <= 30);
-      if (r <= 0){ clearInterval(countdownInterval); countdownInterval = null; toast('▼ contract expired · self-deleting'); selfDelete(); }
+      const aged = Date.now() - startedAt;
+      if (r <= 0 && aged > 600){ clearInterval(countdownInterval); countdownInterval = null; toast('▼ contract expired · self-deleting'); selfDelete(); }
     };
     tick();
     countdownInterval = setInterval(tick, 250);

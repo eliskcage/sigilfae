@@ -573,12 +573,14 @@ function parseShape(s){
   const treeMode = s.includes('^');
   // detect contract mode (presence of `:`)
   const contractMode = s.includes(':');
-  // Extract time-anchors first: .<digits> = pay-by countdown in seconds
-  // e.g. '.8000-.9000' = "valid from +8000s, expires at +9000s, then self-delete"
+  // Extract time-anchors: .<digits> = pay-by countdown in seconds.
+  // Only extract anchors with value > 0 — prevents instant-destruct when
+  // mid-typing (e.g. user typing '.0030' passes through '.0' momentarily).
   const timeAnchors = [];
   const cleaned = s.replace(/\.(\d+)/g, (m, n) => {
-    timeAnchors.push(parseInt(n, 10));
-    return '';   // strip from grammar tokens
+    const v = parseInt(n, 10);
+    if (v > 0){ timeAnchors.push(v); return ''; }
+    return m;  // leave 0-valued anchors in place; token-strip handles them
   });
   // case-sensitive: keep upper Q distinct from lower q
   const tokens = cleaned.replace(/[^.,sbjqtQwe/^:\-\s]/g, '').split('').filter(c => c !== ' ');
@@ -1302,6 +1304,10 @@ function renderShape(){
       if (s >= 60){ const m = Math.floor(s/60), sec = s%60; return `${m}m ${String(sec).padStart(2,'0')}s`; }
       return `${s}s`;
     };
+    // Grace period: don't fire self-delete within the first 600ms of timing
+    // creation. Prevents instant-destruct when ghost-typing passes through
+    // partial numbers momentarily.
+    const timingStartedAt = Date.now();
     const tickCountdown = () => {
       if (!activeTiming) return;  // bailout if cleared
       const remaining = Math.max(0, Math.floor((activeTiming.expires - Date.now())/1000));
@@ -1309,7 +1315,8 @@ function renderShape(){
       if (dirEl) dirEl.textContent = arrow;
       if (ctdEl) ctdEl.textContent = '⌛ ' + fmt(remaining);
       if (cs) cs.classList.toggle('urgent', remaining <= 30);
-      if (remaining <= 0){
+      const aged = Date.now() - timingStartedAt;
+      if (remaining <= 0 && aged > 600){
         clearInterval(countdownInterval); countdownInterval = null;
         showToast('▼ contract expired · self-deleting');
         contractSelfDelete();
