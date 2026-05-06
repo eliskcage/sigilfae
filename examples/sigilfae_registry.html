@@ -114,51 +114,108 @@
   </div>
 
   <!-- Genealogy tree (SVG visualisation) -->
-  <div class="tree-zone">
-    <svg viewBox="0 0 1100 240" style="width:100%;height:100%" preserveAspectRatio="xMidYMid meet">
+  <div class="tree-zone" style="height:280px">
+    <svg viewBox="0 0 1200 280" style="width:100%;height:100%" preserveAspectRatio="xMidYMid meet">
       <defs>
         <linearGradient id="lineageGrad" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stop-color="#d4a544" stop-opacity="0.6"/>
+          <stop offset="0" stop-color="#d4a544" stop-opacity="0.7"/>
           <stop offset="1" stop-color="#d4a544" stop-opacity="0.2"/>
         </linearGradient>
+        <radialGradient id="kingGlow"><stop offset="0" stop-color="#ffd700" stop-opacity="0.3"/><stop offset="1" stop-color="#ffd700" stop-opacity="0"/></radialGradient>
       </defs>
-      <!-- root: SIGILFAE NOTAE at top -->
-      <line x1="200" y1="80" x2="200" y2="160" stroke="url(#lineageGrad)" stroke-width="2"/>
-      <line x1="200" y1="80" x2="450" y2="160" stroke="url(#lineageGrad)" stroke-width="2"/>
-      <line x1="200" y1="80" x2="700" y2="160" stroke="url(#lineageGrad)" stroke-width="2" stroke-dasharray="4 4" opacity="0.4"/>
-      <line x1="200" y1="80" x2="950" y2="160" stroke="url(#lineageGrad)" stroke-width="2" stroke-dasharray="4 4" opacity="0.4"/>
 
-      <!-- root node -->
-      <circle cx="200" cy="60" r="24" fill="#0a0a0a" stroke="#d4a544" stroke-width="2.5"/>
-      <text x="200" y="66" text-anchor="middle" fill="#d4a544" font-family="monospace" font-size="16" font-weight="bold">.</text>
-      <text x="200" y="100" text-anchor="middle" fill="#d4a544" font-family="monospace" font-size="10" letter-spacing="2">SIGILFAE NOTAE</text>
-      <text x="200" y="115" text-anchor="middle" fill="#666" font-family="monospace" font-size="9">base · canonical</text>
+      <!-- ▲ KING NOTAE at top centre, golden -->
+      <text x="600" y="22" text-anchor="middle" fill="#ffd700" font-size="18">♛</text>
+      <circle cx="600" cy="60" r="40" fill="url(#kingGlow)"/>
+      <circle cx="600" cy="60" r="28" fill="#0a0a0a" stroke="#ffd700" stroke-width="3">
+        <animate attributeName="stroke-width" values="2.5;3.5;2.5" dur="2s" repeatCount="indefinite"/>
+      </circle>
+      <text x="600" y="68" text-anchor="middle" fill="#ffd700" font-family="monospace" font-size="20" font-weight="bold">.</text>
+      <text x="600" y="105" text-anchor="middle" fill="#ffd700" font-family="monospace" font-size="11" letter-spacing="3" font-weight="bold">SIGILFAE NOTAE ♛</text>
+      <text x="600" y="120" text-anchor="middle" fill="#888" font-family="monospace" font-size="9">king · base · absorbs proven offspring</text>
 
-      <!-- PYXIS (built) -->
-      <circle cx="200" cy="180" r="20" fill="rgba(185,164,245,0.1)" stroke="#b9a4f5" stroke-width="2"/>
-      <text x="200" y="186" text-anchor="middle" fill="#b9a4f5" font-family="monospace" font-size="14" font-weight="bold">,</text>
-      <text x="200" y="218" text-anchor="middle" fill="#b9a4f5" font-family="monospace" font-size="10" letter-spacing="2">PYXIS</text>
-      <text x="200" y="232" text-anchor="middle" fill="#666" font-family="monospace" font-size="9">live</text>
+      <!-- 7 canonical children + 3 proposed = 10 lines fanning out -->
+      <!-- canonical -->
+      <line x1="600" y1="100" x2="100" y2="200" stroke="url(#lineageGrad)" stroke-width="1.6"/>
+      <line x1="600" y1="100" x2="220" y2="200" stroke="url(#lineageGrad)" stroke-width="1.6"/>
+      <line x1="600" y1="100" x2="340" y2="200" stroke="url(#lineageGrad)" stroke-width="1.6"/>
+      <line x1="600" y1="100" x2="460" y2="200" stroke="url(#lineageGrad)" stroke-width="1.6"/>
+      <line x1="600" y1="100" x2="580" y2="200" stroke="url(#lineageGrad)" stroke-width="1.6"/>
+      <line x1="600" y1="100" x2="700" y2="200" stroke="url(#lineageGrad)" stroke-width="1.6"/>
+      <line x1="600" y1="100" x2="820" y2="200" stroke="url(#lineageGrad)" stroke-width="1.6"/>
+      <line x1="600" y1="100" x2="940" y2="200" stroke="url(#lineageGrad)" stroke-width="1.6"/>
+      <!-- proposed (dashed) -->
+      <line x1="600" y1="100" x2="1060" y2="200" stroke="#444" stroke-width="1.2" stroke-dasharray="3 3" opacity="0.6"/>
+      <line x1="600" y1="100" x2="1180" y2="200" stroke="#444" stroke-width="1.2" stroke-dasharray="3 3" opacity="0.6"/>
 
-      <!-- ASTRUM (proposed) -->
-      <circle cx="450" cy="180" r="20" fill="#0a0a0a" stroke="#444" stroke-width="2" stroke-dasharray="3 3"/>
-      <text x="450" y="186" text-anchor="middle" fill="#666" font-family="monospace" font-size="14">*</text>
-      <text x="450" y="218" text-anchor="middle" fill="#888" font-family="monospace" font-size="10" letter-spacing="2">ASTRUM</text>
-      <text x="450" y="232" text-anchor="middle" fill="#444" font-family="monospace" font-size="9">proposed</text>
+      <!-- PYXIS , -->
+      <circle cx="100" cy="220" r="18" fill="rgba(185,164,245,0.12)" stroke="#b9a4f5" stroke-width="2"/>
+      <text x="100" y="226" text-anchor="middle" fill="#b9a4f5" font-family="monospace" font-size="14" font-weight="bold">,</text>
+      <text x="100" y="252" text-anchor="middle" fill="#b9a4f5" font-family="monospace" font-size="9" letter-spacing="2">PYXIS</text>
+      <text x="100" y="265" text-anchor="middle" fill="#666" font-family="monospace" font-size="8">forms</text>
 
-      <!-- CIRCULUS (proposed) -->
-      <circle cx="700" cy="180" r="20" fill="#0a0a0a" stroke="#444" stroke-width="2" stroke-dasharray="3 3"/>
-      <text x="700" y="186" text-anchor="middle" fill="#666" font-family="monospace" font-size="14">o</text>
-      <text x="700" y="218" text-anchor="middle" fill="#888" font-family="monospace" font-size="10" letter-spacing="2">CIRCULUS</text>
-      <text x="700" y="232" text-anchor="middle" fill="#444" font-family="monospace" font-size="9">proposed</text>
+      <!-- CRUX / -->
+      <circle cx="220" cy="220" r="18" fill="rgba(155,224,212,0.1)" stroke="#9be0d4" stroke-width="2"/>
+      <text x="220" y="226" text-anchor="middle" fill="#9be0d4" font-family="monospace" font-size="14" font-weight="bold">/</text>
+      <text x="220" y="252" text-anchor="middle" fill="#9be0d4" font-family="monospace" font-size="9" letter-spacing="2">CRUX</text>
+      <text x="220" y="265" text-anchor="middle" fill="#666" font-family="monospace" font-size="8">3D</text>
 
-      <!-- UNDA (proposed) -->
-      <circle cx="950" cy="180" r="20" fill="#0a0a0a" stroke="#444" stroke-width="2" stroke-dasharray="3 3"/>
-      <text x="950" y="186" text-anchor="middle" fill="#666" font-family="monospace" font-size="14">~</text>
-      <text x="950" y="218" text-anchor="middle" fill="#888" font-family="monospace" font-size="10" letter-spacing="2">UNDA</text>
-      <text x="950" y="232" text-anchor="middle" fill="#444" font-family="monospace" font-size="9">proposed</text>
+      <!-- ANIMA s -->
+      <circle cx="340" cy="220" r="18" fill="rgba(126,108,255,0.1)" stroke="#7e6cff" stroke-width="2"/>
+      <text x="340" y="226" text-anchor="middle" fill="#7e6cff" font-family="monospace" font-size="14" font-weight="bold">s</text>
+      <text x="340" y="252" text-anchor="middle" fill="#7e6cff" font-family="monospace" font-size="9" letter-spacing="2">ANIMA</text>
+      <text x="340" y="265" text-anchor="middle" fill="#666" font-family="monospace" font-size="8">soul</text>
 
-      <text x="40" y="35" fill="#666" font-family="monospace" font-size="10" letter-spacing="3">▲ GENEALOGY</text>
+      <!-- PANIS b -->
+      <circle cx="460" cy="220" r="18" fill="rgba(212,165,68,0.1)" stroke="#d4a544" stroke-width="2"/>
+      <text x="460" y="226" text-anchor="middle" fill="#d4a544" font-family="monospace" font-size="14" font-weight="bold">b</text>
+      <text x="460" y="252" text-anchor="middle" fill="#d4a544" font-family="monospace" font-size="9" letter-spacing="2">PANIS</text>
+      <text x="460" y="265" text-anchor="middle" fill="#666" font-family="monospace" font-size="8">biscuit</text>
+
+      <!-- OPERA j -->
+      <circle cx="580" cy="220" r="18" fill="rgba(232,226,212,0.08)" stroke="#e8e2d4" stroke-width="2"/>
+      <text x="580" y="226" text-anchor="middle" fill="#e8e2d4" font-family="monospace" font-size="14" font-weight="bold">j</text>
+      <text x="580" y="252" text-anchor="middle" fill="#e8e2d4" font-family="monospace" font-size="9" letter-spacing="2">OPERA</text>
+      <text x="580" y="265" text-anchor="middle" fill="#666" font-family="monospace" font-size="8">jobs</text>
+
+      <!-- APIS q -->
+      <circle cx="700" cy="220" r="18" fill="rgba(255,215,0,0.08)" stroke="#ffd700" stroke-width="2"/>
+      <text x="700" y="226" text-anchor="middle" fill="#ffd700" font-family="monospace" font-size="14" font-weight="bold">q</text>
+      <text x="700" y="252" text-anchor="middle" fill="#ffd700" font-family="monospace" font-size="9" letter-spacing="2">APIS</text>
+      <text x="700" y="265" text-anchor="middle" fill="#666" font-family="monospace" font-size="8">bee</text>
+
+      <!-- TESSERA t (triangle) -->
+      <polygon points="820,205 838,237 802,237" fill="rgba(255,215,0,0.12)" stroke="#ffd700" stroke-width="2"/>
+      <text x="820" y="232" text-anchor="middle" fill="#ffd700" font-family="monospace" font-size="13" font-weight="bold">t</text>
+      <text x="820" y="252" text-anchor="middle" fill="#ffd700" font-family="monospace" font-size="9" letter-spacing="2">TESSERA</text>
+      <text x="820" y="265" text-anchor="middle" fill="#666" font-family="monospace" font-size="8">△ kingdom</text>
+
+      <!-- QUADRA Q (square) — NEWLY GENOMIC-LOCKED -->
+      <rect x="922" y="202" width="36" height="36" fill="rgba(255,215,0,0.15)" stroke="#ffd700" stroke-width="2.5"/>
+      <text x="940" y="226" text-anchor="middle" fill="#ffd700" font-family="monospace" font-size="14" font-weight="bold">Q</text>
+      <text x="940" y="252" text-anchor="middle" fill="#ffd700" font-family="monospace" font-size="9" letter-spacing="2">QUADRA</text>
+      <text x="940" y="265" text-anchor="middle" fill="#ffd700" font-family="monospace" font-size="8">□ sigilfae · GOLD-ZIP</text>
+      <!-- glow indicating genomic-lock -->
+      <rect x="918" y="198" width="44" height="44" fill="none" stroke="#ffd700" stroke-width="1" opacity="0.4">
+        <animate attributeName="opacity" values="0.2;0.6;0.2" dur="2s" repeatCount="indefinite"/>
+      </rect>
+
+      <!-- ASTRUM proposed -->
+      <circle cx="1060" cy="220" r="16" fill="#0a0a0a" stroke="#444" stroke-width="1.5" stroke-dasharray="3 3"/>
+      <text x="1060" y="226" text-anchor="middle" fill="#666" font-family="monospace" font-size="13">*</text>
+      <text x="1060" y="252" text-anchor="middle" fill="#888" font-family="monospace" font-size="9" letter-spacing="2">ASTRUM</text>
+      <text x="1060" y="265" text-anchor="middle" fill="#444" font-family="monospace" font-size="8">proposed</text>
+
+      <!-- UNDA / CIRCULUS proposed (combined far right column) -->
+      <circle cx="1180" cy="210" r="13" fill="#0a0a0a" stroke="#444" stroke-width="1.5" stroke-dasharray="3 3"/>
+      <text x="1180" y="215" text-anchor="middle" fill="#666" font-family="monospace" font-size="11">o</text>
+      <text x="1180" y="232" text-anchor="middle" fill="#888" font-family="monospace" font-size="8">CIRCULUS</text>
+      <circle cx="1180" cy="252" r="13" fill="#0a0a0a" stroke="#444" stroke-width="1.5" stroke-dasharray="3 3"/>
+      <text x="1180" y="257" text-anchor="middle" fill="#666" font-family="monospace" font-size="11">~</text>
+      <text x="1180" y="273" text-anchor="middle" fill="#888" font-family="monospace" font-size="8">UNDA</text>
+
+      <text x="40" y="35" fill="#666" font-family="monospace" font-size="10" letter-spacing="3">▲ GENEALOGY · 1 king + 8 canonical children + 3 proposed slots</text>
+      <text x="940" y="284" text-anchor="middle" fill="#ffd700" font-family="monospace" font-size="8" letter-spacing="2">[just-locked golden-zip]</text>
     </svg>
   </div>
 
@@ -227,6 +284,96 @@ const VARIANTS = [
     purple: false,
     metrics: { fun: 88, use: 82, inc: 6, net: 3 },
     notes: 'declares 3rd dimension · Z-edge between nodes (cyan dashed perspective line) · trailing / raises next node\'s z-layer.'
+  },
+  {
+    binomial: 'SIGILFAE ANIMA',
+    common: 'soul-bond fairies',
+    glyph: 's',
+    parent: 'NOTAE',
+    canonical: true,
+    proposed: false,
+    soul: 'SF-SIG-ANMA',
+    author: 'UNKLE_ROAL_DAHL',
+    born: '2026-05-06',
+    demo: 's-s-s-s',
+    purple: false,
+    metrics: { fun: 70, use: 90, inc: 30, net: 8 },
+    notes: 'declares the user\'s SFT soul-file is LIVE on the visualizer · QR-triangle indigo chest · binds mesh actions to the bearer\'s soul.'
+  },
+  {
+    binomial: 'SIGILFAE PANIS',
+    common: 'biscuit fairies',
+    glyph: 'b',
+    parent: 'NOTAE',
+    canonical: true,
+    proposed: false,
+    soul: 'SF-SIG-PANS',
+    author: 'UNKLE_ROAL_DAHL',
+    born: '2026-05-06',
+    demo: 'b-b-b-b',
+    purple: false,
+    metrics: { fun: 85, use: 60, inc: 5, net: 4 },
+    notes: 'empire affirmation token · biscuit chest · used to mark small wins / thanks / witness events.'
+  },
+  {
+    binomial: 'SIGILFAE OPERA',
+    common: 'jobs-list fairies',
+    glyph: 'j',
+    parent: 'NOTAE',
+    canonical: true,
+    proposed: false,
+    soul: 'SF-SIG-OPRA',
+    author: 'UNKLE_ROAL_DAHL',
+    born: '2026-05-06',
+    demo: 'j-j-j',
+    purple: false,
+    metrics: { fun: 60, use: 85, inc: 25, net: 6 },
+    notes: 'jobs-list bearer · scroll chest · click expands list of pending jobs · used in pyramid surfaces.'
+  },
+  {
+    binomial: 'SIGILFAE APIS',
+    common: 'angry-bee quid-pro-quo',
+    glyph: 'q',
+    parent: 'NOTAE',
+    canonical: true,
+    proposed: false,
+    soul: 'SF-SIG-APIS',
+    author: 'UNKLE_ROAL_DAHL',
+    born: '2026-05-06',
+    demo: 'q-q-q',
+    purple: false,
+    metrics: { fun: 75, use: 70, inc: 40, net: 5 },
+    notes: 'striped body + red stinger · pre-condition fairy demanding a trade · CLICK to open the QR-gate to a base-page · shakes when present.'
+  },
+  {
+    binomial: 'SIGILFAE TESSERA',
+    common: 'kingdom-piece gate (triangle)',
+    glyph: 't',
+    parent: 'NOTAE',
+    canonical: true,
+    proposed: false,
+    soul: 'SF-SIG-TESS',
+    author: 'UNKLE_DAVID_BOWIE',
+    born: '2026-05-06',
+    demo: 't-t-t-t',
+    purple: false,
+    metrics: { fun: 82, use: 95, inc: 60, net: 8 },
+    notes: 'Satoshi-QR-TRIANGLE chest · kingdom-piece gate (matches shortfactory.shop/q/ existing system) · click → QR-input modal → kingdom base-page.'
+  },
+  {
+    binomial: 'SIGILFAE QUADRA ⚿',
+    common: 'sigilfae empire gate (square) · GENOMIC LOCK 6 May 2026',
+    glyph: 'Q',
+    parent: 'NOTAE',
+    canonical: true,
+    proposed: false,
+    soul: 'SF-SIG-QUAD',
+    author: 'UNKLE_DAVID_BOWIE',
+    born: '2026-05-06',
+    demo: 'Q-Q-Q-Q',
+    purple: false,
+    metrics: { fun: 80, use: 92, inc: 55, net: 8 },
+    notes: 'Satoshi-QR-SQUARE chest · SIGILFAE empire signature (distinct from kingdom triangle) · powered by square_cypher.html · 4-edge spiral · GENOMIC GOLDEN-ZIP locked 2026-05-06 — design frozen, ready for offspring variation.'
   },
   {
     binomial: 'SIGILFAE ASTRUM',
