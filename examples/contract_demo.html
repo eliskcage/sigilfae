@@ -95,16 +95,19 @@
 
   .fairy .anima-qr{position:absolute;left:50%;top:34%;transform:translateX(-50%);width:13px;height:11px;clip-path:polygon(50% 0,100% 100%,0 100%);background:repeating-conic-gradient(from 0deg at 50% 50%,#000 0deg 18deg,#7e6cff 18deg 36deg);box-shadow:0 0 10px #7e6cff}
   .fairy .panis-biscuit{position:absolute;left:50%;top:34%;transform:translateX(-50%);width:12px;height:8px;border-radius:50%;background:radial-gradient(ellipse at 50% 30%,#e8c578,#a87330);box-shadow:0 0 6px #d4a544,inset 0 -1px 1px rgba(0,0,0,0.3);border:0.5px solid #6b4a1a}
-  /* LOADED biscuit — gold-filled core + £ amount overlay */
+  /* LOADED biscuit — gold-fill that DRAINS as capital streams to the receiver */
   .fairy.loaded .panis-biscuit{
-    background:radial-gradient(ellipse at 50% 30%,#fff8c8 0%,#ffd700 40%,#a87330 90%);
+    background:linear-gradient(0deg,
+      rgba(168,115,48,0.6) 0%,
+      rgba(168,115,48,0.6) calc((1 - var(--drain, 1)) * 100%),
+      #fff8c8 calc((1 - var(--drain, 1)) * 100% + 1%),
+      #ffd700 100%
+    ),radial-gradient(ellipse at 50% 30%,#fff8c8 0%,#ffd700 40%,#a87330 90%);
     box-shadow:0 0 14px #ffd700,inset 0 -1px 2px rgba(0,0,0,0.3);
-    animation:loadedShimmer 1.6s ease-in-out infinite
   }
-  @keyframes loadedShimmer{0%,100%{box-shadow:0 0 12px #ffd700,inset 0 -1px 2px rgba(0,0,0,0.3)}50%{box-shadow:0 0 22px #ffeb70,inset 0 -1px 2px rgba(0,0,0,0.3)}}
   .fairy.loaded::after{
     content:attr(data-loaded);position:absolute;bottom:-14px;left:50%;transform:translateX(-50%);
-    font-size:9px;color:#ffd700;font-weight:bold;letter-spacing:0.06em;font-family:monospace;
+    font-size:8px;color:#ffd700;font-weight:bold;letter-spacing:0.04em;font-family:monospace;
     text-shadow:0 0 6px rgba(255,215,0,0.6);white-space:nowrap;
     background:rgba(0,0,0,0.7);padding:1px 5px;border-radius:6px;border:0.5px solid #ffd700
   }
@@ -460,12 +463,29 @@ function render(){
     // Grace period: don't fire self-delete within the first 600ms of timing creation.
     // Prevents instant-destruct when ghost-typing reaches a partial number momentarily.
     const startedAt = Date.now();
+    const totalSecs = activeTiming.end;
     const tick = () => {
       if (!activeTiming) return;
-      const r = Math.max(0, Math.floor((activeTiming.expires - Date.now())/1000));
+      const elapsed = Math.max(0, Math.floor((Date.now() - (activeTiming.expires - totalSecs*1000))/1000));
+      const r = Math.max(0, totalSecs - elapsed);
       cdir.textContent = payerDirection === 'empire-to-user' ? 'EMPIRE → USER' : 'USER → EMPIRE';
       cctdn.textContent = '⌛ ' + fmt(r);
       cstatus.classList.toggle('urgent', r <= 30);
+      // ─── STREAMING PAY-AS-YOU-GO: drain each loaded biscuit proportionally ───
+      const progress = totalSecs > 0 ? Math.min(1, elapsed / totalSecs) : 0;
+      fairies.filter(f => f.loadedAmount).forEach(f => {
+        const streamed = Math.round(f.loadedAmount * progress);
+        const remaining = f.loadedAmount - streamed;
+        f.streamedAmount = streamed;
+        // Update label: "£N streamed / £TOTAL"
+        f.el.dataset.loaded = `£${streamed}/£${f.loadedAmount}`;
+        // CSS variable controls drain-fill height (1 = full, 0 = empty)
+        f.el.style.setProperty('--drain', String(1 - progress));
+        // Occasional gold particle from biscuit to receiver
+        if (Math.random() < 0.18 && remaining > 0){
+          spawnStreamParticle(f.x, f.y, stage.clientWidth/2, stage.clientHeight - 60);
+        }
+      });
       const aged = Date.now() - startedAt;
       if (r <= 0 && aged > 600){ clearInterval(countdownInterval); countdownInterval = null; toast('▼ contract expired · self-deleting'); selfDelete(); }
     };
@@ -709,7 +729,7 @@ function attachPaymentToken(token, label, amount){
       lastBisc.el.dataset.loaded = '£' + amount;
     }
     whiteBlood += 1; localStorage.setItem('sf_demo_white', String(whiteBlood)); refreshStats();
-    toast(`▲ STAKED £${amount} · biscuit loaded · honour to release · or collapse → empire 51% / wronged 49%`);
+    toast(`▲ STAKED £${amount} · streaming · biscuit drains as time runs · unstreamed forfeits on collapse`);
   } else {
     // Non-biscuit pay-options HONOUR the deal
     contractPaid = true;
@@ -722,20 +742,21 @@ function attachPaymentToken(token, label, amount){
 
 // ─── SELF-DELETE ───
 function selfDelete(){
-  // Sum loaded capital from any loaded biscuits in the contract
+  // Sum loaded capital + already-streamed amounts
   const loadedFairies = fairies.filter(f => f.loadedAmount && f.contract);
   const totalLoaded = loadedFairies.reduce((s, f) => s + (f.loadedAmount || 0), 0);
+  const totalStreamed = loadedFairies.reduce((s, f) => s + (f.streamedAmount || 0), 0);
+  const totalUnstreamed = totalLoaded - totalStreamed;
 
   if (contractPaid){
-    // ─── HONOURED · capital releases as agreed ───
+    // ─── HONOURED · any unstreamed remainder releases to receiver ───
     fairies.filter(f => f.contract).forEach(f => {
       f.el.classList.remove('contract');
       f.el.style.filter = 'hue-rotate(28deg) brightness(1.1) saturate(1.3)';
     });
     whiteBlood += 5; localStorage.setItem('sf_demo_white', String(whiteBlood));
     if (totalLoaded > 0){
-      toast(`♛ HONOURED · £${totalLoaded} released · +5 white`);
-      // Visual: gold particles from each loaded biscuit (released to receiver)
+      toast(`♛ HONOURED · £${totalStreamed} streamed + £${totalUnstreamed} released · +5 white`);
       loadedFairies.forEach(f => spawnGoldStream(f.x, f.y, stage.clientWidth/2, stage.clientHeight - 40, '#ffd700'));
     } else {
       toast('♛ DEAL HONOURED · +5 white');
@@ -743,13 +764,14 @@ function selfDelete(){
     refreshStats();
     TXT.value = TXT.value.replace(/\.\d+/g,'').replace(/:/, '·').trim();
   } else {
-    // ─── COLLAPSED · capital forfeits per rubberband doctrine ───
+    // ─── COLLAPSED · ONLY UNSTREAMED capital forfeits ───
+    // Streamed portion stayed with receiver during contract life — irrevocable
     let toEmpire = 0, toWronged = 0;
-    if (totalLoaded > 0){
-      toEmpire = Math.round(totalLoaded * 0.51);
-      toWronged = totalLoaded - toEmpire;
+    if (totalUnstreamed > 0){
+      toEmpire = Math.round(totalUnstreamed * 0.51);
+      toWronged = totalUnstreamed - toEmpire;
       empireTreasury += toEmpire;
-      whiteBlood += toWronged;  // wronged party (the user being demo'd) gets the 49% as compensation
+      whiteBlood += toWronged + totalStreamed;  // wronged party also keeps already-streamed
       localStorage.setItem('sf_empire_treasury', String(empireTreasury));
       localStorage.setItem('sf_demo_white', String(whiteBlood));
     }
@@ -800,7 +822,7 @@ function selfDelete(){
     });
     blackMarks += 1; localStorage.setItem('sf_demo_black', String(blackMarks));
     if (totalLoaded > 0){
-      toast(`▼ COLLAPSED · empire +£${toEmpire} · wronged +£${toWronged} · +1 BLACK MARK`);
+      toast(`▼ COLLAPSED · streamed £${totalStreamed} kept · unstreamed £${totalUnstreamed}: empire +£${toEmpire} / wronged +£${toWronged} · +1 BLACK MARK`);
     } else {
       toast('▼ DEAL COLLAPSED · +1 BLACK MARK · others may proceed');
     }
@@ -826,6 +848,19 @@ function spawnGoldStream(fromX, fromY, toX, toY, color){
       setTimeout(() => p.remove(), 800);
     }, i*60);
   }
+}
+
+// continuous-stream single particle for pay-as-you-go visual
+function spawnStreamParticle(fromX, fromY, toX, toY){
+  const p = document.createElement('div');
+  p.className = 'pop-particle';
+  p.style.background = '#ffd700'; p.style.boxShadow = '0 0 5px #ffd700';
+  p.style.width = '3px'; p.style.height = '3px';
+  p.style.setProperty('--tx', (toX - fromX) + 'px');
+  p.style.setProperty('--ty', (toY - fromY) + 'px');
+  p.style.left = fromX + 'px'; p.style.top = fromY + 'px';
+  stage.appendChild(p);
+  setTimeout(() => p.remove(), 800);
 }
 
 // ─── TOAST ───
