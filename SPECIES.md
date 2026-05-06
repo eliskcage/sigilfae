@@ -21,9 +21,27 @@ by review as variants qualify.
 | `Q` | **SIGILFAE QUADRA** | canonical | NOTAE | UNKLE_DAVID_BOWIE | 2026-05-06 | Satoshi-QR-**square** chest; empire signature; SIGILFAE base-page gate (distinct from kingdom triangle) |
 | `w` | **SIGILFAE TESTIS** ⚖ | canonical · :variety | NOTAE | UNKLE_ROAL_DAHL | 2026-05-06 | witness · notepad chest with self-writing pencil · sits LEFT of bond · earns fee for observing · makes contracts auditable |
 | `e` | **SIGILFAE FISCUS** ⚖ | canonical · :variety | NOTAE | UNKLE_ROAL_DAHL | 2026-05-06 | escrow pot · sits ON bond midpoint · holds funds visibly · auto-releases on commit · auto-refunds on default |
+| `—` | **SIGILFAE LUDUS** 🏆 *(game)* | canonical · :variety · GAME | :variety | UNKLE_DAVID_BOWIE | 2026-05-06 | meta-frame around :variety contracts. WIN = honour the most complex contract. Score = nodes×5 + species bonus × multi-user × £loaded. Web Audio dopamine palette · camera composite at z:0 · win-fanfare song · 60-confetti burst · 🏆 wins tally · leaderboard. Daily-replayable. Live in `examples/contract_demo.html` |
 | `*` | SIGILFAE ASTRUM | proposed | NOTAE | (open) | — | proposed: 5-pointed pentagonal stars between nodes; tag-input |
 | `o` | SIGILFAE CIRCULUS | proposed | NOTAE | (open) | — | proposed: orbiting circular nodes; radio-toggle behaviour |
 | `~` | SIGILFAE UNDA | proposed | NOTAE | (open) | — | proposed: sine-wave edges; range-slider behaviour |
+
+## Genealogy notes
+
+Most species are **glyph-children of NOTAE** — they introduce a new parser
+token + render behaviour, descend directly from the king, and operate as
+nodes in any DOTGRAMMA expression.
+
+A second kind of offspring is the **game-species**, born from the `:variety`
+clade rather than from NOTAE. SIGILFAE LUDUS is the first: it has no parser
+glyph; it's a **frame** that wraps an entire `:variety` contract and turns
+its honourable completion into a scored, sound-rich, photographable win.
+LUDUS is sibling to TESTIS + FISCUS at the contract level, but at a
+different abstraction — they are pieces inside a deal, LUDUS is the deal
+treated as a daily-playable game.
+
+Future game-species (proposed): **CIRCUS** (multi-LUDUS tournament bracket),
+**THEATRUM** (replay-as-spectacle, recorded plays watchable as cinema).
 
 ## Adding a variant
 
@@ -47,6 +65,7 @@ by review as variants qualify.
 | QUADRA | 80 | 92 | 55 | 8 |
 | TESTIS | 75 | 88 | 35 | 6 |
 | FISCUS | 80 | 92 | 65 | 7 |
+| LUDUS | — | — | — | — |
 | ASTRUM | — | — | — | — |
 | CIRCULUS | — | — | — | — |
 | UNDA | — | — | — | — |
