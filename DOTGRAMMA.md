@@ -15,6 +15,8 @@
 | `q` | APIS | quid-pro-quo / gate | angry-bee fairy with stinger; click opens TESSERA gate to a base-page |
 | `t` | TESSERA | kingdom gate | golden Satoshi-QR-**triangle** chest; kingdom-piece system (shortfactory.shop/q/) |
 | `Q` | QUADRA | sigilfae gate | golden Satoshi-QR-**square** chest; SIGILFAE empire signature (distinct surface) |
+| `w` | TESTIS ⚖ | :variety witness | notepad chest · self-writing pencil · sits LEFT of contract bond · earns fee for observing · auditable record |
+| `e` | FISCUS ⚖ | :variety escrow | pot chest with `$` jangling · sits ON bond midpoint · holds funds · auto-release/auto-refund |
 | `-` | (operator) | edge | draws an amber edge between previous and next node |
 | `^` | (operator) | tree branch | declares the flanking nodes are siblings under a shared parent above; activates TREE MODE |
 

@@ -19,6 +19,8 @@ by review as variants qualify.
 | `q` | **SIGILFAE APIS** | canonical | NOTAE | UNKLE_ROAL_DAHL | 2026-05-06 | angry-bee quid-pro-quo; striped body + red stinger; blocks until trade resolved; clicking opens TESSERA gate |
 | `t` | **SIGILFAE TESSERA** | canonical | NOTAE | UNKLE_DAVID_BOWIE | 2026-05-06 | Satoshi-QR-**triangle** chest; kingdom-piece gate (matches shortfactory.shop/q/ existing system) |
 | `Q` | **SIGILFAE QUADRA** | canonical | NOTAE | UNKLE_DAVID_BOWIE | 2026-05-06 | Satoshi-QR-**square** chest; empire signature; SIGILFAE base-page gate (distinct from kingdom triangle) |
+| `w` | **SIGILFAE TESTIS** ⚖ | canonical · :variety | NOTAE | UNKLE_ROAL_DAHL | 2026-05-06 | witness · notepad chest with self-writing pencil · sits LEFT of bond · earns fee for observing · makes contracts auditable |
+| `e` | **SIGILFAE FISCUS** ⚖ | canonical · :variety | NOTAE | UNKLE_ROAL_DAHL | 2026-05-06 | escrow pot · sits ON bond midpoint · holds funds visibly · auto-releases on commit · auto-refunds on default |
 | `*` | SIGILFAE ASTRUM | proposed | NOTAE | (open) | — | proposed: 5-pointed pentagonal stars between nodes; tag-input |
 | `o` | SIGILFAE CIRCULUS | proposed | NOTAE | (open) | — | proposed: orbiting circular nodes; radio-toggle behaviour |
 | `~` | SIGILFAE UNDA | proposed | NOTAE | (open) | — | proposed: sine-wave edges; range-slider behaviour |
@@ -43,6 +45,8 @@ by review as variants qualify.
 | APIS | 75 | 70 | 40 | 5 |
 | TESSERA | 82 | 95 | 60 | 8 |
 | QUADRA | 80 | 92 | 55 | 8 |
+| TESTIS | 75 | 88 | 35 | 6 |
+| FISCUS | 80 | 92 | 65 | 7 |
 | ASTRUM | — | — | — | — |
 | CIRCULUS | — | — | — | — |
 | UNDA | — | — | — | — |

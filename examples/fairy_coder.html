@@ -121,6 +121,52 @@
   }
   @keyframes qrPulse{0%,100%{box-shadow:0 0 12px #ffd700}50%{box-shadow:0 0 22px #ffeb70}}
 
+  /* SIGILFAE TESTIS · witness fairy (w) — :variety · neutral observer with notepad */
+  .fairy.testis .body{background:linear-gradient(180deg,#dfe2d4,#a8a89a) !important}
+  .fairy.testis .head{background:#dfe2d4}
+  .fairy .testis-pad{
+    position:absolute;left:50%;top:33%;transform:translateX(-50%);
+    width:11px;height:13px;background:#fffbef;border:1px solid #888;
+    border-radius:1px;
+    background-image:linear-gradient(180deg,
+      transparent 0,transparent 2px,
+      #888 2px,#888 2.4px,transparent 2.4px,transparent 4.5px,
+      #888 4.5px,#888 4.9px,transparent 4.9px,transparent 7px,
+      #888 7px,#888 7.4px,transparent 7.4px,transparent 9.5px,
+      #888 9.5px,#888 9.9px,transparent 9.9px,transparent 11px
+    );
+    box-shadow:0 0 4px rgba(255,255,255,0.4)
+  }
+  .fairy.testis .pent{display:none}
+  /* tiny pencil floating above pad — typewriter-mark animation */
+  .fairy.testis::after{
+    content:'✎';position:absolute;left:80%;top:30%;font-size:9px;color:#888;
+    animation:testisWrite 1.6s ease-in-out infinite
+  }
+  @keyframes testisWrite{0%,100%{transform:translateX(0) rotate(-15deg)}50%{transform:translateX(-3px) rotate(-25deg)}}
+
+  /* SIGILFAE FISCUS · escrow pot (e) — :variety · holds funds visibly, sits on the bond */
+  .fairy.fiscus .body{background:linear-gradient(180deg,#a87330,#5a3818) !important;border:1px solid #2a1a08 !important}
+  .fairy.fiscus .head{background:#a87330}
+  .fairy .fiscus-pot{
+    position:absolute;left:50%;top:32%;transform:translateX(-50%);
+    width:15px;height:13px;
+    background:radial-gradient(ellipse at 50% 30%,#d4a544 0%,#a87330 80%);
+    border:1px solid #5a3818;border-radius:0 0 50% 50% / 0 0 30% 30%;
+    box-shadow:0 0 8px rgba(212,165,68,0.6),inset 0 -2px 2px rgba(0,0,0,0.3)
+  }
+  .fairy .fiscus-pot::before{
+    content:'';position:absolute;left:-2px;right:-2px;top:-2px;height:3px;
+    background:#5a3818;border-radius:2px
+  }
+  .fairy .fiscus-pot::after{
+    content:'$';position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+    color:#ffd700;font-size:8px;font-weight:bold;text-shadow:0 0 4px rgba(255,215,0,0.8);
+    animation:fiscusJangle 0.8s ease-in-out infinite alternate
+  }
+  @keyframes fiscusJangle{0%{transform:translate(-50%,-50%) rotate(-3deg)}100%{transform:translate(-50%,-50%) rotate(3deg)}}
+  .fairy.fiscus .pent{display:none}
+
   /* SIGILFAE QUADRA · Square-QR chest (Q) — empire's signature shape, distinguishes from kingdom-piece */
   .fairy .quadra-qr{
     position:absolute;left:50%;top:32%;transform:translateX(-50%);
@@ -320,7 +366,7 @@
     <code>-</code> edge ·
     <code>^</code> tree branch
     <br><span style="color:#aaa">click → cycle state · drag → move · POP earns blood · click APIS or TESSERA → opens QR-gate to your base-page</span>
-    <br><span style="color:#52a86b;font-size:10px;letter-spacing:0.18em;opacity:0.65">[ <code style="color:#52a86b;border-color:#52a86b">:</code> for those who know · <code style="color:#52a86b;border-color:#52a86b">.NNNN</code> sets a countdown ]</span>
+    <br><span style="color:#52a86b;font-size:10px;letter-spacing:0.18em;opacity:0.85">▲ <b>THE :VARIETY</b> · contract clade · <code style="color:#52a86b;border-color:#52a86b">:</code> declares pact · <code style="color:#52a86b;border-color:#52a86b">w</code> witness · <code style="color:#52a86b;border-color:#52a86b">e</code> escrow · <code style="color:#52a86b;border-color:#52a86b">.NNNN</code> countdown</span>
   </div>
 </div>
 
@@ -346,18 +392,16 @@
     <div>
       <label>DOTGRAMMA · type a string · click pills · or PLAY DEMO</label>
       <textarea id="fixText" placeholder=". , / s b j q = nodes · - = edge · ^ = tree branch" spellcheck="false">.^. .^. .^.</textarea>
+      <div style="margin-top:14px;font-size:10px;color:#52a86b;letter-spacing:0.2em">▲ THE :VARIETY · click to load · type to riff</div>
       <div class="demos">
-        <span class="demo-pill" onclick="ghostType('.-.-.-')">.-.-.-<span class="sub">closed △</span></span>
-        <span class="demo-pill" onclick="ghostType('.-.-.-.-')">.-.-.-.-<span class="sub">closed □</span></span>
-        <span class="demo-pill" style="border-color:#b9a4f5;color:#b9a4f5" onclick="ghostType(',-,-,-,-')">,-,-,-,-<span class="sub">PYXIS forms</span></span>
-        <span class="demo-pill" style="border-color:#7e6cff;color:#7e6cff" onclick="ghostType('s-s-s-s')">s-s-s-s<span class="sub">ANIMA souls</span></span>
-        <span class="demo-pill" style="border-color:#d4a544;color:#d4a544" onclick="ghostType('b-b-b-b')">b-b-b-b<span class="sub">PANIS biscuits</span></span>
-        <span class="demo-pill" onclick="ghostType('j-j-j')">j-j-j<span class="sub">OPERA jobs</span></span>
-        <span class="demo-pill" style="border-color:#ffd700;color:#ffd700" onclick="ghostType('q-q-q')">q-q-q<span class="sub">APIS bees · click to gate</span></span>
-        <span class="demo-pill" style="border-color:#ffd700;color:#ffd700;background:rgba(255,215,0,0.08)" onclick="ghostType('t-t-t-t')">t-t-t-t<span class="sub">TESSERA △ · kingdom</span></span>
-        <span class="demo-pill" style="border-color:#ffd700;color:#ffd700;background:rgba(255,215,0,0.12)" onclick="ghostType('Q-Q-Q-Q')">Q-Q-Q-Q<span class="sub">QUADRA □ · sigilfae</span></span>
-        <span class="demo-pill" style="border-color:#ffd700;color:#ffd700;background:rgba(255,215,0,0.05)" onclick="ghostType('.^. .^. .^.')">.^. .^. .^.<span class="sub">TREE · cascade-pop</span></span>
-        <span class="demo-pill" style="border-color:#ffd700;color:#ffd700;background:rgba(255,215,0,0.05)" onclick="ghostType('s^j j^b j^,')">s^j j^b j^,<span class="sub">empire MONEY-tree</span></span>
+        <span class="demo-pill" style="border-color:#52a86b;color:#52a86b" onclick="ghostType(':')">:<span class="sub">bare pact · empire ↔ user</span></span>
+        <span class="demo-pill" style="border-color:#52a86b;color:#52a86b" onclick="ghostType(':b.0015')">:b.0015<span class="sub">biscuit deal · 15s</span></span>
+        <span class="demo-pill" style="border-color:#52a86b;color:#52a86b" onclick="ghostType(':s-Q.0030')">:s-Q.0030<span class="sub">soul + base · 30s</span></span>
+        <span class="demo-pill" style="border-color:#52a86b;color:#52a86b;background:rgba(82,168,107,0.08)" onclick="ghostType(':w-b.0020')">:w-b.0020<span class="sub">▲ witnessed biscuit · 20s</span></span>
+        <span class="demo-pill" style="border-color:#52a86b;color:#52a86b;background:rgba(82,168,107,0.08)" onclick="ghostType(':e-s.0030')">:e-s.0030<span class="sub">▲ escrowed soul · 30s</span></span>
+        <span class="demo-pill" style="border-color:#52a86b;color:#52a86b;background:rgba(82,168,107,0.12)" onclick="ghostType(':w-e-s-Q.0060')">:w-e-s-Q.0060<span class="sub">▲ FULL DEAL · witness + escrow + soul + base · 60s</span></span>
+        <span class="demo-pill" style="border-color:#52a86b;color:#52a86b" onclick="ghostType(':e-Q.0045')">:e-Q.0045<span class="sub">escrow + base · 45s</span></span>
+        <span class="demo-pill" style="border-color:#52a86b;color:#52a86b" onclick="ghostType(':w-w-b.0025')">:w-w-b.0025<span class="sub">two witnesses + biscuit</span></span>
       </div>
     </div>
     <div class="controls">
@@ -510,7 +554,7 @@ function setMode(m){
 //   s  ANIMA soul-bond  b  PANIS biscuit     j  OPERA jobs-list   q  APIS angry-bee
 //   -  2D edge
 //   ^  TREE branch (declares parent above the flanking nodes)
-const NODE_TOKENS = '.,sbjqtQ';
+const NODE_TOKENS = '.,sbjqtQwe';
 function speciesOf(c){
   if (c === '.') return 'notae';
   if (c === ',') return 'pyxis';
@@ -520,6 +564,8 @@ function speciesOf(c){
   if (c === 'q') return 'apis';
   if (c === 't') return 'tessera';
   if (c === 'Q') return 'quadra';
+  if (c === 'w') return 'testis';   // :variety witness
+  if (c === 'e') return 'fiscus';   // :variety escrow pot
   return 'notae';
 }
 function parseShape(s){
@@ -535,7 +581,7 @@ function parseShape(s){
     return '';   // strip from grammar tokens
   });
   // case-sensitive: keep upper Q distinct from lower q
-  const tokens = cleaned.replace(/[^.,sbjqtQ/^:\-\s]/g, '').split('').filter(c => c !== ' ');
+  const tokens = cleaned.replace(/[^.,sbjqtQwe/^:\-\s]/g, '').split('').filter(c => c !== ' ');
   const nodes = [];      // {sp, z, row?, contract?, contractRole?}
   const edges = [];      // {a, b, z?, tree?, contract?}
   let pendingDash = false;
@@ -732,6 +778,8 @@ function spawnFairy(node, idx, x, y, opts={}){
   let cls = 'fairy bob';
   if (purple) cls += ' purple';
   if (isApis) cls += ' apis';
+  if (sp === 'testis') cls += ' testis';
+  if (sp === 'fiscus') cls += ' fiscus';
   if (isPaymentRoot || isPaymentMid) cls += ' payment';
   if (node.contract) cls += ' contract';
   if (node.contractRole === 'empire') cls += ' empire-side';
@@ -755,6 +803,8 @@ function spawnFairy(node, idx, x, y, opts={}){
   else if (sp === 'opera') chestHTML = '<div class="opera-list"></div>';
   else if (sp === 'tessera') chestHTML = '<div class="tessera-qr"></div>';
   else if (sp === 'quadra') chestHTML = '<div class="quadra-qr"></div>';
+  else if (sp === 'testis') chestHTML = '<div class="testis-pad"></div>';
+  else if (sp === 'fiscus') chestHTML = '<div class="fiscus-pot"></div>';
   else if (isApis) chestHTML = '<div class="apis-stinger"></div>';
   else if (isPaymentRoot || isPaymentMid) chestHTML = '<div class="pent"></div>';
 
@@ -1312,14 +1362,26 @@ function renderPolygonMode(nodes, edges, closed){
     verts = new Array(nodes.length);
     verts[empireIdx] = {x: cx, y: cy - R*0.6};
     verts[userIdx]   = {x: cx, y: cy + R*0.6};
-    // Other nodes (attachments) → arc around user position
+    // Other nodes (attachments) — special placement by species
     const attached = nodes.map((n,i) => i).filter(i => i !== empireIdx && i !== userIdx);
-    attached.forEach((idx, j) => {
-      const ang = (j / Math.max(1, attached.length - 1) || 0.5) * Math.PI - Math.PI/2;
+    // Group: TESTIS witnesses go off-axis (left), FISCUS escrow goes ON the bond, others arc around user
+    const testisIdx = attached.filter(i => nodes[i].sp === 'testis');
+    const fiscusIdx = attached.filter(i => nodes[i].sp === 'fiscus');
+    const others    = attached.filter(i => nodes[i].sp !== 'testis' && nodes[i].sp !== 'fiscus');
+    // FISCUS on the bond midpoint (or stacked if multiple)
+    fiscusIdx.forEach((idx, j) => {
+      verts[idx] = {x: cx + (j - (fiscusIdx.length-1)/2) * 30, y: cy};
+    });
+    // TESTIS to the left of bond at mid-height (witnesses observing)
+    testisIdx.forEach((idx, j) => {
+      verts[idx] = {x: cx - R*0.7 - j*40, y: cy + (j%2 === 0 ? -R*0.15 : R*0.15)};
+    });
+    // Others arc around user (attached proofs)
+    others.forEach((idx, j) => {
+      const ang = others.length === 1 ? 0 : (j / (others.length - 1)) * Math.PI - Math.PI/2;
       const aR = R * 0.55;
-      verts[idx] = {x: cx + aR * Math.cos(ang) + R*0.4, y: cy + R*0.6 + aR * Math.sin(ang) * 0.55};
-      // Fallback to a tidier layout for single attachments: just to the right of user
-      if (attached.length === 1) verts[idx] = {x: cx + R*0.5, y: cy + R*0.6};
+      verts[idx] = {x: cx + aR * Math.cos(ang) + R*0.45, y: cy + R*0.6 + aR * Math.sin(ang) * 0.55};
+      if (others.length === 1) verts[idx] = {x: cx + R*0.55, y: cy + R*0.6};
     });
   } else {
     verts = polygonVertices(nodes.length, cx, cy, R);
