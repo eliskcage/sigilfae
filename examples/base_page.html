@@ -24,16 +24,16 @@
     content:'▲';position:absolute;right:-30px;top:-40px;
     font-size:200px;color:rgba(255,215,0,0.04);pointer-events:none
   }
-  /* SIGILFAE empire signature: SQUARE QR — distinct from shortfactory kingdom triangle */
+  /* SIGILFAE empire signature: SQUARE-CYPHER · rendered from the user's idea-string
+     using the same A-Z → open/filled algorithm as 00.shortfactory.shop/triangle-cipher,
+     but on 4 edges spiralling inward. Shape is deterministic + decodable. */
   .hdr-qr{
-    width:88px;height:88px;flex-shrink:0;
+    width:96px;height:96px;flex-shrink:0;
     background:#000;border:2px solid #ffd700;border-radius:6px;
     box-shadow:0 0 20px rgba(255,215,0,0.5);animation:hdrPulse 2s infinite;
-    display:grid;grid-template-columns:repeat(7,1fr);grid-template-rows:repeat(7,1fr);
-    padding:6px;gap:1px
+    position:relative;cursor:pointer;overflow:hidden
   }
-  .hdr-qr i{display:block;background:#ffd700;border-radius:1px}
-  .hdr-qr i.off{background:transparent}
+  .hdr-qr canvas{display:block;width:100%;height:100%}
   @keyframes hdrPulse{0%,100%{box-shadow:0 0 20px rgba(255,215,0,0.5)}50%{box-shadow:0 0 32px rgba(255,235,112,0.7)}}
   .hdr-info{flex:1}
   .hdr-tag{font-size:10px;color:#888;letter-spacing:0.3em;margin-bottom:4px}
@@ -113,7 +113,7 @@
 <body>
 
 <div class="hdr">
-  <div class="hdr-qr" id="hdrQr"></div>
+  <div class="hdr-qr" id="hdrQr" title="click to mint a fresh cypher" onclick="window.open('square_cypher.html?text='+encodeURIComponent(document.getElementById('formIdea').value || soulId.textContent), '_blank')"><canvas id="hdrCanvas"></canvas></div>
   <div class="hdr-info">
     <div class="hdr-tag">▲ YOUR BASE OF OPERATIONS · SIGILFAE □</div>
     <div class="hdr-soul" id="soulId">SF-LOADING</div>
@@ -211,26 +211,103 @@ const params = new URLSearchParams(window.location.search);
 const qr = (params.get('qr') || localStorage.getItem('sf_tessera_active') || 'SF-NEWBASE').toUpperCase();
 document.getElementById('soulId').textContent = qr;
 
-// ─── Render the SIGILFAE square QR deterministically from the soul-id ─────
-function renderSquareQR(seed){
-  // Simple 7×7 deterministic pattern: hash the seed → 49 bits, render cells
-  let h = 0;
-  for (let i=0; i<seed.length; i++) h = (h * 31 + seed.charCodeAt(i)) | 0;
-  const cells = [];
-  // generate 49 deterministic on/off values via xorshift
-  let x = h || 1;
-  for (let i=0; i<49; i++){
-    x ^= x << 13; x ^= x >>> 17; x ^= x << 5;
-    cells.push((x & 1) === 1);
-  }
-  // Force the 3 finder corners (top-left, top-right, bottom-left) to be filled
-  // for QR-aesthetic. Position-based override.
-  const finderCells = [0,1,2,5,6,7,8,9,11,12,13, 14,18, 21,25, 28,29,30,32,33,34,35];
-  finderCells.forEach(i => { if (i < 49) cells[i] = true; });
-  const el = document.getElementById('hdrQr');
-  el.innerHTML = cells.map(on => `<i class="${on?'':'off'}"></i>`).join('');
+// ─── Render the SIGILFAE square-cypher header ─────────────────────────
+// Same A-Z encoding as 00.shortfactory.shop/triangle-cipher, but on 4
+// edges spiralling inward. Deterministic from the user's idea-string.
+function letterToNumber(ch){ const c = ch.toUpperCase(); return (c >= 'A' && c <= 'Z') ? c.charCodeAt(0) - 64 : -1; }
+function numberToSymbols(n){
+  const s = [];
+  for (let i=0; i<Math.floor(n/5); i++) s.push('open');
+  for (let i=0; i<n%5; i++) s.push('filled');
+  return s;
 }
-renderSquareQR(qr);
+function encodeText(text){
+  const symbols = [];
+  const letters = (text || '').toUpperCase().split('');
+  for (let i=0; i<letters.length; i++){
+    const ch = letters[i];
+    if (ch === ' '){ symbols.push({type:'space'}); continue; }
+    const num = letterToNumber(ch);
+    if (num > 0){
+      for (const t of numberToSymbols(num)) symbols.push({type:t});
+      if (i < letters.length-1 && letters[i+1] !== ' ') symbols.push({type:'letter-gap'});
+    }
+  }
+  return symbols;
+}
+function getSquarePositions(count, size){
+  if (count === 0) return [];
+  const cx = size/2, cy = size/2;
+  const maxR = size * 0.42, minR = size * 0.05;
+  const circleR = Math.max(1.5, Math.min(5, size * 0.025));
+  const spacing = circleR * 3;
+  const slotsPerLap = Math.max(4, Math.floor(4 * (maxR + minR) / spacing));
+  const laps = Math.max(1.25, Math.min(8, count / slotsPerLap));
+  const corners = [{x:-1,y:-1},{x:1,y:-1},{x:1,y:1},{x:-1,y:1}];
+  const radiusAt = u => maxR - (maxR - minR) * u * u;
+  const positions = [];
+  const totalSeg = laps * 4;
+  for (let s=0; s<count; s++){
+    const u = count===1 ? 0.5 : s/(count-1);
+    const segPos = u * totalSeg;
+    const segIdx = Math.floor(segPos) % 4;
+    const segFrac = segPos - Math.floor(segPos);
+    const fullSegIdx = Math.floor(segPos);
+    const uA = fullSegIdx/totalSeg, uB = (fullSegIdx+1)/totalSeg;
+    const rA = radiusAt(uA), rB = radiusAt(uB);
+    const cA = corners[segIdx], cB = corners[(segIdx+1)%4];
+    const ax = cx + rA*cA.x, ay = cy + rA*cA.y;
+    const bx = cx + rB*cB.x, by = cy + rB*cB.y;
+    const x = ax + (bx-ax)*segFrac, y = ay + (by-ay)*segFrac;
+    const r = rA + (rB-rA)*segFrac;
+    positions.push({x, y, size: circleR * (0.6 + 0.4*(r/maxR))});
+  }
+  return positions;
+}
+function renderHeaderCypher(text){
+  const c = document.getElementById('hdrCanvas');
+  const wrap = c.parentElement;
+  const dpr = window.devicePixelRatio || 1;
+  const size = wrap.clientWidth;
+  c.width = size * dpr; c.height = size * dpr;
+  c.style.width = size+'px'; c.style.height = size+'px';
+  const cx = c.getContext('2d');
+  cx.setTransform(dpr,0,0,dpr,0,0);
+  cx.fillStyle = '#000';
+  cx.fillRect(0,0,size,size);
+  // Faint guide squares
+  for (let r=0; r<=3; r++){
+    const rad = size * 0.42 * (1 - r * 0.18);
+    cx.beginPath();
+    cx.rect(size/2 - rad, size/2 - rad, rad*2, rad*2);
+    cx.strokeStyle = `rgba(255,215,0,${0.06 - r*0.012})`;
+    cx.lineWidth = 0.8;
+    cx.stroke();
+  }
+  const symbols = encodeText(text);
+  const positions = getSquarePositions(symbols.length, size);
+  for (let i=0; i<symbols.length; i++){
+    const sym = symbols[i];
+    const pos = positions[i];
+    if (!pos || sym.type === 'letter-gap' || sym.type === 'space') continue;
+    if (sym.type === 'open'){
+      cx.beginPath(); cx.arc(pos.x, pos.y, pos.size, 0, Math.PI*2);
+      cx.strokeStyle = '#ffd700'; cx.lineWidth = Math.max(1, pos.size * 0.4);
+      cx.stroke();
+    } else if (sym.type === 'filled'){
+      cx.beginPath(); cx.arc(pos.x, pos.y, pos.size, 0, Math.PI*2);
+      cx.fillStyle = '#ffd700'; cx.fill();
+    }
+  }
+}
+// Re-render whenever the idea-text changes (or fall back to soul-id)
+function refreshHeaderCypher(){
+  const text = (state.idea || qr).replace(/[^A-Za-z\s]/g,'') || qr;
+  renderHeaderCypher(text);
+}
+window.addEventListener('resize', refreshHeaderCypher);
+// Initial render
+setTimeout(refreshHeaderCypher, 0);
 
 // Persist per-soul state in localStorage
 const STORE_KEY = 'sf_base_' + qr;
@@ -295,7 +372,8 @@ function saveBase(){
   saveState(state);
   refreshGraphFrame();
   renderVideo();
-  toast('▲ base saved · refresh-safe');
+  refreshHeaderCypher();   // ← header now reflects the new idea-text
+  toast('▲ base saved · cypher updated · refresh-safe');
 }
 
 function vote(kind){

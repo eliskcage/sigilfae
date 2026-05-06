@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SIGILFAE □ Square Cypher · type your idea · the fairies build the QR</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{background:#000;color:#f7e9b8;font-family:ui-monospace,'Consolas','Menlo',monospace;min-height:100vh}
+  body{padding:24px;background:radial-gradient(ellipse at top,#0c0a18 0%,#04030a 60%);display:flex;flex-direction:column;align-items:center}
+  header{text-align:center;margin-bottom:18px}
+  header .crown{color:#ffd700;font-size:22px;letter-spacing:0.5em}
+  header h1{font-size:13px;letter-spacing:0.4em;color:#ffd700;text-transform:uppercase;margin-top:6px}
+  header .sub{font-size:10px;color:#7a6e4f;letter-spacing:0.18em;margin-top:6px}
+  .modes{display:flex;gap:6px;margin-bottom:14px}
+  .mode{padding:7px 16px;background:#000;border:1px solid #333;color:#888;cursor:pointer;border-radius:3px;font-family:inherit;font-size:10px;letter-spacing:0.18em;text-transform:uppercase}
+  .mode.active{border-color:#ffd700;color:#ffd700;background:rgba(255,215,0,0.08);font-weight:bold}
+
+  /* Encode panel */
+  #encode-section{width:100%;max-width:760px;display:flex;flex-direction:column;align-items:center}
+  #decode-section{width:100%;max-width:760px;display:none;flex-direction:column;align-items:center}
+  textarea{
+    width:100%;background:#000;border:1px solid #333;border-radius:6px;padding:14px;
+    color:#ffd700;font-family:inherit;font-size:18px;line-height:1.5;min-height:80px;resize:vertical;
+    text-transform:uppercase;letter-spacing:0.12em;outline:none
+  }
+  textarea:focus{border-color:#ffd700;box-shadow:0 0 18px rgba(255,215,0,0.3)}
+  .canvas-wrap{
+    width:100%;max-width:560px;aspect-ratio:1;background:#000;border:1px solid rgba(255,215,0,0.25);
+    border-radius:8px;margin:18px 0;position:relative;overflow:hidden;box-shadow:0 0 40px rgba(255,215,0,0.1)
+  }
+  canvas#sq-canvas{width:100%;height:100%;display:block}
+  .notation{font-family:inherit;color:#ffd700;font-size:14px;letter-spacing:0.2em;text-align:center;min-height:24px;margin:8px 0;word-break:break-all}
+  .notation .filled{color:#ffd700}
+  .notation .open{color:#7a6e4f}
+  .notation .space{color:#444}
+  .actions{display:flex;gap:10px;margin-top:8px;flex-wrap:wrap;justify-content:center}
+  .btn{padding:9px 16px;background:transparent;color:#ffd700;border:1px solid rgba(255,215,0,0.45);border-radius:4px;font-family:inherit;font-size:10px;letter-spacing:0.18em;cursor:pointer;text-transform:uppercase}
+  .btn:hover{background:rgba(255,215,0,0.08)}
+  .btn.primary{background:linear-gradient(180deg,#ffeb70,#ffd700);color:#000;border-color:#ffd700;font-weight:bold}
+  .meta{font-size:10px;color:#5a5238;letter-spacing:0.16em;margin-top:14px;text-align:center;line-height:1.6;max-width:560px}
+  .meta b{color:#ffd700}
+
+  /* Decode */
+  #drop-zone{
+    width:100%;max-width:560px;aspect-ratio:1.6;border:2px dashed rgba(255,215,0,0.3);border-radius:10px;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    color:#7a6e4f;cursor:pointer;margin-bottom:16px;text-align:center;padding:20px
+  }
+  #drop-zone.over{border-color:#ffd700;background:rgba(255,215,0,0.04)}
+  #decode-preview{max-width:100%;max-height:400px;border-radius:4px;display:none;border:1px solid #222;margin-bottom:16px}
+  #decoded-text{font-family:inherit;color:#ffd700;font-size:18px;letter-spacing:0.16em;text-align:center;min-height:30px;text-transform:uppercase}
+
+  .legend{font-size:11px;color:#7a6e4f;text-align:center;margin-top:18px;letter-spacing:0.04em}
+  .legend code{background:#0d0d0d;border:1px solid #333;color:#ffd700;padding:2px 6px;border-radius:2px;font-family:inherit}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="crown">▲ □ ▲</div>
+  <h1>SIGILFAE □ Square Cypher</h1>
+  <div class="sub">type your idea · the fairies build the QR · 4 edges spiral inward · sister to the triangle</div>
+</header>
+
+<div class="modes">
+  <div class="mode active" id="mode-encode" onclick="setMode('encode')">▲ ENCODE</div>
+  <div class="mode" id="mode-decode" onclick="setMode('decode')">◆ DECODE</div>
+</div>
+
+<div id="encode-section">
+  <textarea id="text-input" placeholder="TYPE YOUR IDEA — A-Z ONLY" maxlength="200" spellcheck="false">SIGILFAE</textarea>
+  <div class="canvas-wrap"><canvas id="sq-canvas"></canvas></div>
+  <div class="notation" id="notation"></div>
+  <div class="actions">
+    <button class="btn primary" onclick="copySquare()">▲ COPY PNG</button>
+    <button class="btn" onclick="downloadSquare()">▼ DOWNLOAD</button>
+    <button class="btn" onclick="clearAll()">CLEAR</button>
+    <button class="btn" onclick="toggleSound()" id="sound-btn">▲ SOUND ON</button>
+  </div>
+  <div class="meta">
+    A→Z = 1→26 · each letter = <span style="color:#ffd700">⚪ open (×5)</span> + <span style="color:#ffd700">⚫ filled (×1)</span> symbols<br>
+    symbols spiral inward along 4 edges of a square · square distinguishes <b>SIGILFAE</b> from <b>kingdom (△)</b>
+  </div>
+</div>
+
+<div id="decode-section">
+  <div id="drop-zone" onclick="document.getElementById('file-input').click()">
+    <div style="font-size:24px;color:#ffd700;margin-bottom:8px">▲ DROP A SIGILFAE SQUARE</div>
+    <div>or click to upload · PNG with the square pattern</div>
+  </div>
+  <input id="file-input" type="file" accept="image/*" style="display:none">
+  <img id="decode-preview" alt="">
+  <div id="decoded-text"></div>
+  <div class="actions">
+    <button class="btn" onclick="resetDecode()">RESET</button>
+  </div>
+</div>
+
+<div class="legend">
+  <code>○</code> = +5 (open)  ·  <code>●</code> = +1 (filled)  ·  <code>▪</code> = space<br>
+  e.g. A=1=● · E=5=○ · F=6=○● · Z=26=○○○○○●
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+// SIGILFAE Square Cypher · sister to triangle-cypher
+// Same A-Z encoding, square spiral layout, dopamine engine.
+// ═══════════════════════════════════════════════════════════════
+
+const canvas = document.getElementById('sq-canvas');
+const ctx = canvas.getContext('2d');
+let W, H;
+let currentSymbols = [];
+let prevText = '';
+let soundOn = true;
+let globalRotation = 0;
+
+// ─── Audio (Web Audio synth) ──────────────────────────────
+let audioCtx = null;
+function ensureAudio(){ if(!audioCtx) audioCtx = new (window.AudioContext||window.webkitAudioContext)(); return audioCtx; }
+function playTone(freq, duration, type='sine', vol=0.06, detune=0){
+  if (!soundOn) return;
+  const ctx2 = ensureAudio();
+  const t0 = ctx2.currentTime;
+  const osc = ctx2.createOscillator();
+  const gain = ctx2.createGain();
+  osc.type = type; osc.frequency.value = freq;
+  if (detune) osc.detune.value = detune;
+  gain.gain.setValueAtTime(0, t0);
+  gain.gain.linearRampToValueAtTime(vol, t0 + 0.01);
+  gain.gain.exponentialRampToValueAtTime(0.001, t0 + duration);
+  osc.connect(gain).connect(ctx2.destination);
+  osc.start(t0); osc.stop(t0 + duration + 0.05);
+}
+function soundOpen(){ playTone(540, 0.12, 'sine', 0.06); playTone(720, 0.10, 'triangle', 0.04, 5); }
+function soundFilled(){ playTone(380, 0.08, 'square', 0.04); playTone(190, 0.10, 'sine', 0.05); }
+function soundGong(){
+  if (!soundOn) return;
+  const ctx2 = ensureAudio();
+  const t0 = ctx2.currentTime;
+  [440, 554, 659, 880].forEach((f,i) => {
+    const osc = ctx2.createOscillator(); const g = ctx2.createGain();
+    osc.type = 'sine'; osc.frequency.value = f;
+    g.gain.setValueAtTime(0, t0 + i*0.04); g.gain.linearRampToValueAtTime(0.05, t0 + i*0.04 + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.001, t0 + i*0.04 + 0.6);
+    osc.connect(g).connect(ctx2.destination); osc.start(t0+i*0.04); osc.stop(t0+i*0.04+0.7);
+  });
+}
+function soundComplete(){ playTone(880, 0.15, 'triangle', 0.06); setTimeout(()=> playTone(1320, 0.2, 'triangle', 0.05), 80); }
+
+function toggleSound(){
+  soundOn = !soundOn;
+  document.getElementById('sound-btn').textContent = soundOn ? '▲ SOUND ON' : '◆ SOUND OFF';
+}
+
+// ─── Particles ────────────────────────────────────────────
+let particles = [];
+function spawnParticles(x, y, color, count=8){
+  for (let i=0; i<count; i++){
+    const a = (i/count) * Math.PI*2 + Math.random()*0.4;
+    const v = 1 + Math.random()*1.5;
+    particles.push({x,y,vx:Math.cos(a)*v,vy:Math.sin(a)*v,life:1,color});
+  }
+}
+function tickParticles(){
+  particles = particles.filter(p => {
+    p.x += p.vx; p.y += p.vy; p.life -= 0.025;
+    p.vx *= 0.96; p.vy *= 0.96;
+    return p.life > 0;
+  });
+}
+function drawParticles(){
+  particles.forEach(p => {
+    ctx.fillStyle = p.color;
+    ctx.globalAlpha = p.life;
+    ctx.beginPath(); ctx.arc(p.x, p.y, 1.6, 0, Math.PI*2); ctx.fill();
+    ctx.globalAlpha = 1;
+  });
+}
+
+// ─── Cypher · same algorithm as triangle-cypher ───────────
+function letterToNumber(ch){ const c = ch.toUpperCase(); return (c >= 'A' && c <= 'Z') ? c.charCodeAt(0) - 64 : -1; }
+function numberToSymbols(n){
+  const syms = [];
+  for (let i=0; i<Math.floor(n/5); i++) syms.push('open');
+  for (let i=0; i<n%5; i++) syms.push('filled');
+  return syms;
+}
+function encodeText(text){
+  const symbols = [];
+  const letters = text.split('');
+  for (let i=0; i<letters.length; i++){
+    const ch = letters[i];
+    if (ch === ' '){ symbols.push({type:'space'}); continue; }
+    const num = letterToNumber(ch);
+    if (num > 0){
+      for (const s of numberToSymbols(num)) symbols.push({type:s});
+      if (i < letters.length-1 && letters[i+1] !== ' ') symbols.push({type:'letter-gap'});
+    }
+  }
+  return symbols;
+}
+function symbolsToNotation(text){
+  const parts = [];
+  for (const ch of text){
+    if (ch === ' '){ parts.push('▪'); continue; }
+    const num = letterToNumber(ch);
+    if (num > 0){
+      let s = '';
+      for (let j=0; j<Math.floor(num/5); j++) s += '○';
+      for (let j=0; j<num%5; j++) s += '●';
+      parts.push(s);
+    }
+  }
+  return parts.map(p => `<span class="${p === '▪' ? 'space' : ''}">${p.replace(/●/g, '<span class="filled">●</span>').replace(/○/g, '<span class="open">○</span>')}</span>`).join(' ');
+}
+
+// ─── Square spiral layout ─────────────────────────────────
+// 4 edges per ring: top → right → bottom → left, then shrink and repeat.
+// Continuous spiral inward, like the triangle-cypher's getTriPositions.
+function getSquarePositions(count, canvasSize){
+  if (count === 0) return [];
+  const cx = canvasSize/2;
+  const cy = canvasSize/2;
+  const maxR = canvasSize * 0.42;
+  const minR = canvasSize * 0.04;
+  const circleR = Math.max(2, Math.min(7, canvasSize * 0.013));
+  const spacing = circleR * 3.2;
+  const avgPerimAtMid = 4 * (maxR + minR);  // 4 edges
+  const slotsPerLap = Math.max(4, Math.floor(avgPerimAtMid / spacing));
+  const laps = Math.max(1.25, Math.min(10, count / slotsPerLap));
+
+  // 4 corners of an axis-aligned square (top-left, top-right, bottom-right, bottom-left)
+  const corners = [
+    {x:-1, y:-1}, {x: 1, y:-1}, {x: 1, y: 1}, {x:-1, y: 1}
+  ];
+  const radiusAt = (u) => maxR - (maxR - minR) * u * u;
+
+  const positions = [];
+  const totalSegments = laps * 4;
+
+  for (let s=0; s<count; s++){
+    const u = count === 1 ? 0.5 : s/(count-1);
+    const segPos = u * totalSegments;
+    const segIdx = Math.floor(segPos) % 4;
+    const segFrac = segPos - Math.floor(segPos);
+    const fullSegIdx = Math.floor(segPos);
+
+    const uA = fullSegIdx / totalSegments;
+    const uB = (fullSegIdx + 1) / totalSegments;
+    const rA = radiusAt(uA);
+    const rB = radiusAt(uB);
+
+    const cA = corners[segIdx];
+    const cB = corners[(segIdx + 1) % 4];
+
+    const ax = cx + rA * cA.x;
+    const ay = cy + rA * cA.y;
+    const bx = cx + rB * cB.x;
+    const by = cy + rB * cB.y;
+
+    const x = ax + (bx - ax) * segFrac;
+    const y = ay + (by - ay) * segFrac;
+    const r = rA + (rB - rA) * segFrac;
+    const sizeFactor = 0.55 + 0.45 * (r / maxR);
+    positions.push({x, y, size: circleR * sizeFactor, r, edge: segIdx, ring: Math.floor(fullSegIdx/4)});
+  }
+  return positions;
+}
+
+// ─── Render ───────────────────────────────────────────────
+function resizeCanvas(){
+  const wrap = canvas.parentElement;
+  const size = wrap.clientWidth;
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width = size * dpr; canvas.height = size * dpr;
+  canvas.style.width = size+'px'; canvas.style.height = size+'px';
+  W = canvas.width; H = canvas.height;
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+}
+window.addEventListener('resize', resizeCanvas);
+
+function drawSquare(time){
+  const size = canvas.width / (window.devicePixelRatio || 1);
+  ctx.clearRect(0,0,size,size);
+  ctx.fillStyle = '#000';
+  ctx.fillRect(0,0,size,size);
+  const cx = size/2, cy = size/2;
+  globalRotation = (time||0) * 0.00001;
+
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.rotate(globalRotation);
+  ctx.translate(-cx, -cy);
+
+  // Faint square guides
+  if (currentSymbols.length > 0){
+    for (let r=0; r<=4; r++){
+      const rad = size * 0.42 * (1 - r * 0.18);
+      ctx.beginPath();
+      ctx.rect(cx - rad, cy - rad, rad*2, rad*2);
+      ctx.strokeStyle = `rgba(255,215,0,${0.04 - r*0.008})`;
+      ctx.lineWidth = 1;
+      ctx.stroke();
+    }
+  }
+
+  const positions = getSquarePositions(currentSymbols.length, size);
+  for (let i=0; i<currentSymbols.length && i<positions.length; i++){
+    const sym = currentSymbols[i];
+    const pos = positions[i];
+    if (sym.type === 'letter-gap' || sym.type === 'space') continue;
+
+    let scale = 1;
+    if (sym.birthTime){
+      const age = (time||0) - sym.birthTime;
+      if (age < 400){
+        scale = 0.1 + 0.9 * Math.min(1, age/400);
+        scale = 1 - Math.pow(1 - scale, 3);
+      }
+    }
+    const r = pos.size * scale;
+
+    if (sym.type === 'open'){
+      ctx.beginPath();
+      ctx.arc(pos.x, pos.y, r, 0, Math.PI*2);
+      ctx.strokeStyle = '#ffd700';
+      ctx.lineWidth = Math.max(1, r * 0.35);
+      ctx.shadowBlur = 8; ctx.shadowColor = '#ffd700';
+      ctx.stroke();
+      ctx.shadowBlur = 0;
+    } else if (sym.type === 'filled'){
+      ctx.beginPath();
+      ctx.arc(pos.x, pos.y, r, 0, Math.PI*2);
+      ctx.fillStyle = '#ffd700';
+      ctx.shadowBlur = 12; ctx.shadowColor = '#ffd700';
+      ctx.fill();
+      ctx.shadowBlur = 0;
+    }
+  }
+
+  ctx.restore();
+
+  // Particles (in screen space, no rotation)
+  tickParticles();
+  drawParticles();
+
+  requestAnimationFrame(drawSquare);
+}
+
+// ─── Input ────────────────────────────────────────────────
+const textInput = document.getElementById('text-input');
+function updateFromText(){
+  const val = textInput.value.toUpperCase().replace(/[^A-Z\s]/g,'');
+  if (val !== textInput.value){
+    const pos = textInput.selectionStart;
+    textInput.value = val;
+    textInput.setSelectionRange(pos, pos);
+  }
+  const newSymbols = encodeText(val);
+  // If text grew, sound + spawn particles for new symbols
+  if (val.length > prevText.length && newSymbols.length > currentSymbols.length){
+    const startIdx = currentSymbols.length;
+    const now = performance.now();
+    for (let i=startIdx; i<newSymbols.length; i++) newSymbols[i].birthTime = now;
+    // Trigger sound for the LAST added node (latest letter)
+    const last = newSymbols[newSymbols.length-1];
+    if (last && last.type === 'open') soundOpen();
+    else if (last && last.type === 'filled') soundFilled();
+    // Particles at the latest position
+    const positions = getSquarePositions(newSymbols.length, canvas.width/(window.devicePixelRatio||1));
+    const lp = positions[positions.length-1];
+    if (lp) spawnParticles(lp.x, lp.y, '#ffd700', 6);
+    // Gong every 4 segments (a full lap of the square)
+    if (Math.floor(currentSymbols.length / 4) < Math.floor(newSymbols.length / 4)) soundGong();
+  }
+  // preserve birth times for unchanged
+  for (let i=0; i<Math.min(currentSymbols.length, newSymbols.length); i++){
+    if (currentSymbols[i] && currentSymbols[i].birthTime && currentSymbols[i].type === newSymbols[i].type){
+      newSymbols[i].birthTime = currentSymbols[i].birthTime;
+    }
+  }
+  currentSymbols = newSymbols;
+  document.getElementById('notation').innerHTML = symbolsToNotation(val);
+  prevText = val;
+}
+textInput.addEventListener('input', updateFromText);
+
+// ─── Actions ──────────────────────────────────────────────
+function clearAll(){
+  textInput.value = '';
+  currentSymbols = [];
+  prevText = '';
+  document.getElementById('notation').innerHTML = '';
+}
+
+function getExportCanvas(){
+  const exp = document.createElement('canvas');
+  const size = 800;
+  exp.width = size; exp.height = size;
+  const ec = exp.getContext('2d');
+  ec.fillStyle = '#000'; ec.fillRect(0,0,size,size);
+  // square guides
+  const cx = size/2, cy = size/2;
+  for (let r=0; r<=4; r++){
+    const rad = size * 0.42 * (1 - r * 0.18);
+    ec.beginPath();
+    ec.rect(cx - rad, cy - rad, rad*2, rad*2);
+    ec.strokeStyle = `rgba(255,215,0,${0.05 - r*0.01})`;
+    ec.lineWidth = 1;
+    ec.stroke();
+  }
+  // symbols at full scale (no birth animation)
+  const positions = getSquarePositions(currentSymbols.length, size);
+  for (let i=0; i<currentSymbols.length && i<positions.length; i++){
+    const sym = currentSymbols[i];
+    const pos = positions[i];
+    if (sym.type === 'letter-gap' || sym.type === 'space') continue;
+    if (sym.type === 'open'){
+      ec.beginPath();
+      ec.arc(pos.x, pos.y, pos.size, 0, Math.PI*2);
+      ec.strokeStyle = '#ffd700'; ec.lineWidth = Math.max(1, pos.size*0.35);
+      ec.stroke();
+    } else if (sym.type === 'filled'){
+      ec.beginPath();
+      ec.arc(pos.x, pos.y, pos.size, 0, Math.PI*2);
+      ec.fillStyle = '#ffd700';
+      ec.fill();
+    }
+  }
+  // signature
+  ec.font = '11px monospace'; ec.fillStyle = 'rgba(255,215,0,0.5)'; ec.textAlign = 'center';
+  ec.fillText('SIGILFAE □', size/2, size - 14);
+  return exp;
+}
+
+async function copySquare(){
+  const exp = getExportCanvas();
+  exp.toBlob(async blob => {
+    try {
+      await navigator.clipboard.write([new ClipboardItem({'image/png': blob})]);
+      flashButton('▲ COPIED');
+      soundComplete();
+      spawnParticles(canvas.width/(window.devicePixelRatio||1)/2, canvas.height/(window.devicePixelRatio||1)/2, '#ffd700', 24);
+    } catch(e){ flashButton('× FAILED'); }
+  }, 'image/png');
+}
+function downloadSquare(){
+  const exp = getExportCanvas();
+  const link = document.createElement('a');
+  link.download = 'sigilfae-square-cypher.png';
+  link.href = exp.toDataURL();
+  link.click();
+  soundComplete();
+}
+function flashButton(msg){
+  const b = document.querySelector('.btn.primary');
+  const old = b.textContent;
+  b.textContent = msg;
+  setTimeout(() => b.textContent = old, 1100);
+}
+
+// ─── Mode switch ──────────────────────────────────────────
+function setMode(mode){
+  document.getElementById('mode-encode').classList.toggle('active', mode === 'encode');
+  document.getElementById('mode-decode').classList.toggle('active', mode === 'decode');
+  document.getElementById('encode-section').style.display = mode === 'encode' ? 'flex' : 'none';
+  document.getElementById('decode-section').style.display = mode === 'decode' ? 'flex' : 'none';
+}
+
+// ─── Decode (basic, mirrors triangle decoder) ─────────────
+const dropZone = document.getElementById('drop-zone');
+const fileInput = document.getElementById('file-input');
+const decodePreview = document.getElementById('decode-preview');
+const decodedText = document.getElementById('decoded-text');
+['dragenter','dragover'].forEach(e => dropZone.addEventListener(e, ev => { ev.preventDefault(); dropZone.classList.add('over'); }));
+['dragleave','drop'].forEach(e => dropZone.addEventListener(e, ev => { ev.preventDefault(); dropZone.classList.remove('over'); }));
+dropZone.addEventListener('drop', ev => {
+  if (ev.dataTransfer.files[0]) processImage(ev.dataTransfer.files[0]);
+});
+fileInput.addEventListener('change', e => { if (e.target.files[0]) processImage(e.target.files[0]); });
+function processImage(file){
+  const r = new FileReader();
+  r.onload = e => {
+    decodePreview.src = e.target.result;
+    decodePreview.style.display = 'block';
+    const img = new Image();
+    img.onload = () => decodeImage(img);
+    img.src = e.target.result;
+  };
+  r.readAsDataURL(file);
+}
+function decodeImage(img){
+  // Quick-decode stub: scan for golden-pixel blobs, classify by hollow-vs-filled
+  // Production version mirrors the triangle decoder more closely.
+  const cv = document.createElement('canvas');
+  cv.width = img.width; cv.height = img.height;
+  const c = cv.getContext('2d');
+  c.drawImage(img, 0, 0);
+  const data = c.getImageData(0, 0, cv.width, cv.height).data;
+  const isGolden = (i) => data[i] > 180 && data[i+1] > 130 && data[i+2] < 130;
+  let count = 0;
+  for (let i=0; i<data.length; i+=4) if (isGolden(i)) count++;
+  decodedText.textContent = count > 100
+    ? '▲ SQUARE DETECTED · ' + count + ' golden pixels · use triangle-cypher decoder for exact text recovery'
+    : '◆ no SIGILFAE square detected';
+}
+function resetDecode(){
+  decodePreview.style.display = 'none';
+  decodedText.textContent = '';
+  fileInput.value = '';
+}
+
+// ─── Init ─────────────────────────────────────────────────
+resizeCanvas();
+updateFromText();
+requestAnimationFrame(drawSquare);
+
+// URL param support: ?text=... auto-fills
+const params = new URLSearchParams(window.location.search);
+const t = params.get('text');
+if (t){ textInput.value = t.toUpperCase().slice(0, 200); updateFromText(); }
+
+console.log('▲ SIGILFAE □ square cypher · sister to triangle · same A-Z encoding · 4 edges');
+console.log('▲ try: type your idea · the fairies build the QR with sound + particles');
+</script>
+
+</body>
+</html>
