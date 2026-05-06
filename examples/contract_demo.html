@@ -471,23 +471,29 @@
       <span class="x" onclick="closePay()">×</span>
       <div class="h">▲ HOW DO YOU PAY ▲</div>
       <div class="h2" id="payH2">choose one — attach to the contract</div>
-      <button class="pay-opt" onclick="payVia('Q','QUADRA · square base-QR')">
+      <!-- EMPIRE-side · ShortFactory pays in white blood (the demo currency) -->
+      <button class="pay-opt" data-role="empire" onclick="payVia('W','WHITE BLOOD · empire pay token')" style="border-color:rgba(255,255,255,0.45);background:linear-gradient(180deg,rgba(255,255,255,0.06),rgba(255,255,255,0.02))">
+        <span class="pay-glyph" style="background:linear-gradient(180deg,#ffffff,#dcd8c8);color:#000;border:1px solid #888;border-radius:50% 50% 50% 50% / 70% 70% 30% 30%;font-size:18px;line-height:1">●</span>
+        <span class="pay-info"><b style="color:#fff">WHITE BLOOD — ShortFactory pays</b><span class="pay-sub">demo currency · accumulates · link your soul to keep it forever</span></span>
+      </button>
+      <!-- USER-side options · participant attaches their own token -->
+      <button class="pay-opt" data-role="user" onclick="payVia('Q','QUADRA · square base-QR')">
         <span class="pay-glyph" style="background:#000;border:2px solid #ffd700;color:#ffd700">Q</span>
         <span class="pay-info"><b>QUADRA — your SIGILFAE base</b><span class="pay-sub">empire-side identity + funds</span></span>
       </button>
-      <button class="pay-opt" onclick="payVia('t','TESSERA · triangle kingdom-QR')">
+      <button class="pay-opt" data-role="user" onclick="payVia('t','TESSERA · triangle kingdom-QR')">
         <span class="pay-glyph" style="background:#000;border:2px solid #ffd700;clip-path:polygon(50% 10%,90% 90%,10% 90%);color:#ffd700">t</span>
         <span class="pay-info"><b>TESSERA — kingdom-piece QR</b><span class="pay-sub">shortfactory.shop kingdom identity</span></span>
       </button>
-      <button class="pay-opt" onclick="payVia('b','PANIS · biscuit')">
+      <button class="pay-opt" data-role="user" onclick="payVia('b','PANIS · biscuit')">
         <span class="pay-glyph" style="background:radial-gradient(ellipse at 30% 30%,#e8c578,#a87330);color:#fff;border:1px solid #6b4a1a">b</span>
         <span class="pay-info"><b>PANIS — send a biscuit</b><span class="pay-sub">small affirmation token</span></span>
       </button>
-      <button class="pay-opt" onclick="payVia('s','ANIMA · soul-bond')">
+      <button class="pay-opt" data-role="user" onclick="payVia('s','ANIMA · soul-bond')">
         <span class="pay-glyph" style="background:#000;border:2px solid #7e6cff;color:#7e6cff">s</span>
-        <span class="pay-info"><b>ANIMA — connect SFT soul</b><span class="pay-sub">highest-tier commitment</span></span>
+        <span class="pay-info"><b>ANIMA — connect SFT soul</b><span class="pay-sub">link your soul · binds white blood to you forever</span></span>
       </button>
-      <button class="pay-opt" onclick="payVia(',','PYXIS · upload file')">
+      <button class="pay-opt" data-role="user" onclick="payVia(',','PYXIS · upload file')">
         <span class="pay-glyph" style="background:rgba(185,164,245,0.15);border:2px solid #b9a4f5;color:#b9a4f5">,</span>
         <span class="pay-info"><b>PYXIS — attach a file</b><span class="pay-sub">proof / contract / asset</span></span>
       </button>
@@ -1217,12 +1223,53 @@ function swapPayer(){
 
 // ─── PAY ───
 function openPay(payer){
-  document.getElementById('payH2').textContent = `paying as ${payer.contractRole === 'empire' ? 'EMPIRE-side' : 'USER-side'} · choose how`;
+  const role = payer.contractRole;  // 'empire' or 'user'
+  // Show only the options that match who's paying:
+  //   empire (ShortFactory) pays in WHITE BLOOD · the demo's reward currency
+  //   user attaches their own token (Q / t / b / s / ,)
+  document.querySelectorAll('#payOverlay .pay-opt[data-role]').forEach(el => {
+    el.style.display = (el.dataset.role === role) ? 'flex' : 'none';
+  });
+  document.getElementById('payH2').textContent = role === 'empire'
+    ? 'paying as EMPIRE-side · ShortFactory pays in white blood'
+    : 'paying as USER-side · attach your token';
   document.getElementById('payOverlay').classList.add('show');
   playSound('pay-open');
 }
 function closePay(){ document.getElementById('payOverlay').classList.remove('show'); }
 function payVia(token, label){
+  // ─── EMPIRE PAYS IN WHITE BLOOD · the demo's reward currency ───
+  // Accumulates in localStorage[sf_demo_white]. Link an SFT soul (via the
+  // ANIMA pay-option) to bind the balance to your soul forever — survives
+  // device reset, follows you into the rest of the empire surfaces.
+  if (token === 'W'){
+    closePay();
+    contractPaid = true;
+    const userCount = Math.max(1, fairies.filter(f => f.contractRole === 'user').length);
+    const award = 5 + 5 * userCount;  // +5 base + 5 per participating user (multi-party rewards)
+    whiteBlood += award;
+    localStorage.setItem('sf_demo_white', String(whiteBlood));
+    refreshStats();
+    toast(`▲ EMPIRE PAID · +${award} WHITE BLOOD · contract honoured`);
+    playSound('pay');
+    EDGES.querySelectorAll('line[stroke="url(#ec)"]').forEach(l => l.setAttribute('stroke', '#ffffff'));
+    // Sparkle white particles from empire fairy outward — visualise the gift
+    const empF = fairies.find(f => f.contractRole === 'empire');
+    if (empF){
+      for (let k=0; k<14; k++){
+        const p = document.createElement('div');
+        p.className = 'pop-particle';
+        p.style.background = '#ffffff'; p.style.boxShadow = '0 0 8px #ffffff';
+        const ang = (k/14)*Math.PI*2;
+        p.style.setProperty('--tx', (Math.cos(ang)*70)+'px');
+        p.style.setProperty('--ty', (Math.sin(ang)*70)+'px');
+        p.style.left = empF.x+'px'; p.style.top = empF.y+'px';
+        stage.appendChild(p);
+        setTimeout(() => p.remove(), 900);
+      }
+    }
+    return;
+  }
   // PANIS biscuits open the load-amount flow instead of paying directly.
   // The biscuit must be loaded with capital + thumbprint-locked first.
   if (token === 'b'){
