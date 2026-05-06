@@ -67,6 +67,24 @@
   .contract-status.urgent .ctdwn{color:#ff5050;text-shadow:0 0 14px rgba(255,80,80,0.6)}
   .contract-status .swap-hint{font-size:8px;color:#888;letter-spacing:0.12em;display:block;margin-top:3px}
 
+  /* STUDIO MIGRATION BANNER — surfaces when contract grows beyond mobile */
+  .studio-banner{
+    position:absolute;top:8px;right:8px;
+    background:rgba(0,0,0,0.94);border:1.5px solid #ffaa3a;border-radius:10px;
+    padding:6px 10px;font-size:8px;color:#ffaa3a;letter-spacing:0.14em;
+    z-index:11;font-family:monospace;display:none;text-align:center;
+    box-shadow:0 0 18px rgba(255,170,58,0.4);max-width:140px;line-height:1.5;
+    animation:studioPulse 1.6s infinite ease-in-out
+  }
+  @keyframes studioPulse{0%,100%{box-shadow:0 0 14px rgba(255,170,58,0.4)}50%{box-shadow:0 0 26px rgba(255,170,58,0.7)}}
+  .studio-banner b{color:#ffd07a;font-size:9px;letter-spacing:0.18em}
+  .studio-banner .studio-btn{
+    display:block;margin-top:4px;background:linear-gradient(180deg,#ffc060,#ffaa3a);
+    color:#000;border:none;border-radius:5px;padding:5px 8px;font-size:8px;
+    letter-spacing:0.18em;font-weight:bold;cursor:pointer;font-family:inherit;width:100%
+  }
+  .studio-banner .studio-btn:active{transform:scale(0.96)}
+
   /* P2 INVITE PANEL — appears below contract status when pending users exist */
   .invite-panel{
     position:absolute;top:78px;left:50%;transform:translateX(-50%);
@@ -270,6 +288,10 @@
       ▲ DECLARED · <b id="cdir">EMPIRE → USER</b>
       <span class="ctdwn" id="cctdn" style="display:none">⌛ —</span>
       <span class="swap-hint">tap line to swap · tap paying fairy to PAY</span>
+    </div>
+    <div class="studio-banner" id="studioBanner">
+      ▲ <b>UNRULY</b><br>this contract has outgrown the phone
+      <button class="studio-btn" onclick="openStudio()">OPEN IN STUDIO →</button>
     </div>
     <div class="invite-panel" id="invitePanel" style="display:none">
       <div class="invite-h">▼ <b>PLAYER 2</b> INVITE · <span id="inviteTimer">2m 00s</span></div>
@@ -824,13 +846,28 @@ function render(){
   // party paid by many in a queue) — not yet wired; detect via guaranteeMode
   // when a future `:g` token or guarantee flag arrives.
   const guaranteeMode = false;
+  // Adaptive polygon radius — shrink as headcount grows so all fairies fit.
+  // For (N+1)-gon, adjacent vertex distance = 2R·sin(π/(N+1)). We want that
+  // distance ≥ ~52px (fairy footprint with breathing room). Solve for R.
+  const FAIRY_CLEARANCE = 52;
+  const STAGE_PAD = 32;  // hard margin from stage edge (fairy half-size + buffer)
+  function polygonRadius(total){
+    if (total < 3) return 0;
+    // requiredR: small enough N → low; large N → grows so neighbours stay apart
+    const requiredR = ((FAIRY_CLEARANCE / 2) / Math.sin(Math.PI / total)) * 1.15;
+    // niceR: comfortable default for small polygons (triangle, square, pentagon)
+    const niceR = Math.min(W, H) * 0.28;
+    // maxR: hard ceiling from stage size
+    const maxR = Math.min(W * 0.42 - STAGE_PAD, H * 0.34 - STAGE_PAD);
+    return Math.min(maxR, Math.max(niceR, requiredR));
+  }
   if (empIdx >= 0 && userIndices.length > 0){
     const total = 1 + userIndices.length;
     if (guaranteeMode){
       // ROW · queue-of-payers around the guarantor (empire on top, users below in a line)
       verts[empIdx] = {x:cx, y:cy - H*0.22};
       const userY = cy + H*0.22;
-      const userSpread = Math.min(W*0.6, userIndices.length * 60);
+      const userSpread = Math.min(W - 2*STAGE_PAD, userIndices.length * 60);
       userIndices.forEach((uIdx, j) => {
         const t = userIndices.length === 1 ? 0.5 : j / (userIndices.length - 1);
         verts[uIdx] = {x: cx - userSpread/2 + t * userSpread, y: userY};
@@ -841,7 +878,7 @@ function render(){
       verts[userIndices[0]] = {x:cx, y:cy + H*0.22};
     } else {
       // (N+1)-gon · empire at top vertex (-π/2), users distributed clockwise
-      const R = Math.min(W, H) * 0.28;
+      const R = polygonRadius(total);
       const empAngle = -Math.PI/2;
       verts[empIdx] = {x: cx + R*Math.cos(empAngle), y: cy + R*Math.sin(empAngle)};
       userIndices.forEach((uIdx, j) => {
@@ -860,8 +897,11 @@ function render(){
     const coreCx = coreXs.reduce((a,b)=>a+b,0) / coreXs.length;
     const coreCy = coreYs.reduce((a,b)=>a+b,0) / coreYs.length;
     fiscus.forEach((idx,j) => { verts[idx] = {x: coreCx + (j - (fiscus.length-1)/2) * 30, y: coreCy}; });
-    // TESTIS sits to the LEFT of the contract — neutral observer
-    testis.forEach((idx,j) => { verts[idx] = {x: cx - W*0.34 - j*22, y: cy + (j%2 ? H*0.05 : -H*0.05)}; });
+    // TESTIS sits to the LEFT of the contract — neutral observer (clamped to stage)
+    testis.forEach((idx,j) => {
+      const tx = Math.max(STAGE_PAD, cx - W*0.34 - j*22);
+      verts[idx] = {x: tx, y: cy + (j%2 ? H*0.05 : -H*0.05)};
+    });
     // Other attached species (PANIS, ANIMA, QUADRA, TESSERA, etc.) ride along the RIGHTMOST user
     let anchorIdx = userIndices[0];
     userIndices.forEach(i => { if (verts[i].x > verts[anchorIdx].x) anchorIdx = i; });
@@ -877,7 +917,7 @@ function render(){
       verts[0] = {x: cx - W*0.18, y: cy};
       verts[1] = {x: cx + W*0.18, y: cy};
     } else {
-      const R = Math.min(W, H) * 0.28;
+      const R = polygonRadius(nodes.length);
       nodes.forEach((n,i) => {
         const angle = (i/nodes.length) * Math.PI * 2 - Math.PI/2;
         verts[i] = {x: cx + R*Math.cos(angle), y: cy + R*Math.sin(angle)};
@@ -885,9 +925,40 @@ function render(){
     }
   }
 
+  // ─── HARD CLAMP · fairies must remain on-stage (interactable) ───
+  // A fairy off the edge is an unreachable contract node. Clamp + flag.
+  let overflow = false;
+  for (let i = 0; i < verts.length; i++){
+    const v = verts[i]; if (!v) continue;
+    if (v.x < STAGE_PAD)         { v.x = STAGE_PAD;         overflow = true; }
+    else if (v.x > W - STAGE_PAD){ v.x = W - STAGE_PAD;     overflow = true; }
+    if (v.y < STAGE_PAD)         { v.y = STAGE_PAD;         overflow = true; }
+    else if (v.y > H - STAGE_PAD){ v.y = H - STAGE_PAD;     overflow = true; }
+  }
+
+  // ─── COMPLEXITY GATE · "this contract has outgrown the phone" ───
+  // Triggers when (a) clamping was needed OR (b) headcount crossed the comfort line.
+  // The contract still renders — Dan: "it should be able to become unruly" — but a
+  // migration banner surfaces inviting the user to open it in the desktop studio.
+  const COMPLEX_HEADCOUNT = 9;   // empire + ~8 users / ancillary fairies
+  const isComplex = overflow || nodes.length > COMPLEX_HEADCOUNT;
+  const banner = document.getElementById('studioBanner');
+  if (banner) banner.style.display = isComplex ? 'block' : 'none';
+
   nodes.forEach((n,i) => spawnFairy(n, i, verts[i].x, verts[i].y));
   currentEdges = edges;
   drawEdges(edges);
+}
+
+// ─── STUDIO MIGRATION · stub ───
+// Future: opens shortfactory.shop/studio with the contract string serialised in URL.
+// Multi-contract organiser. Today: surface the intent, play a tone, toast.
+function openStudio(){
+  playSound('pay-open');
+  toast('▲ desktop contract studio · in build · stay on phone for now');
+  const banner = document.getElementById('studioBanner');
+  if (banner) banner.style.transform = 'scale(0.94)';
+  setTimeout(() => { if (banner) banner.style.transform = ''; }, 200);
 }
 
 function spawnFairy(node, idx, x, y){
