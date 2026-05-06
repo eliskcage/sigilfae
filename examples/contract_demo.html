@@ -310,9 +310,10 @@
     <textarea id="txt" spellcheck="false" placeholder=":variety syntax · e.g. :w-e-s-Q.0030">:</textarea>
     <div class="pill-row" id="pills"></div>
     <div class="actions">
-      <button class="action-btn" onclick="clearAll()">CLEAR</button>
-      <button class="action-btn" onclick="toggleCamera()" id="camBtn">📷 SNAP</button>
       <button class="action-btn primary" onclick="walkDemo()">▶ WALK</button>
+    </div>
+    <div style="text-align:center;font-size:8px;color:#555;letter-spacing:0.18em;margin-top:6px;font-family:monospace">
+      tap stage to <b style="color:#888">📷 snap</b> · hold to <b style="color:#888">▼ clear</b>
     </div>
   </div>
 
@@ -633,18 +634,20 @@ function closeWin(){
 }
 
 // ─── DEMO PILLS ───
+// `:` = GUARANTEE PAY · single-party deal, empire guarantees the bond
+// `::` (and beyond) = BILL SPLIT · multi-party, share the cost across users
 const PILLS = [
-  {s:':',                kind:'BARE PACT',   sub:'empire ↔ user · no expiry'},
-  {s:':b.0030',          kind:'BISCUIT',     sub:'biscuit deal · 30s'},
-  {s:':s-Q.0045',        kind:'SOUL+BASE',   sub:'soul + base · 45s'},
-  {s:':w-b.0030',        kind:'WITNESSED',   sub:'witness biscuit · 30s'},
-  {s:':e-s.0045',        kind:'ESCROWED',    sub:'escrow soul · 45s'},
-  {s:':w-e-s-Q.0060',    kind:'FULL DEAL',   sub:'witness+escrow+soul+base · 60s', full:true},
-  {s:'::b.0030',         kind:'2-WAY SPLIT', sub:'2 users split biscuit · 30s'},
-  {s:':::b.0045',        kind:'3-WAY SPLIT', sub:'3 users split biscuit · 45s'},
-  {s:'::w-b.0030',       kind:'SPLIT+WIT',   sub:'2 users + witness · 30s'},
-  {s:':e-Q.0045',        kind:'ESCROW BASE', sub:'escrow + base · 45s'},
-  {s:':b-b-b.0030',      kind:'TRIPLE TIP',  sub:'three biscuits · 30s'},
+  {s:':',                kind:'GUARANTEE PAY',     sub:'empire guarantees user · no expiry'},
+  {s:':b.0030',          kind:'GUARANTEE · biscuit', sub:'biscuit deal · 30s'},
+  {s:':s-Q.0045',        kind:'GUARANTEE · soul+base', sub:'soul + base · 45s'},
+  {s:':w-b.0030',        kind:'GUARANTEE · witnessed', sub:'witness biscuit · 30s'},
+  {s:':e-s.0045',        kind:'GUARANTEE · escrowed',  sub:'escrow soul · 45s'},
+  {s:':w-e-s-Q.0060',    kind:'GUARANTEE · full deal', sub:'witness+escrow+soul+base · 60s', full:true},
+  {s:'::b.0030',         kind:'BILL SPLIT · 2-way',  sub:'2 users split biscuit · 30s'},
+  {s:':::b.0045',        kind:'BILL SPLIT · 3-way',  sub:'3 users split biscuit · 45s'},
+  {s:'::w-b.0030',       kind:'BILL SPLIT · witnessed', sub:'2 users + witness · 30s'},
+  {s:':e-Q.0045',        kind:'GUARANTEE · escrow+base', sub:'escrow + base · 45s'},
+  {s:':b-b-b.0030',      kind:'GUARANTEE · triple tip',  sub:'three biscuits · 30s'},
 ];
 function renderPills(){
   const row = document.getElementById('pills');
@@ -840,12 +843,10 @@ function render(){
   const userIndices = nodes.map((n,i) => n.contractRole === 'user' ? i : -1).filter(i => i >= 0);
   const verts = new Array(nodes.length);
   // Smart-contract inference from headcount:
-  //   1 user  → vertical pair (the canonical pact)
-  //   N≥2     → regular (N+1)-gon, empire at top vertex, users clockwise
-  // A horizontal row is reserved for an explicit :guarantee scenario (one
-  // party paid by many in a queue) — not yet wired; detect via guaranteeMode
-  // when a future `:g` token or guarantee flag arrives.
-  const guaranteeMode = false;
+  //   `:`     · GUARANTEE PAY  → 2 fairies, vertical pair (empire on top, user below)
+  //   `::`    · BILL SPLIT     → triangle (3-gon) · empire + 2 users
+  //   `:::`   · BILL SPLIT     → square  (4-gon) · empire + 3 users
+  //   `::::…` · BILL SPLIT     → regular (N+1)-gon · empire at top vertex, users CW
   // Adaptive polygon radius — shrink as headcount grows so all fairies fit.
   // For (N+1)-gon, adjacent vertex distance = 2R·sin(π/(N+1)). We want that
   // distance ≥ ~52px (fairy footprint with breathing room). Solve for R.
@@ -863,17 +864,8 @@ function render(){
   }
   if (empIdx >= 0 && userIndices.length > 0){
     const total = 1 + userIndices.length;
-    if (guaranteeMode){
-      // ROW · queue-of-payers around the guarantor (empire on top, users below in a line)
-      verts[empIdx] = {x:cx, y:cy - H*0.22};
-      const userY = cy + H*0.22;
-      const userSpread = Math.min(W - 2*STAGE_PAD, userIndices.length * 60);
-      userIndices.forEach((uIdx, j) => {
-        const t = userIndices.length === 1 ? 0.5 : j / (userIndices.length - 1);
-        verts[uIdx] = {x: cx - userSpread/2 + t * userSpread, y: userY};
-      });
-    } else if (total === 2){
-      // Bare pact · empire on top, single user below
+    if (total === 2){
+      // GUARANTEE PAY · empire on top, single user below
       verts[empIdx] = {x:cx, y:cy - H*0.22};
       verts[userIndices[0]] = {x:cx, y:cy + H*0.22};
     } else {
@@ -1342,9 +1334,55 @@ function toast(msg){
   setTimeout(() => t.remove(), 2000);
 }
 
+// ─── BACKGROUND GESTURES · tap = snap cycle · long-press = full clear ───
+function fullReset(){
+  TXT.value = '';
+  if (camFrozen || camStream){
+    const v = document.getElementById('bgVideo');
+    const cv = document.getElementById('bgFreeze');
+    if (v) v.style.display = 'none';
+    if (cv) cv.style.display = 'none';
+    if (camStream){ camStream.getTracks().forEach(t => t.stop()); camStream = null; }
+    camFrozen = false;
+  }
+  playSound('reset');
+  toast('▼ cleared');
+  render();
+}
+function _isStageBackground(t){
+  if (!t) return false;
+  if (t === stage) return true;
+  if (t.id === 'bgVideo' || t.id === 'bgFreeze' || t.id === 'edges') return true;
+  if (t.tagName && t.tagName.toLowerCase() === 'svg') return true;
+  return false;
+}
+let _bgPressTimer = null, _bgPressStart = null, _bgPressFired = false;
+stage.addEventListener('pointerdown', e => {
+  if (!_isStageBackground(e.target)) return;
+  _bgPressStart = {x: e.clientX, y: e.clientY};
+  _bgPressFired = false;
+  _bgPressTimer = setTimeout(() => { _bgPressFired = true; fullReset(); }, 600);
+});
+stage.addEventListener('pointermove', e => {
+  if (!_bgPressStart || !_bgPressTimer) return;
+  const dx = e.clientX - _bgPressStart.x, dy = e.clientY - _bgPressStart.y;
+  if (dx*dx + dy*dy > 100){ clearTimeout(_bgPressTimer); _bgPressTimer = null; }
+});
+stage.addEventListener('pointerup', e => {
+  if (_bgPressTimer){ clearTimeout(_bgPressTimer); _bgPressTimer = null; }
+  if (!_bgPressFired && _bgPressStart && _isStageBackground(e.target)){
+    toggleCamera();
+  }
+  _bgPressStart = null; _bgPressFired = false;
+});
+stage.addEventListener('pointercancel', () => {
+  if (_bgPressTimer){ clearTimeout(_bgPressTimer); _bgPressTimer = null; }
+  _bgPressStart = null; _bgPressFired = false;
+});
+
 // init
 render();
-console.log('▲ THE :VARIETY · mobile contract demo · click any pill');
+console.log('▲ THE :VARIETY · mobile contract demo · tap stage to snap · hold to clear');
 </script>
 
 </body>
