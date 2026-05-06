@@ -2,6 +2,10 @@
 
 > **An open-source species of empire fairies who speak a 2D form animation language.**
 > The empire's visual descriptor for organising work. Funny as its nature.
+>
+> **NOTAE is the king.** As proven offspring variants succeed in the wild, the king
+> absorbs their powers — see [ABSORPTION.md](ABSORPTION.md). Authors keep their earnings.
+> The king becomes the king of all the best systems.
 
 ## What is this?
 
@@ -43,6 +47,16 @@ Every fairy is interactive:
 - **Click PYXIS box** → opens a real file picker; attaching a file auto-progresses the node
 - **POP** → particle burst + joyful pop sound + comedic scream + `+5 white blood`
   granted to the active soul (see [BLOODS.md](BLOODS.md))
+
+## The king mechanic (NOTAE absorbs proven powers)
+
+NOTAE — the base species — is **the king**. As variants prove themselves in the
+wild (working, useful, fun, makes money — see [ABSORPTION.md](ABSORPTION.md) for
+thresholds), the king absorbs their powers as chest pips she can wear. The
+variant author keeps all earned bloods + gets a permanent **HONOURED-AUTHOR**
+mark. The king gets capability. Empire gets stronger.
+
+Live kingship state: [`kingship.json`](kingship.json).
 
 ## How to fork & contribute a variant
 

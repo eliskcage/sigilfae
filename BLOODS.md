@@ -54,6 +54,19 @@ network user whose own work earns big), you rise with them — your white-blood
 accumulates faster from their downstream activity. **The network is fairness-
 aware as its structure.**
 
+## Absorption preserves author earnings
+
+If your variant proves itself and gets absorbed by NOTAE-the-king (see
+[ABSORPTION.md](ABSORPTION.md)):
+
+- **All your accumulated white blood + network blood is preserved.**
+- When users invoke your token directly, your variant fires and you still earn.
+- You receive a permanent `HONOURED-AUTHOR` mark — visible across the registry.
+- Soul-score bump + faster path to **level 2** (red blood, cashable).
+
+Absorption is recognition, not reassignment. The king gets capability; the
+author gets retained earnings + permanent honour. Three-way win.
+
 ## Tracking
 
 Every variant carries:

@@ -1,8 +1,16 @@
 # SPECIES.md · canonical Sigilfae catalogue
 
+## The king
+
+**SIGILFAE NOTAE** is the base species AND the king. As proven offspring
+variants succeed in the wild, NOTAE absorbs their powers as chest pips
+(see [ABSORPTION.md](ABSORPTION.md)). The king's current pip-stack lives
+in [`kingship.json`](kingship.json) — empty at empire-genesis, populated
+by review as variants qualify.
+
 | Glyph | Binomial | Status | Parent | Author | Born | Behaviour |
 |---|---|---|---|---|---|---|
-| `.` | **SIGILFAE NOTAE** | canonical · base | — (root) | UNKLE_ROAL_DAHL | 2026-05-06 | decorative node; amber pentagon chest |
+| `.` | **SIGILFAE NOTAE** ♛ *(king)* | canonical · base | — (root) | UNKLE_ROAL_DAHL | 2026-05-06 | decorative node; amber pentagon chest; absorbs proven offspring's powers |
 | `,` | **SIGILFAE PYXIS** | canonical | NOTAE | UNKLE_DAVID_BOWIE | 2026-05-06 | real file-upload form on chest; click → file picker |
 | `/` | **SIGILFAE CRUX** | canonical | NOTAE | UNKLE_ROAL_DAHL | 2026-05-06 | declares 3rd-dim; Z-edge or Z-layer raise |
 | `*` | SIGILFAE ASTRUM | proposed | NOTAE | (open) | — | proposed: 5-pointed pentagonal stars between nodes; tag-input |

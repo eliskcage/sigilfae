@@ -1,0 +1,18 @@
+{
+  "king": {
+    "binomial": "SIGILFAE NOTAE",
+    "soul": "SF-SIG-N0TA",
+    "current_version": "v0",
+    "absorbed_powers": []
+  },
+  "absorption_history": [],
+  "thresholds": {
+    "fun": 70,
+    "use": 70,
+    "income": 50,
+    "uses_total": 200,
+    "active_days": 30
+  },
+  "next_review": null,
+  "review_quorum": "dan + scribe (initial); 24-founder-phones (long-term)"
+}
