@@ -653,10 +653,10 @@ function attachPaymentToken(token, label, amount){
   const sep = afterNoTime.trim().length > 0 ? '-' : '';
   TXT.value = cur.slice(0, colonIdx + 1) + afterNoTime + sep + token + trailingTime;
   render();
-  contractPaid = true;
-  whiteBlood += 3; localStorage.setItem('sf_demo_white', String(whiteBlood)); refreshStats();
-  toast('▲ paid via ' + label + ' · contract honoured');
-  // If token was a biscuit with loaded capital, mark the newest biscuit fairy
+
+  // Loaded PANIS biscuits STAKE capital but DON'T fully honour the deal — that
+  // way the rubberband can still collapse and the empire collects 51%. Only
+  // non-biscuit pay-options (Q, t, s, ,) commit `contractPaid = true`.
   if (token === 'b' && amount > 0){
     const lastBisc = fairies.filter(f => f.sp === 'panis').slice(-1)[0];
     if (lastBisc){
@@ -664,9 +664,16 @@ function attachPaymentToken(token, label, amount){
       lastBisc.el.classList.add('loaded');
       lastBisc.el.dataset.loaded = '£' + amount;
     }
+    whiteBlood += 1; localStorage.setItem('sf_demo_white', String(whiteBlood)); refreshStats();
+    toast(`▲ STAKED £${amount} · biscuit loaded · honour to release · or collapse → empire 51% / wronged 49%`);
+  } else {
+    // Non-biscuit pay-options HONOUR the deal
+    contractPaid = true;
+    whiteBlood += 3; localStorage.setItem('sf_demo_white', String(whiteBlood)); refreshStats();
+    toast('▲ paid via ' + label + ' · contract honoured');
+    // bond stroke amber → gold visually
+    EDGES.querySelectorAll('line[stroke="url(#ec)"]').forEach(l => l.setAttribute('stroke', '#ffd700'));
   }
-  // bond stroke amber → gold visually
-  EDGES.querySelectorAll('line[stroke="url(#ec)"]').forEach(l => l.setAttribute('stroke', '#ffd700'));
 }
 
 // ─── SELF-DELETE ───
