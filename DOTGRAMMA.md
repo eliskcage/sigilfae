@@ -9,9 +9,15 @@
 | `.` | NOTAE | node | decorative; fairy with amber pentagon chest |
 | `,` | PYXIS | node + form | fairy with file-upload widget; clicking the box opens a real file picker |
 | `/` | CRUX | depth | declares 3rd-dimension (Z-edge between nodes; trailing `/` raises next node's Z-layer) |
+| `s` | ANIMA | soul-bond | fairy with user's SFT soul-QR on chest; declares blood-connection live |
+| `b` | PANIS | biscuit | fairy with biscuit on chest; affirmation / thanks / small-reward token |
+| `j` | OPERA | jobs-list | fairy with scroll on chest; bears a list of pending jobs |
+| `q` | APIS | quid-pro-quo | angry-bee fairy with stinger; pre-condition fairy demanding trade |
 | `-` | (operator) | edge | draws an amber edge between previous and next node |
+| `^` | (operator) | tree branch | declares the flanking nodes are siblings under a shared parent above; activates TREE MODE |
 
-Tokens not in this table are ignored. Whitespace is ignored.
+Tokens not in this table are ignored. Whitespace is ignored. Tree mode is
+triggered by the presence of any `^`.
 
 ## Grammar (informal BNF)
 
@@ -83,9 +89,62 @@ the polygon is open.
 .-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.- → closed 16-gon (huge ring)
 ```
 
+## Tree mode (the cascade-pop mechanic)
+
+When `^` appears anywhere in the input, the parser enters **TREE MODE**:
+
+- The flanking nodes of each `.^.` (or any species pair around `^`) are
+  declared **siblings under a shared parent** in the row above.
+- Multiple sibling-pairs link up into a hierarchy with a single root —
+  the **♛ PAYMENT FAIRY** at the apex.
+- Layout: vertical tree, leaves at the bottom, parents stacked above.
+
+### Cascade-pop / row locking
+
+In tree mode:
+- **Only the bottom row (leaves) is pop-eligible** — higher rows are
+  greyed out and unclickable.
+- When ALL bottom-row leaves have been popped, the row above unlocks.
+- The cascade continues upward until the **PAYMENT FAIRY** unlocks at the
+  apex.
+- Popping the PAYMENT FAIRY fires a **100× blood reward** + a celebratory
+  ceremony (massive particle burst, fanfare sound, dedicated toast,
+  empire-revenue-released event).
+
+### Example (Dan's spec)
+
+```
+.^. .^. .^.
+```
+
+= 6 leaf-nodes in 3 sibling-pairs → 3 mid-tier parents → 1 PAYMENT FAIRY.
+
+```
+            ♛   (payment fairy at apex — locked until all below clear)
+          / | \
+         .  .  .   (3 mid-tier parents — locked until leaves clear)
+        /|  /|  /|
+       . . . . . .   (6 bottom leaves — pop-eligible)
+```
+
+### Why it works
+
+- Lowers the engagement bar — anyone can click a small leaf.
+- Creates a **cascade incentive** — lots of small contributors must finish
+  before mid-tier work even starts.
+- Apex is a true milestone, never reachable without full-chain completion.
+- Audience workshop, made structural.
+
+## LOCKED state — pay-once enforcement
+
+Any fairy can enter **LOCKED state** when its associated job has been
+claimed by a soul. Greyed out, dimmed, no pointer events. The QR on the
+locked fairy proves who claimed it. This prevents double-payment by
+physical impossibility, not policy.
+
 ## Versioning
 
-This is **DOTGRAMMA v0.1**. Future versions may add:
+This is **DOTGRAMMA v0.2**. Future versions may add:
 - `*` ASTRUM (star nodes / pentagonal stars between nodes)
 - `o` CIRCULUS (orbiting nodes / radio-toggle behaviour)
 - `~` UNDA (sine-wave edges / range-slider behaviour)

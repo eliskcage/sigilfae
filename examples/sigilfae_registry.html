@@ -211,7 +211,22 @@ const VARIANTS = [
     demo: ',-,-,-,-',
     purple: true,
     metrics: { fun: 80, use: 75, inc: 8, net: 4 },
-    notes: 'first child variant · upload-box chest icon · proposed by Dan in same session as the species naming. proves DOTGRAMMA is extensible by token.'
+    notes: 'real file-upload form on chest · click box → file picker · proves DOTGRAMMA is behaviour-extensible.'
+  },
+  {
+    binomial: 'SIGILFAE CRUX',
+    common: 'cross-dimensional fairies',
+    glyph: '/',
+    parent: 'NOTAE',
+    canonical: true,
+    proposed: false,
+    soul: 'SF-SIG-CRUX',
+    author: 'UNKLE_ROAL_DAHL',
+    born: '2026-05-06',
+    demo: '.-./.-./.',
+    purple: false,
+    metrics: { fun: 88, use: 82, inc: 6, net: 3 },
+    notes: 'declares 3rd dimension · Z-edge between nodes (cyan dashed perspective line) · trailing / raises next node\'s z-layer.'
   },
   {
     binomial: 'SIGILFAE ASTRUM',
@@ -336,7 +351,7 @@ function openInCoder(demo){
 }
 
 function openSubmit(){
-  alert('▲ SUBMIT A VARIANT\n\nWill open: github.com/shortfactory/sigilfae/issues/new?template=variant.md\n\n(repo not live yet — for now, propose your variant in chat with Dan and I\'ll add it to the registry)');
+  window.open('https://github.com/eliskcage/sigilfae/issues/new?template=new_variant.md', '_blank');
 }
 
 document.getElementById('variantsGrid').innerHTML =

@@ -101,6 +101,84 @@
   /* SIGILFAE CRUX = 3D z-marker */
   .fairy.crux .pent{background:#9be0d4;box-shadow:0 0 12px #9be0d4;clip-path:polygon(20% 0,80% 0,100% 30%,100% 70%,80% 100%,20% 100%,0 70%,0 30%)}
 
+  /* SIGILFAE ANIMA · soul-bond fairy (s) — QR triangle on chest, indigo glow */
+  .fairy .anima-qr{
+    position:absolute;left:50%;top:34%;transform:translateX(-50%);
+    width:13px;height:11px;
+    clip-path:polygon(50% 0,100% 100%,0 100%);
+    background:repeating-conic-gradient(from 0deg at 50% 50%,#000 0deg 18deg,#7e6cff 18deg 36deg);
+    box-shadow:0 0 10px #7e6cff;
+  }
+
+  /* SIGILFAE PANIS · biscuit fairy (b) — small biscuit on chest */
+  .fairy .panis-biscuit{
+    position:absolute;left:50%;top:34%;transform:translateX(-50%);
+    width:12px;height:8px;border-radius:50%;
+    background:radial-gradient(ellipse at 50% 30%,#e8c578,#a87330);
+    box-shadow:0 0 6px #d4a544,inset 0 -1px 1px rgba(0,0,0,0.3);
+    border:0.5px solid #6b4a1a;
+  }
+  .fairy .panis-biscuit::after{
+    content:'';position:absolute;inset:2px;border-radius:50%;
+    background:radial-gradient(circle at 30% 30%,transparent,transparent 0.5px,#6b4a1a 1px,transparent 1.5px),
+               radial-gradient(circle at 70% 60%,transparent,transparent 0.5px,#6b4a1a 1px,transparent 1.5px);
+    background-size:auto;opacity:0.6
+  }
+
+  /* SIGILFAE OPERA · jobs-list fairy (j) — small scroll/list on chest */
+  .fairy .opera-list{
+    position:absolute;left:50%;top:33%;transform:translateX(-50%);
+    width:11px;height:13px;background:#fffbef;border:1px solid #6b4a1a;
+    box-shadow:0 0 6px rgba(255,251,239,0.6);border-radius:1px;
+    background-image:linear-gradient(180deg,
+      transparent 0,transparent 2px,
+      #6b4a1a 2px,#6b4a1a 2.5px,transparent 2.5px,transparent 5px,
+      #6b4a1a 5px,#6b4a1a 5.5px,transparent 5.5px,transparent 8px,
+      #6b4a1a 8px,#6b4a1a 8.5px,transparent 8.5px,transparent 11px
+    );
+  }
+
+  /* SIGILFAE APIS · angry bee quid-pro-quo (q) — striped body + stinger */
+  .fairy.apis .body{background:repeating-linear-gradient(90deg,#ffd700 0,#ffd700 4px,#1a1a1a 4px,#1a1a1a 7px) !important}
+  .fairy.apis .head{background:#ffd700}
+  .fairy .apis-stinger{
+    position:absolute;left:50%;bottom:6%;transform:translateX(-50%);
+    width:0;height:0;border-left:3px solid transparent;border-right:3px solid transparent;
+    border-top:8px solid #c83030;filter:drop-shadow(0 0 4px #c83030);
+  }
+  .fairy.apis .pent{display:none}
+  .fairy.apis{animation:angryShake 0.18s infinite alternate}
+  @keyframes angryShake{0%{transform:translate(-1px,0)}100%{transform:translate(1px,0)}}
+
+  /* LOCKED state — greyed out claimed fairy */
+  .fairy.locked{
+    filter:grayscale(0.85) brightness(0.5);
+    cursor:not-allowed !important;
+    pointer-events:none !important;
+    animation:none !important
+  }
+  .fairy.locked .lock-qr{
+    position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+    width:18px;height:16px;clip-path:polygon(50% 0,100% 100%,0 100%);
+    background:repeating-conic-gradient(from 0deg at 50% 50%,#000 0deg 12deg,#666 12deg 24deg);
+    opacity:0.85;z-index:5
+  }
+  .fairy.locked .state-tag{color:#666 !important}
+
+  /* PAYMENT FAIRY — apex of tree, golden crown */
+  .fairy.payment .pent{background:#ffd700;box-shadow:0 0 18px #ffd700,0 0 32px rgba(255,215,0,0.5);width:9px;height:9px}
+  .fairy.payment::before{
+    content:'♛';position:absolute;left:50%;top:-12px;transform:translateX(-50%);
+    font-size:14px;color:#ffd700;text-shadow:0 0 8px #ffd700;animation:crownFloat 2s ease-in-out infinite
+  }
+  @keyframes crownFloat{0%,100%{top:-12px}50%{top:-16px}}
+
+  /* TREE-MODE: row-locked greyed */
+  .fairy.row-locked{filter:grayscale(0.7) brightness(0.35);cursor:not-allowed;pointer-events:none}
+  .fairy.row-locked::after{
+    content:'🔒';position:absolute;top:-4px;right:-4px;font-size:10px;opacity:0.7
+  }
+
   /* Pop particles */
   .pop-particle{
     position:absolute;width:4px;height:4px;background:var(--amber-glow);
@@ -159,11 +237,16 @@
   <h1>The Godmesh · DOTGRAMMA</h1>
   <div class="sub">click · drag · complete · pop · earn blood · funny as its nature</div>
   <div class="legend">
-    <code>.</code> NOTAE node ·
-    <code>,</code> PYXIS upload-form ·
-    <code>/</code> CRUX 3rd dimension ·
-    <code>-</code> 2D edge ·
-    <span style="color:#aaa">click any node → cycle state · drag → free move · POP on complete</span>
+    <code>.</code> NOTAE ·
+    <code>,</code> PYXIS form ·
+    <code>/</code> CRUX 3D ·
+    <code>s</code> ANIMA soul ·
+    <code>b</code> PANIS biscuit ·
+    <code>j</code> OPERA jobs ·
+    <code>q</code> APIS bee ·
+    <code>-</code> edge ·
+    <code>^</code> tree branch
+    <br><span style="color:#aaa">click → cycle state · drag → move · POP earns blood · TREE: cascade-pop bottom-up to PAYMENT FAIRY</span>
   </div>
 </div>
 
@@ -183,15 +266,17 @@
   <div class="input-zone">
     <div>
       <label>DOTGRAMMA · type a string · click pills · or PLAY DEMO</label>
-      <textarea id="fixText" placeholder=". = node · , = form · / = 3D · - = edge" spellcheck="false">.-.-.-</textarea>
+      <textarea id="fixText" placeholder=". , / s b j q = nodes · - = edge · ^ = tree branch" spellcheck="false">.^. .^. .^.</textarea>
       <div class="demos">
-        <span class="demo-pill" onclick="ghostType('....')">....<span class="sub">4 dance</span></span>
         <span class="demo-pill" onclick="ghostType('.-.-.-')">.-.-.-<span class="sub">closed △</span></span>
         <span class="demo-pill" onclick="ghostType('.-.-.-.-')">.-.-.-.-<span class="sub">closed □</span></span>
-        <span class="demo-pill" onclick="ghostType('.-.-.-.-.-')">.-.-.-.-.-<span class="sub">closed ⬠</span></span>
         <span class="demo-pill" style="border-color:#b9a4f5;color:#b9a4f5" onclick="ghostType(',-,-,-,-')">,-,-,-,-<span class="sub">PYXIS forms</span></span>
-        <span class="demo-pill" style="border-color:#9be0d4;color:#9be0d4" onclick="ghostType('.-./.-./.')">.-./.-./.<span class="sub">CRUX 3D</span></span>
-        <span class="demo-pill" onclick="ghostType('.-,-.-,-.-,-')">.-,-.-,-.-,-<span class="sub">mixed</span></span>
+        <span class="demo-pill" style="border-color:#7e6cff;color:#7e6cff" onclick="ghostType('s-s-s-s')">s-s-s-s<span class="sub">ANIMA souls</span></span>
+        <span class="demo-pill" style="border-color:#d4a544;color:#d4a544" onclick="ghostType('b-b-b-b')">b-b-b-b<span class="sub">PANIS biscuits</span></span>
+        <span class="demo-pill" onclick="ghostType('j-j-j')">j-j-j<span class="sub">OPERA jobs</span></span>
+        <span class="demo-pill" style="border-color:#ffd700;color:#ffd700" onclick="ghostType('q-q-q')">q-q-q<span class="sub">APIS angry bees</span></span>
+        <span class="demo-pill" style="border-color:#ffd700;color:#ffd700;background:rgba(255,215,0,0.05)" onclick="ghostType('.^. .^. .^.')">.^. .^. .^.<span class="sub">TREE · cascade-pop</span></span>
+        <span class="demo-pill" style="border-color:#ffd700;color:#ffd700;background:rgba(255,215,0,0.05)" onclick="ghostType('s^j j^b j^,')">s^j j^b j^,<span class="sub">empire MONEY-tree</span></span>
       </div>
     </div>
     <div class="controls">
@@ -208,9 +293,20 @@
     </div>
   </div>
 
+  <div style="margin-top:24px;padding:16px;background:rgba(255,215,0,0.04);border:1px dashed rgba(255,215,0,0.3);border-radius:8px">
+    <div style="font-size:11px;color:#ffd700;letter-spacing:0.2em;margin-bottom:10px">▲ EMPIRE PROBLEM-TREES · click any to load · cascade-pop bottom-up</div>
+    <div class="demos">
+      <span class="demo-pill" style="border-color:#ffd700;color:#ffd700" onclick="loadEmpireTree('money')">▲ MONEY tree<span class="sub">apex = revenue · 3 mid · 6 leaf</span></span>
+      <span class="demo-pill" style="border-color:#ffd700;color:#ffd700" onclick="loadEmpireTree('network')">▲ NETWORK tree<span class="sub">apex = swarm · pair · onboard</span></span>
+      <span class="demo-pill" style="border-color:#ffd700;color:#ffd700" onclick="loadEmpireTree('jobs')">▲ JOBS tree<span class="sub">apex = backlog · stipulation · wallet</span></span>
+      <span class="demo-pill" style="border-color:#ffd700;color:#ffd700" onclick="loadEmpireTree('publicity')">▲ PUBLICITY tree<span class="sub">apex = visibility · copy · video</span></span>
+    </div>
+  </div>
+
   <div class="doctrine">
-    <b>THE GODMESH:</b> the empire's visual descriptor for organising ShortFactory jobs. Every Sigilfae node is interactive — <b>click</b> to cycle state (open → in-progress → complete → POP), <b>drag</b> to move freely, <b>complete</b> to explode and earn white blood. Tokens declare BEHAVIOUR, not just visuals — <code>,</code> spawns a real file-upload form, <code>/</code> declares the 3rd dimension (Z-edge / depth-shift). Funny as its nature: pop = synth pop + comedic scream + particle burst + blood grant + toast.<br>
-    <b>NEXT:</b> push to <code>github.com/shortfactory/sigilfae</code> so GPT, Grok, and other AIs can develop variants. Empire owns / markets / implements every accepted offspring.
+    <b>THE GODMESH:</b> empire's visual descriptor for ShortFactory jobs. <b>POLYGON mode</b> (no <code>^</code>) = N nodes form a regular N-gon with edges. <b>TREE mode</b> (<code>^</code> present) = vertical hierarchy with cascade-pop locking — <b>only the bottom row is clickable</b> until it's fully popped, then the row above unlocks, all the way to the <b>♛ PAYMENT FAIRY</b> at the apex who emits a 100× blood ceremony when finally released.<br>
+    <b>SPECIES BEHAVIOUR:</b> each token declares a real role — <code>,</code> opens a file picker · <code>s</code> declares your soul-bond · <code>b</code> awards a biscuit · <code>j</code> bears a jobs list · <code>q</code> is an angry bee that wants something in exchange.<br>
+    <b>LIVE on</b> <code>github.com/eliskcage/sigilfae</code> · GPT, Grok, and other AIs can fork and develop variants. King NOTAE absorbs proven offspring's powers.
   </div>
 
 </div>
@@ -256,25 +352,45 @@ function setMode(m){
 }
 
 // ─── DOTGRAMMA parser ─────────────────────────────────────
-// Tokens: . = NOTAE node · , = PYXIS form node · / = CRUX 3D node-or-edge · - = 2D edge
+// Tokens:
+//   .  NOTAE node      ,  PYXIS form-node    /  CRUX 3D node/edge
+//   s  ANIMA soul-bond  b  PANIS biscuit     j  OPERA jobs-list   q  APIS angry-bee
+//   -  2D edge
+//   ^  TREE branch (declares parent above the flanking nodes)
+const NODE_TOKENS = '.,sbjq';
+function speciesOf(c){
+  if (c === '.') return 'notae';
+  if (c === ',') return 'pyxis';
+  if (c === 's') return 'anima';
+  if (c === 'b') return 'panis';
+  if (c === 'j') return 'opera';
+  if (c === 'q') return 'apis';
+  return 'notae';
+}
 function parseShape(s){
-  const tokens = s.replace(/[^.,/\-]/g, '').split('');
-  const nodes = [];      // {sp, z}
-  const edges = [];      // {a, b, z?}
+  // detect tree mode (presence of ^)
+  const treeMode = s.includes('^');
+  const tokens = s.replace(/[^.,sbjq/^\-\s]/gi, '').split('').filter(c => c !== ' ');
+  const nodes = [];      // {sp, z, row?}
+  const edges = [];      // {a, b, z?, tree?}
   let pendingDash = false;
-  let pendingZ = 0;       // accumulates / before next node
-  let zEdgePending = false; // / between two nodes = z-edge
+  let pendingZ = 0;
+  let zEdgePending = false;
+  let pendingBranch = false;  // ^ pending between two nodes
+
   for (let i=0; i<tokens.length; i++){
     const c = tokens[i];
-    if (c === '.' || c === ','){
+    if (NODE_TOKENS.includes(c)){
       const newIdx = nodes.length;
-      nodes.push({
-        sp: c === ',' ? 'pyxis' : 'notae',
-        z: pendingZ
-      });
+      nodes.push({sp: speciesOf(c), z: pendingZ, row: 0, branchPair: null});
       pendingZ = 0;
       if (newIdx > 0){
-        if (zEdgePending){
+        if (pendingBranch){
+          // mark these two as a branch-pair (siblings sharing a parent)
+          nodes[newIdx-1].branchPair = newIdx;
+          nodes[newIdx].branchPair = newIdx - 1;
+          pendingBranch = false;
+        } else if (zEdgePending){
           edges.push({a: newIdx-1, b: newIdx, z: true});
           zEdgePending = false;
         } else if (pendingDash){
@@ -283,31 +399,84 @@ function parseShape(s){
       }
       pendingDash = false;
     } else if (c === '-'){
-      pendingDash = true;
-      zEdgePending = false;
+      pendingDash = true; zEdgePending = false; pendingBranch = false;
+    } else if (c === '^'){
+      pendingBranch = true; pendingDash = false; zEdgePending = false;
     } else if (c === '/'){
-      // / between nodes: z-edge. Or trailing : raises next node z.
-      if (pendingDash){
-        // dash then slash then node = z-edge override
-        zEdgePending = true;
-        pendingDash = false;
-      } else if (nodes.length > 0 && !pendingDash){
-        // standalone / : raise next node's z
-        pendingZ++;
-      } else {
-        pendingZ++;
-      }
+      if (pendingDash){ zEdgePending = true; pendingDash = false; }
+      else { pendingZ++; }
     }
   }
   let closed = false;
   if (pendingDash && nodes.length >= 2){
-    edges.push({a: nodes.length-1, b: 0, z: false});
-    closed = true;
+    edges.push({a: nodes.length-1, b: 0, z: false}); closed = true;
   } else if (zEdgePending && nodes.length >= 2){
-    edges.push({a: nodes.length-1, b: 0, z: true});
-    closed = true;
+    edges.push({a: nodes.length-1, b: 0, z: true}); closed = true;
   }
-  return {nodes, edges, closed};
+  return {nodes, edges, closed, treeMode};
+}
+
+// ─── Tree layout ──────────────────────────────────────────
+// Builds a hierarchy from branch-pairs. The flanking nodes of each .^.
+// pair become leaves under a shared (synthetic) parent. Multiple parents
+// merge under a higher synthetic parent until single root = PAYMENT FAIRY.
+function buildTree(nodes){
+  // Identify leaf-pairs from branchPair indices
+  const leafGroups = [];
+  const usedLeaves = new Set();
+  for (let i=0; i<nodes.length; i++){
+    if (nodes[i].branchPair != null && !usedLeaves.has(i)){
+      const j = nodes[i].branchPair;
+      if (j > i){ leafGroups.push([i, j]); usedLeaves.add(i); usedLeaves.add(j); }
+    }
+  }
+  // Any node not in a branch-pair becomes a singleton leaf
+  for (let i=0; i<nodes.length; i++){
+    if (!usedLeaves.has(i)) leafGroups.push([i]);
+  }
+  // Build tier structure
+  // Tier 0 = leaves (real nodes)
+  // Tier 1 = synthetic parents (one per leaf-group)
+  // Tier 2 = synthetic root (one) — PAYMENT FAIRY
+  return {
+    leafGroups,
+    leafCount: nodes.length,
+    midCount: leafGroups.length,
+    rootCount: leafGroups.length > 1 ? 1 : 0
+  };
+}
+
+function layoutTree(nodes, stageW, stageH){
+  const tree = buildTree(nodes);
+  const positions = []; // index → {x, y, row}
+  const rowH = stageH / 4;
+  const bottomY = stageH - 80;
+  const midY = bottomY - rowH;
+  const topY = midY - rowH;
+  // Spread leaves evenly across stage width
+  const margin = 60;
+  const span = stageW - margin*2;
+  const stepX = span / Math.max(1, nodes.length);
+  // Place leaves
+  let leafIdx = 0;
+  tree.leafGroups.forEach(group => {
+    group.forEach((nodeIdx, j) => {
+      const slot = leafIdx;
+      const x = margin + (slot + 0.5) * stepX;
+      positions[nodeIdx] = {x, y: bottomY, row: 0};
+      leafIdx++;
+    });
+  });
+  // Synthetic mid parents (rendered as PAYMENT FAIRIES at higher tiers)
+  const midParents = tree.leafGroups.map((group, i) => {
+    const xs = group.map(n => positions[n].x);
+    const x = xs.reduce((a,b) => a+b, 0) / xs.length;
+    return {x, y: midY, row: 1, isSynthetic: true, children: group, sp: 'payment-mid'};
+  });
+  // Synthetic root (the PAYMENT FAIRY at apex)
+  const rootX = midParents.length ? midParents.reduce((a,b)=>a+b.x, 0)/midParents.length : stageW/2;
+  const root = tree.midCount > 1 ? {x: rootX, y: topY, row: 2, isSynthetic: true, children: midParents.map((_,i)=>nodes.length+i), sp: 'payment-root'} : null;
+  return {leafPositions: positions, midParents, root, tree};
 }
 
 function polygonVertices(n, cx, cy, R){
@@ -367,49 +536,80 @@ function playPopSound(){
 }
 
 // ─── Spawn ────────────────────────────────────────────────
-function spawnFairy(node, idx, x, y){
+function spawnFairy(node, idx, x, y, opts={}){
   const el = document.createElement('div');
-  const isPyxis = node.sp === 'pyxis';
+  const sp = node.sp;
+  const isPyxis = sp === 'pyxis';
+  const isApis  = sp === 'apis';
+  const isPaymentRoot = sp === 'payment-root';
+  const isPaymentMid  = sp === 'payment-mid';
   const purple = isPyxis || idx % 3 === 1;
-  el.className = 'fairy bob' + (purple ? ' purple' : '');
-  el.dataset.species = node.sp;
-  el.dataset.z = node.z;
+  let cls = 'fairy bob';
+  if (purple) cls += ' purple';
+  if (isApis) cls += ' apis';
+  if (isPaymentRoot || isPaymentMid) cls += ' payment';
+  el.className = cls;
+  el.dataset.species = sp;
+  el.dataset.z = node.z || 0;
+  if (opts.row != null) el.dataset.row = String(opts.row);
   el.style.animationDelay = (idx * 0.18) + 's';
-  // depth scale + opacity
-  const zScale = 1 / (1 + node.z * 0.18);
-  const zOpacity = 1 / (1 + node.z * 0.25);
+  const zScale = 1 / (1 + (node.z||0) * 0.18);
+  const zOpacity = 1 / (1 + (node.z||0) * 0.25);
   el.style.transform = `scale(${zScale.toFixed(2)})`;
   el.style.opacity = zOpacity.toFixed(2);
-  el.style.zIndex = String(10 - node.z);
-  const chestHTML = isPyxis ? `<div class="pyxis-box"></div>` : `<div class="pent"></div>`;
+  el.style.zIndex = String(10 - (node.z||0));
+
+  // chest icon by species
+  let chestHTML = '<div class="pent"></div>';
+  if (isPyxis) chestHTML = '<div class="pyxis-box"></div>';
+  else if (sp === 'anima') chestHTML = '<div class="anima-qr"></div>';
+  else if (sp === 'panis') chestHTML = '<div class="panis-biscuit"></div>';
+  else if (sp === 'opera') chestHTML = '<div class="opera-list"></div>';
+  else if (isApis) chestHTML = '<div class="apis-stinger"></div>';
+  else if (isPaymentRoot || isPaymentMid) chestHTML = '<div class="pent"></div>';
+
+  let stateLabel = '▼ open';
+  if (opts.locked) stateLabel = '◇ row-locked';
+  if (opts.claimed) stateLabel = '🔒 claimed';
+  if (isPaymentRoot) stateLabel = '♛ PAYMENT';
+
   el.innerHTML = `
     <div class="wing l"></div><div class="wing r"></div>
     <div class="body"></div>
     <div class="head"><div class="eye l"></div><div class="eye r"></div></div>
     ${chestHTML}
-    <div class="state-tag">▼ open</div>
+    <div class="state-tag">${stateLabel}</div>
   `;
   el.style.left = (x) + 'px';
   el.style.top = (STAGE_H() + 30) + 'px';
   STAGE.appendChild(el);
-  const f = {el, idx, sp: node.sp, z: node.z, state: 'open', x, y, hasFile: false, fileName: null, dragOffset: null};
+  const f = {
+    el, idx, sp, z: node.z||0, state: opts.locked ? 'row-locked' : 'open',
+    x, y, hasFile: false, fileName: null,
+    isPaymentRoot, isPaymentMid,
+    row: opts.row || 0,
+    rowLocked: !!opts.locked,
+    claimed: !!opts.claimed,
+    children: opts.children || [],
+    rewardMultiplier: isPaymentRoot ? 100 : (isPaymentMid ? 25 : 1)
+  };
+  if (opts.locked) f.el.classList.add('row-locked');
   fairies.push(f);
-  // hidden file input for PYXIS
+
   if (isPyxis){
     const input = document.createElement('input');
     input.type = 'file';
     input.className = 'pyxis-input';
-    input.dataset.fairyIdx = idx;
     input.addEventListener('change', e => onFileChosen(f, e.target.files[0]));
     el.appendChild(input);
   }
-  // wire interactions
+
   attachInteractions(f);
-  // animate to target
   requestAnimationFrame(() => {
     el.style.left = (x - 18) + 'px';
     el.style.top = (y - 27) + 'px';
   });
+  return f;
 }
 
 function attachInteractions(f){
@@ -479,51 +679,128 @@ function cycleState(f){
 
 function popFairy(f){
   f.state = 'popped';
-  // particle burst
-  for (let i=0; i<14; i++){
+  const isPaymentRoot = f.isPaymentRoot;
+  const isPaymentMid = f.isPaymentMid;
+  const baseReward = 5;
+  const rewardMult = f.rewardMultiplier || 1;
+  const reward = baseReward * rewardMult;
+  // BIG burst for payment fairies
+  const burstCount = isPaymentRoot ? 60 : (isPaymentMid ? 30 : 14);
+  for (let i=0; i<burstCount; i++){
     const p = document.createElement('div');
     p.className = 'pop-particle';
-    const ang = (i/14) * Math.PI * 2;
-    const dist = 50 + Math.random()*40;
+    const ang = (i/burstCount) * Math.PI * 2;
+    const dist = (isPaymentRoot ? 120 : isPaymentMid ? 80 : 50) + Math.random()*40;
     p.style.setProperty('--tx', (Math.cos(ang)*dist) + 'px');
     p.style.setProperty('--ty', (Math.sin(ang)*dist) + 'px');
     p.style.left = (f.x) + 'px';
     p.style.top = (f.y) + 'px';
+    if (isPaymentRoot) p.style.background = '#ffd700';
     STAGE.appendChild(p);
-    setTimeout(() => p.remove(), 800);
+    setTimeout(() => p.remove(), 1000);
   }
-  // pop animation on the fairy
   f.el.classList.add('popping');
-  f.el.style.transform = 'scale(1.6)';
+  f.el.style.transform = `scale(${isPaymentRoot ? '2.4' : isPaymentMid ? '2' : '1.6'})`;
   f.el.style.opacity = '0';
-  // sound
-  playPopSound();
-  // grant white blood
-  const reward = 5;
+  // Sound — bigger ceremony for payment fairies
+  if (isPaymentRoot){
+    playPaymentSound();
+  } else if (isPaymentMid){
+    playPopSound();
+    setTimeout(() => playPopSound(), 200);
+  } else {
+    playPopSound();
+  }
   whiteBlood += reward;
   localStorage.setItem('sf_godmesh_white', String(whiteBlood));
   completeCount++;
-  // empire-jobs integration: fire window.IDF if available in opener
   try {
     if (window.opener && window.opener.IDF){
       window.opener.IDF.logJobCompletion({
-        jobId: 'godmesh-pop',
-        whiteBlood: reward,
-        networkBloodPct: 51,
-        parentSoul: 'SF-GODMESH',
-        childSoul: 'SF-FAIRY-' + f.idx
+        jobId: isPaymentRoot ? 'payment-fairy-pop' : 'godmesh-pop',
+        whiteBlood: reward, networkBloodPct: 51,
+        parentSoul: 'SF-GODMESH', childSoul: 'SF-FAIRY-' + f.idx
       });
     }
   } catch(e){}
-  // toast
-  showToast('▲ POP · +' + reward + ' white blood');
-  // remove fairy after animation
+  if (isPaymentRoot){
+    showToast('♛ PAYMENT FAIRY POPPED · +' + reward + ' WHITE · empire revenue released');
+  } else if (isPaymentMid){
+    showToast('▲ MID-TIER POPPED · +' + reward + ' white · row above unlocking');
+  } else {
+    showToast('▲ POP · +' + reward + ' white blood');
+  }
   setTimeout(() => {
     f.el.remove();
     fairies = fairies.filter(x => x !== f);
     redrawEdges();
     updateStats();
+    // Cascade unlock: when this row is fully popped, unlock the next row
+    cascadeUnlockCheck();
   }, 400);
+}
+
+// ─── Cascade unlock for tree-mode ──────────────────────────
+function cascadeUnlockCheck(){
+  // Group remaining fairies by row
+  const remainingByRow = {};
+  fairies.forEach(f => {
+    if (f.state === 'popped') return;
+    const r = f.row || 0;
+    if (!remainingByRow[r]) remainingByRow[r] = [];
+    remainingByRow[r].push(f);
+  });
+  const rowsLeft = Object.keys(remainingByRow).map(Number).sort();
+  if (rowsLeft.length === 0) return;
+  const lowestRow = rowsLeft[0];
+  // Unlock all fairies on the lowest remaining row
+  fairies.forEach(f => {
+    if (f.state === 'popped') return;
+    if (f.row === lowestRow && f.rowLocked){
+      f.rowLocked = false;
+      f.el.classList.remove('row-locked');
+      const tag = f.el.querySelector('.state-tag');
+      if (tag){
+        if (f.isPaymentRoot) tag.textContent = '♛ PAYMENT · CLICK TO RELEASE';
+        else if (f.isPaymentMid) tag.textContent = '▼ unlocked';
+        else tag.textContent = '▼ open';
+      }
+    }
+  });
+}
+
+// ─── Big payment-fairy ceremony sound ─────────────────────
+function playPaymentSound(){
+  const ctx = getAudio();
+  const t0 = ctx.currentTime;
+  // Ascending fanfare chord stack
+  [261.63, 329.63, 392, 523.25, 659.25, 784].forEach((freq, i) => {
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.frequency.value = freq;
+    osc.type = i % 2 === 0 ? 'triangle' : 'sine';
+    gain.gain.setValueAtTime(0, t0 + i*0.06);
+    gain.gain.linearRampToValueAtTime(0.10, t0 + i*0.06 + 0.02);
+    gain.gain.exponentialRampToValueAtTime(0.001, t0 + i*0.06 + 0.6);
+    osc.connect(gain).connect(ctx.destination);
+    osc.start(t0 + i*0.06);
+    osc.stop(t0 + i*0.06 + 0.7);
+  });
+  // "released" finale tone
+  setTimeout(() => {
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    const t1 = ctx.currentTime;
+    osc.frequency.setValueAtTime(880, t1);
+    osc.frequency.exponentialRampToValueAtTime(1760, t1 + 0.4);
+    osc.type = 'triangle';
+    gain.gain.setValueAtTime(0, t1);
+    gain.gain.linearRampToValueAtTime(0.12, t1 + 0.05);
+    gain.gain.exponentialRampToValueAtTime(0.001, t1 + 0.7);
+    osc.connect(gain).connect(ctx.destination);
+    osc.start(t1);
+    osc.stop(t1 + 0.8);
+  }, 500);
 }
 
 // ─── Edges ────────────────────────────────────────────────
@@ -590,48 +867,79 @@ function killFairies(fromIdx){
 
 function renderShape(){
   const s = TEXTAREA.value;
-  const {nodes, edges, closed} = parseShape(s);
+  const parsed = parseShape(s);
+  const {nodes, edges, closed, treeMode} = parsed;
+  // Wipe everything when switching modes or content changes structurally
+  killFairies(0);
+  fairies = [];
+  EDGES_SVG.innerHTML = '';
+
+  if (treeMode){
+    renderTreeMode(nodes);
+  } else {
+    renderPolygonMode(nodes, edges, closed);
+  }
+
+  document.getElementById('nodeCount').textContent = nodes.length;
+  document.getElementById('edgeCount').textContent = edges.length + (closed ? ' (closed)' : '');
+  document.getElementById('statShape').textContent = treeMode ? `tree · ${nodes.length} leaves` : shapeName(nodes.length);
+  document.getElementById('shapeName').textContent = treeMode
+    ? `TREE · ${nodes.length} leaves · cascade-pop`
+    : shapeName(nodes.length) + (edges.length ? ' · ' + edges.length + ' edges' : '') + (closed ? ' (closed)' : '');
+  updateStats();
+}
+
+function renderPolygonMode(nodes, edges, closed){
   const cx = STAGE_W()/2, cy = STAGE_H()/2;
   const R = Math.min(STAGE_W(), STAGE_H()) * 0.35;
   const verts = polygonVertices(nodes.length, cx, cy, R);
-  // apply z-shift to vertex positions (foreground = closer to centre top)
   nodes.forEach((n, i) => {
     if (verts[i] && n.z > 0){
-      // foreground nodes pushed up + slightly larger circle
       verts[i].y -= n.z * 24;
       verts[i].x += n.z * 8;
     }
   });
-
-  // species or count change → respawn (because chest icon differs)
-  let needRespawn = false;
-  if (fairies.length === nodes.length){
-    for (let i=0; i<nodes.length; i++){
-      if (fairies[i].sp !== nodes[i].sp || fairies[i].z !== nodes[i].z){ needRespawn = true; break; }
-    }
+  for (let i=0; i<nodes.length; i++){
+    spawnFairy(nodes[i], i, verts[i].x, verts[i].y);
   }
-  if (needRespawn){
-    killFairies(0);
-    fairies = [];
-  }
-
-  if (fairies.length < nodes.length){
-    for (let i=fairies.length; i<nodes.length; i++){
-      spawnFairy(nodes[i], i, verts[i].x, verts[i].y);
-    }
-  } else if (fairies.length > nodes.length){
-    killFairies(nodes.length);
-  }
-  moveFairies(verts);
-
   currentEdges = edges;
   drawEdges(edges);
+}
 
-  document.getElementById('nodeCount').textContent = nodes.length;
-  document.getElementById('edgeCount').textContent = edges.length + (closed ? ' (closed)' : '');
-  document.getElementById('statShape').textContent = shapeName(nodes.length);
-  document.getElementById('shapeName').textContent = shapeName(nodes.length) + (edges.length ? ' · ' + edges.length + ' edges' : '') + (closed ? ' (closed)' : '');
-  updateStats();
+function renderTreeMode(nodes){
+  const layout = layoutTree(nodes, STAGE_W(), STAGE_H());
+  // Spawn leaves (the user's actual nodes)
+  nodes.forEach((n, i) => {
+    const pos = layout.leafPositions[i];
+    if (!pos) return;
+    spawnFairy(n, i, pos.x, pos.y, {row: 0, locked: false});
+  });
+  // Spawn synthetic mid-tier "payment" fairies (one per leaf-group)
+  let nextIdx = nodes.length;
+  layout.midParents.forEach((mp, mi) => {
+    spawnFairy({sp: 'payment-mid', z: 0}, nextIdx + mi, mp.x, mp.y, {row: 1, locked: true, children: mp.children});
+  });
+  nextIdx += layout.midParents.length;
+  // Spawn apex root payment fairy if we have multiple mid parents
+  if (layout.root){
+    spawnFairy({sp: 'payment-root', z: 0}, nextIdx, layout.root.x, layout.root.y, {row: 2, locked: true, children: layout.midParents.map((_,i) => nodes.length + i)});
+  }
+  // Draw tree edges (parent ← child)
+  const edges = [];
+  layout.midParents.forEach((mp, mi) => {
+    const parentIdx = nodes.length + mi;
+    mp.children.forEach(childIdx => {
+      edges.push({a: parentIdx, b: childIdx, z: false, tree: true});
+    });
+  });
+  if (layout.root){
+    const rootIdx = nodes.length + layout.midParents.length;
+    layout.midParents.forEach((_, mi) => {
+      edges.push({a: rootIdx, b: nodes.length + mi, z: false, tree: true});
+    });
+  }
+  currentEdges = edges;
+  drawEdges(edges);
 }
 
 function updateStats(){
@@ -676,13 +984,16 @@ function ghostType(s, delayMs=120, onDone){
 }
 
 const DEMO_SEQUENCE = [
-  '....',
-  '.-.-.-',
-  '.-.-.-.-',
-  ',-,-,-,-',
-  '.-./.-./.',
-  '.-,-.-,-.-,-',
-  '.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-'
+  '.-.-.-',                  // closed triangle
+  '.-.-.-.-',                // closed square
+  ',-,-,-,-',                // PYXIS forms
+  's-s-s-s',                 // ANIMA souls
+  'b-b-b-b',                 // PANIS biscuits
+  'j-j-j',                   // OPERA jobs
+  'q-q-q',                   // APIS angry bees
+  '.^. .^. .^.',             // TREE — pop bottom row to unlock above
+  '.^.^.^.^.',               // wide tree
+  '.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-' // big closed ring
 ];
 let demoIdx = 0;
 function playDemoCycle(){
@@ -696,6 +1007,42 @@ function playDemoCycle(){
       }, 1800);
     });
   }, 200);
+}
+
+// ─── Empire problem-trees ────────────────────────────────
+// Each tree maps real ShortFactory problems to a DOTGRAMMA string.
+// Bottom leaves = sub-problems anyone can claim & pop. Mid-tier = clusters.
+// Apex = the actual empire-revenue gate (PAYMENT FAIRY).
+const EMPIRE_TREES = {
+  money: {
+    string: 'b^j j^, ,^s s^q',  // 5 leaves under 4 mid parents (each '.^.' is two leaves) → root
+    label: 'MONEY · empire revenue gate',
+    explain: 'Pop bottom leaves first: b=biscuit (small wins), j=jobs done, ,=forms uploaded, s=souls onboarded, q=quid-pro-quo deals. Cascade up to the PAYMENT FAIRY = empire revenue released.'
+  },
+  network: {
+    string: '.^. s^s s^.',  // pair · onboard · soul-bond
+    label: 'NETWORK · grow the swarm',
+    explain: 'Bottom: pair-action / soul-bond / onboarding-step nodes. Mid: clusters of paired phones. Apex: 200+ phone threshold reached.'
+  },
+  jobs: {
+    string: 'j^, j^, j^,',  // 6 leaves of jobs+forms under 3 mid parents
+    label: 'JOBS · backlog cleared',
+    explain: 'Bottom: each unfulfilled job + its form. Mid: stipulation clusters. Apex: backlog drained, stipulations live.'
+  },
+  publicity: {
+    string: 'b^. .^. .^,',  // copy + video + form
+    label: 'PUBLICITY · empire visible',
+    explain: 'Bottom: warm copy lines + video edits + form-uploads. Mid: per-channel clusters. Apex: empire visibility threshold met.'
+  }
+};
+
+function loadEmpireTree(key){
+  const t = EMPIRE_TREES[key];
+  if (!t){ showToast('unknown tree: ' + key); return; }
+  showToast('▲ loading ' + t.label);
+  ghostType(t.string, 90);
+  // Show the explanation as a notice
+  setTimeout(() => showToast(t.explain), 2200);
 }
 
 function completeAll(){
