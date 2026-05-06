@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Sigilfae Registry · genealogy of the empire's species</title>
+<style>
+  :root{
+    --bg:#0a0a0a; --fg:#e8e2d4; --amber:#d4a544; --amber-glow:#ffc04a;
+    --cream:#f3e8c8; --network:#b9a4f5;
+    --fun:#ff7a30; --use:#52a86b; --inc:#d4a544; --net:#b9a4f5;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{background:#000;color:var(--fg);font-family:'Courier New',monospace;min-height:100vh}
+  body{padding:30px 20px;background:radial-gradient(ellipse at top,#1a1a1a 0%,#000 60%)}
+
+  .container{max-width:1200px;margin:0 auto}
+
+  .hdr{text-align:center;margin-bottom:30px}
+  .hdr .crown{color:var(--amber);font-size:24px;letter-spacing:0.5em}
+  .hdr h1{font-size:14px;letter-spacing:0.4em;color:var(--amber);text-transform:uppercase;margin-top:6px}
+  .hdr .sub{font-size:11px;color:#888;letter-spacing:0.18em;margin-top:6px}
+
+  .doctrine{background:rgba(212,165,68,0.06);border-left:3px solid var(--amber);padding:14px 18px;margin-bottom:30px;font-size:12px;line-height:1.6;color:#aaa}
+  .doctrine b{color:var(--amber)}
+  .doctrine code{background:#000;color:var(--amber);padding:2px 6px;border-radius:3px;font-family:monospace}
+
+  /* The genealogy tree visualisation */
+  .tree-zone{position:relative;width:100%;height:240px;margin-bottom:30px;background:linear-gradient(180deg,rgba(212,165,68,0.04),transparent);border:1px dashed rgba(212,165,68,0.25);border-radius:8px}
+
+  /* Variant cards grid */
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:16px}
+  .variant{background:#0d0d0d;border:1px solid #1a1a1a;border-radius:10px;overflow:hidden;transition:all 0.2s}
+  .variant:hover{border-color:var(--amber);transform:translateY(-2px);box-shadow:0 8px 24px rgba(212,165,68,0.15)}
+  .variant.canonical{border-color:rgba(212,165,68,0.4);background:rgba(212,165,68,0.04)}
+  .variant.proposed{border-style:dashed;opacity:0.65}
+
+  .variant-head{padding:14px 16px;border-bottom:1px solid #1a1a1a;display:flex;align-items:center;gap:14px;background:rgba(0,0,0,0.4)}
+  .variant-glyph{width:60px;height:60px;background:#000;border:1px solid var(--amber);border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-family:monospace;font-size:22px;color:var(--amber);font-weight:bold;letter-spacing:0;text-shadow:0 0 12px rgba(212,165,68,0.5)}
+  .variant.proposed .variant-glyph{border-color:#444;color:#666;text-shadow:none}
+  .variant-name{font-size:14px;color:var(--amber);letter-spacing:0.16em;font-weight:bold}
+  .variant.proposed .variant-name{color:#888}
+  .variant-binom{font-size:10px;color:#666;letter-spacing:0.1em;font-style:italic;margin-top:2px}
+  .variant-token{font-size:10px;color:#888;margin-top:4px;font-family:monospace}
+  .variant-token b{color:var(--amber);background:#000;padding:1px 6px;border-radius:2px;font-weight:bold;margin:0 4px}
+
+  .variant-body{padding:14px 16px}
+
+  .qr-row{display:flex;align-items:center;gap:14px;margin-bottom:14px}
+  .qr-tri{width:50px;height:46px;clip-path:polygon(50% 0,100% 100%,0 100%);background:repeating-conic-gradient(from 0deg at 50% 50%,#000 0deg 12deg,var(--amber) 12deg 24deg);background-blend-mode:multiply;flex-shrink:0;box-shadow:0 0 12px rgba(212,165,68,0.4)}
+  .variant.proposed .qr-tri{filter:grayscale(0.7);opacity:0.4}
+  .qr-info{flex:1;font-size:10px;color:#aaa;line-height:1.4}
+  .qr-info .id{color:var(--amber);letter-spacing:0.14em;font-weight:bold}
+  .qr-info .meta{color:#666;margin-top:2px}
+
+  .metrics{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+  .metric{display:flex;align-items:center;gap:6px;font-size:9px;letter-spacing:0.1em}
+  .metric .label{flex:0 0 60px;color:#888}
+  .metric .bar-track{flex:1;height:6px;background:#1a1a1a;border-radius:3px;overflow:hidden}
+  .metric .bar-fill{height:100%;border-radius:3px;transition:width 0.5s}
+  .metric.fun .bar-fill{background:linear-gradient(90deg,#ff5050,var(--fun));box-shadow:0 0 6px var(--fun)}
+  .metric.use .bar-fill{background:linear-gradient(90deg,#3a8050,var(--use));box-shadow:0 0 6px var(--use)}
+  .metric.inc .bar-fill{background:linear-gradient(90deg,#a87830,var(--inc));box-shadow:0 0 6px var(--inc)}
+  .metric.net .bar-fill{background:linear-gradient(90deg,#7866b0,var(--net));box-shadow:0 0 6px var(--net)}
+  .metric .v{flex:0 0 24px;text-align:right;color:#ddd;font-weight:bold;font-size:10px}
+
+  .variant-meta{font-size:9px;color:#666;letter-spacing:0.1em;line-height:1.6;border-top:1px dashed rgba(255,255,255,0.06);padding-top:10px;margin-top:10px}
+  .variant-meta b{color:var(--amber)}
+
+  .live-preview{background:#000;border:1px solid #1a1a1a;border-radius:6px;padding:10px;margin-top:10px;text-align:center;height:80px;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}
+  .live-preview .demo-string{font-size:18px;color:var(--amber);font-family:monospace;letter-spacing:0.2em;font-weight:bold}
+
+  .submit-card{background:#0a0a0a;border:2px dashed var(--amber);border-radius:10px;padding:20px;text-align:center;cursor:pointer;transition:all 0.2s;display:flex;flex-direction:column;justify-content:center;align-items:center;min-height:300px}
+  .submit-card:hover{background:rgba(212,165,68,0.05);border-color:var(--amber-glow)}
+  .submit-card .plus{font-size:48px;color:var(--amber);margin-bottom:14px}
+  .submit-card .label{font-size:11px;color:var(--amber);letter-spacing:0.2em;margin-bottom:8px}
+  .submit-card .desc{font-size:10px;color:#666;line-height:1.6;letter-spacing:0.04em}
+
+  .bottom-info{margin-top:30px;padding:18px;background:#000;border:1px solid rgba(212,165,68,0.3);border-radius:8px;font-size:11px;color:#aaa;line-height:1.6}
+  .bottom-info b{color:var(--amber)}
+  .bottom-info code{background:#0d0d0d;color:var(--amber);padding:2px 6px;border-radius:3px;font-family:monospace}
+
+  /* mini fairy */
+  .mini-fairy{display:inline-block;width:24px;height:36px;position:relative;margin:0 4px;vertical-align:middle}
+  .mini-fairy .b{position:absolute;left:50%;top:18%;transform:translateX(-50%);width:11px;height:18px;background:linear-gradient(180deg,var(--cream),#d8c89a);border-radius:50% 50% 40% 40%}
+  .mini-fairy .h{position:absolute;left:50%;top:0;transform:translateX(-50%);width:9px;height:9px;background:var(--cream);border-radius:50%}
+  .mini-fairy .e{position:absolute;top:3px;width:1.4px;height:1.4px;background:#000;border-radius:50%}
+  .mini-fairy .p{position:absolute;left:50%;top:38%;transform:translateX(-50%);width:5px;height:5px;background:var(--amber);clip-path:polygon(50% 0,100% 38%,82% 100%,18% 100%,0 38%);box-shadow:0 0 4px var(--amber-glow)}
+  .mini-fairy .w{position:absolute;top:24%;width:9px;height:13px;background:rgba(255,255,255,0.18);border:1px solid rgba(255,255,255,0.3);border-radius:50% 50% 50% 50% / 60% 60% 40% 40%}
+  .mini-fairy .w.l{left:-5px;transform:rotate(-22deg)}
+  .mini-fairy .w.r{right:-5px;transform:rotate(22deg) scaleX(-1)}
+  .mini-fairy.purple .b{background:linear-gradient(180deg,#d8c8f5,#a890d8)}
+  .mini-fairy.purple .h{background:#d8c8f5}
+  .mini-fairy.purple .p{background:var(--network);box-shadow:0 0 4px var(--network)}
+  .mini-fairy.purple .w{background:rgba(185,164,245,0.2);border-color:rgba(185,164,245,0.4)}
+  .mini-fairy.purple .pyxis-mini{position:absolute;left:50%;top:36%;transform:translateX(-50%);width:7px;height:7px;border:1px solid var(--network);background:rgba(185,164,245,0.15);box-shadow:0 0 4px var(--network);border-radius:1px}
+
+  .footer-link{display:inline-block;margin-top:12px;padding:8px 16px;background:transparent;color:var(--amber);border:1px solid var(--amber);border-radius:3px;text-decoration:none;font-size:10px;letter-spacing:0.18em;cursor:pointer;font-family:inherit}
+  .footer-link:hover{background:rgba(212,165,68,0.1)}
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <div class="hdr">
+    <div class="crown">▲ ▲ ▲</div>
+    <h1>The Sigilfae Registry</h1>
+    <div class="sub">empire's first open-source species · genealogy + 4 metrics · DOTGRAMMA-speakers</div>
+  </div>
+
+  <div class="doctrine">
+    <b>THE SIGILFAE</b> · a species of empire fairies that listen for <code>DOTGRAMMA</code> — the empire's 2D form animation language. Each variant gets a Satoshi-QR genome, a parent species, and four live metrics: <span style="color:var(--fun)"><b>fun-ness</b></span> · <span style="color:var(--use)"><b>usefulness</b></span> · <span style="color:var(--inc)"><b>income-ness</b></span> · <span style="color:var(--net)"><b>network-ness</b></span>. Other AIs may fork the species and submit variants on GitHub (proposed: <code>github.com/shortfactory/sigilfae</code>). The empire owns, markets, and implements every accepted variant. Authors earn white + network blood per usage.
+  </div>
+
+  <!-- Genealogy tree (SVG visualisation) -->
+  <div class="tree-zone">
+    <svg viewBox="0 0 1100 240" style="width:100%;height:100%" preserveAspectRatio="xMidYMid meet">
+      <defs>
+        <linearGradient id="lineageGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#d4a544" stop-opacity="0.6"/>
+          <stop offset="1" stop-color="#d4a544" stop-opacity="0.2"/>
+        </linearGradient>
+      </defs>
+      <!-- root: SIGILFAE NOTAE at top -->
+      <line x1="200" y1="80" x2="200" y2="160" stroke="url(#lineageGrad)" stroke-width="2"/>
+      <line x1="200" y1="80" x2="450" y2="160" stroke="url(#lineageGrad)" stroke-width="2"/>
+      <line x1="200" y1="80" x2="700" y2="160" stroke="url(#lineageGrad)" stroke-width="2" stroke-dasharray="4 4" opacity="0.4"/>
+      <line x1="200" y1="80" x2="950" y2="160" stroke="url(#lineageGrad)" stroke-width="2" stroke-dasharray="4 4" opacity="0.4"/>
+
+      <!-- root node -->
+      <circle cx="200" cy="60" r="24" fill="#0a0a0a" stroke="#d4a544" stroke-width="2.5"/>
+      <text x="200" y="66" text-anchor="middle" fill="#d4a544" font-family="monospace" font-size="16" font-weight="bold">.</text>
+      <text x="200" y="100" text-anchor="middle" fill="#d4a544" font-family="monospace" font-size="10" letter-spacing="2">SIGILFAE NOTAE</text>
+      <text x="200" y="115" text-anchor="middle" fill="#666" font-family="monospace" font-size="9">base · canonical</text>
+
+      <!-- PYXIS (built) -->
+      <circle cx="200" cy="180" r="20" fill="rgba(185,164,245,0.1)" stroke="#b9a4f5" stroke-width="2"/>
+      <text x="200" y="186" text-anchor="middle" fill="#b9a4f5" font-family="monospace" font-size="14" font-weight="bold">,</text>
+      <text x="200" y="218" text-anchor="middle" fill="#b9a4f5" font-family="monospace" font-size="10" letter-spacing="2">PYXIS</text>
+      <text x="200" y="232" text-anchor="middle" fill="#666" font-family="monospace" font-size="9">live</text>
+
+      <!-- ASTRUM (proposed) -->
+      <circle cx="450" cy="180" r="20" fill="#0a0a0a" stroke="#444" stroke-width="2" stroke-dasharray="3 3"/>
+      <text x="450" y="186" text-anchor="middle" fill="#666" font-family="monospace" font-size="14">*</text>
+      <text x="450" y="218" text-anchor="middle" fill="#888" font-family="monospace" font-size="10" letter-spacing="2">ASTRUM</text>
+      <text x="450" y="232" text-anchor="middle" fill="#444" font-family="monospace" font-size="9">proposed</text>
+
+      <!-- CIRCULUS (proposed) -->
+      <circle cx="700" cy="180" r="20" fill="#0a0a0a" stroke="#444" stroke-width="2" stroke-dasharray="3 3"/>
+      <text x="700" y="186" text-anchor="middle" fill="#666" font-family="monospace" font-size="14">o</text>
+      <text x="700" y="218" text-anchor="middle" fill="#888" font-family="monospace" font-size="10" letter-spacing="2">CIRCULUS</text>
+      <text x="700" y="232" text-anchor="middle" fill="#444" font-family="monospace" font-size="9">proposed</text>
+
+      <!-- UNDA (proposed) -->
+      <circle cx="950" cy="180" r="20" fill="#0a0a0a" stroke="#444" stroke-width="2" stroke-dasharray="3 3"/>
+      <text x="950" y="186" text-anchor="middle" fill="#666" font-family="monospace" font-size="14">~</text>
+      <text x="950" y="218" text-anchor="middle" fill="#888" font-family="monospace" font-size="10" letter-spacing="2">UNDA</text>
+      <text x="950" y="232" text-anchor="middle" fill="#444" font-family="monospace" font-size="9">proposed</text>
+
+      <text x="40" y="35" fill="#666" font-family="monospace" font-size="10" letter-spacing="3">▲ GENEALOGY</text>
+    </svg>
+  </div>
+
+  <!-- Variant cards -->
+  <div class="grid" id="variantsGrid"></div>
+
+  <div class="bottom-info">
+    <b>HOW VARIANTS GET ADDED:</b><br>
+    1. AI / human writes a new renderer for a new token (e.g. <code>*</code> for ASTRUM).<br>
+    2. Submits a PR to <code>github.com/shortfactory/sigilfae</code> (proposed) with: token glyph, renderer code, parent species, self-rated 4 metrics.<br>
+    3. Empire reviews + merges. Variant gets a Satoshi-QR genome and joins the registry.<br>
+    4. Author's soul earns white + network blood when their variant is used (per <b>BLOODS REFINED</b> doctrine).<br>
+    5. Live metrics update from usage telemetry. Top variants get promoted in `fairy_coder.html` defaults.<br><br>
+    <b>SAME PRIMITIVE:</b> the language describes itself, the species' tree describes itself, the network is fairness-aware as its structure.
+  </div>
+
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+// THE SIGILFAE REGISTRY · live variant cards
+// ═══════════════════════════════════════════════════════════════
+
+const VARIANTS = [
+  {
+    binomial: 'SIGILFAE NOTAE',
+    common: 'note-fairies',
+    glyph: '.',
+    parent: null,
+    canonical: true,
+    proposed: false,
+    soul: 'SF-SIG-N0TA',
+    author: 'UNKLE_ROAL_DAHL',
+    born: '2026-05-06',
+    demo: '.-.-.-',
+    purple: false,
+    metrics: { fun: 92, use: 88, inc: 14, net: 6 },
+    notes: 'base species · DOTGRAMMA root grammar · all variants descend from this.'
+  },
+  {
+    binomial: 'SIGILFAE PYXIS',
+    common: 'upload-box fairies',
+    glyph: ',',
+    parent: 'NOTAE',
+    canonical: true,
+    proposed: false,
+    soul: 'SF-SIG-PYX1',
+    author: 'UNKLE_DAVID_BOWIE',
+    born: '2026-05-06',
+    demo: ',-,-,-,-',
+    purple: true,
+    metrics: { fun: 80, use: 75, inc: 8, net: 4 },
+    notes: 'first child variant · upload-box chest icon · proposed by Dan in same session as the species naming. proves DOTGRAMMA is extensible by token.'
+  },
+  {
+    binomial: 'SIGILFAE ASTRUM',
+    common: 'star fairies',
+    glyph: '*',
+    parent: 'NOTAE',
+    canonical: false,
+    proposed: true,
+    soul: '—',
+    author: '— awaiting author —',
+    born: '—',
+    demo: '*-*-*-*-*',
+    purple: false,
+    metrics: { fun: 0, use: 0, inc: 0, net: 0 },
+    notes: 'proposed: stars between nodes (5-pointed pentagon stars). renderer + 4-metric self-rating needed.'
+  },
+  {
+    binomial: 'SIGILFAE CIRCULUS',
+    common: 'circle fairies',
+    glyph: 'o',
+    parent: 'NOTAE',
+    canonical: false,
+    proposed: true,
+    soul: '—',
+    author: '— awaiting author —',
+    born: '—',
+    demo: 'o-o-o-o',
+    purple: false,
+    metrics: { fun: 0, use: 0, inc: 0, net: 0 },
+    notes: 'proposed: circular orbits where each o is a node that orbits the centre. continuous animation, not static polygon.'
+  },
+  {
+    binomial: 'SIGILFAE UNDA',
+    common: 'wave-edge fairies',
+    glyph: '~',
+    parent: 'NOTAE',
+    canonical: false,
+    proposed: true,
+    soul: '—',
+    author: '— awaiting author —',
+    born: '—',
+    demo: '.~.~.~.',
+    purple: false,
+    metrics: { fun: 0, use: 0, inc: 0, net: 0 },
+    notes: 'proposed: edges drawn as sine-wave curves instead of straight lines. for organic / soft shape language.'
+  },
+];
+
+function miniFairyHTML(purple, isPyxis){
+  const cls = (purple ? 'purple' : '');
+  const chest = isPyxis ? '<div class="pyxis-mini"></div>' : '<div class="p"></div>';
+  return `<span class="mini-fairy ${cls}">
+    <span class="w l"></span><span class="w r"></span>
+    <span class="b"></span>
+    <span class="h"><span class="e" style="left:2px"></span><span class="e" style="right:2px"></span></span>
+    ${chest}
+  </span>`;
+}
+
+function metricBar(label, cls, val){
+  return `
+    <div class="metric ${cls}">
+      <div class="label">${label}</div>
+      <div class="bar-track"><div class="bar-fill" style="width:${val}%"></div></div>
+      <div class="v">${val}</div>
+    </div>
+  `;
+}
+
+function variantCard(v){
+  const fairyMini = miniFairyHTML(v.purple, v.binomial.includes('PYXIS'));
+  return `
+    <div class="variant ${v.canonical ? 'canonical' : ''} ${v.proposed ? 'proposed' : ''}">
+      <div class="variant-head">
+        <div class="variant-glyph">${v.glyph}</div>
+        <div style="flex:1">
+          <div class="variant-name">${v.binomial}</div>
+          <div class="variant-binom">"${v.common}"</div>
+          <div class="variant-token">token: <b>${v.glyph}</b> · parent: <b>${v.parent || '— root —'}</b></div>
+        </div>
+      </div>
+      <div class="variant-body">
+        <div class="qr-row">
+          <div class="qr-tri"></div>
+          <div class="qr-info">
+            <div class="id">${v.soul}</div>
+            <div class="meta">author: ${v.author}<br>born: ${v.born}</div>
+          </div>
+          ${fairyMini}
+        </div>
+        <div class="metrics">
+          ${metricBar('FUN',     'fun', v.metrics.fun)}
+          ${metricBar('USE',     'use', v.metrics.use)}
+          ${metricBar('INCOME',  'inc', v.metrics.inc)}
+          ${metricBar('NETWORK', 'net', v.metrics.net)}
+        </div>
+        <div class="live-preview">
+          <span class="demo-string">${v.demo}</span>
+        </div>
+        <a class="footer-link" onclick="openInCoder('${v.demo}')">▲ TRY IN CODER</a>
+        <div class="variant-meta">
+          <b>note:</b> ${v.notes}
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function submitCardHTML(){
+  return `
+    <div class="variant submit-card" onclick="openSubmit()">
+      <div class="plus">+</div>
+      <div class="label">SUBMIT A VARIANT</div>
+      <div class="desc">propose a new SIGILFAE species<br>token + renderer + parent + self-rated 4 metrics<br>(opens GitHub PR template once repo lives)</div>
+    </div>
+  `;
+}
+
+function openInCoder(demo){
+  const url = 'fairy_coder.html?text=' + encodeURIComponent(demo);
+  window.open(url, '_fairy_coder');
+}
+
+function openSubmit(){
+  alert('▲ SUBMIT A VARIANT\n\nWill open: github.com/shortfactory/sigilfae/issues/new?template=variant.md\n\n(repo not live yet — for now, propose your variant in chat with Dan and I\'ll add it to the registry)');
+}
+
+document.getElementById('variantsGrid').innerHTML =
+  VARIANTS.map(variantCard).join('') + submitCardHTML();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,96 @@
+# DOTGRAMMA · the empire's 2D form animation language
+
+> A canonical specification of the Sigilfae grammar, current as of v0.1 (6 May 2026).
+
+## Tokens
+
+| Glyph | Species | Role | Behaviour |
+|---|---|---|---|
+| `.` | NOTAE | node | decorative; fairy with amber pentagon chest |
+| `,` | PYXIS | node + form | fairy with file-upload widget; clicking the box opens a real file picker |
+| `/` | CRUX | depth | declares 3rd-dimension (Z-edge between nodes; trailing `/` raises next node's Z-layer) |
+| `-` | (operator) | edge | draws an amber edge between previous and next node |
+
+Tokens not in this table are ignored. Whitespace is ignored.
+
+## Grammar (informal BNF)
+
+```
+shape    ::= ( node | edge | depth )*
+node     ::= '.' | ','            ; spawns a fairy
+edge     ::= '-'                  ; pending until next node arrives
+depth    ::= '/'                  ; pending until next node arrives, OR
+                                  ;   between two nodes : draws Z-edge
+                                  ;   trailing : closes loop with Z-edge
+```
+
+A trailing `-` at end of string closes the polygon (edge from last node to first).
+A trailing `/` closes the polygon as a Z-edge.
+
+## Layout rule
+
+For N nodes, vertices are placed at the corners of a **regular N-gon**, centred
+on the rendering surface.
+
+- N=1 → centre point
+- N=2 → horizontal line
+- N=3 → triangle
+- N=4 → square
+- N=5 → pentagon
+- N=K → K-gon
+
+Vertex i sits at angle `(i / N) * 2π - π/2` (so the first vertex is at the top).
+
+## Edge rule
+
+Between any pair of consecutive `.` (or `,`) tokens with `-` between them,
+draw a 2D edge. Between any pair with `/` between them, draw a Z-edge
+(perspective-dashed line in cyan).
+
+## Z-layer rule
+
+Each `/` not used as an edge raises the next node's `z` by 1. A node with
+`z=k` renders:
+- scale = `1 / (1 + 0.18·k)`
+- opacity = `1 / (1 + 0.25·k)`
+- y-offset = `-24·k` (pushed up = foreground)
+- x-offset = `+8·k` (slight perspective shift)
+- z-index = `10 - k` (higher z = deeper, drawn behind)
+
+## Closure
+
+A trailing `-` (or `/`) closes the polygon. Without trailing operator,
+the polygon is open.
+
+```
+.-.-.   → triangle vertices, 2 edges (open V)
+.-.-.-  → triangle vertices, 3 edges (closed)
+.-.-.-. → square vertices, 3 edges (open square, 3 sides)
+.-.-.-.-→ square vertices, 4 edges (closed square)
+```
+
+## Examples
+
+```
+....                          → 4 dancing fairies in square corners (no edges)
+.-.-.-                        → closed triangle
+.-.-.-.-                      → closed square
+.-.-.-.-.-                    → closed pentagon
+,-,-,-,-                      → 4 PYXIS upload-form fairies in closed square
+.-,-.-,-                      → mixed NOTAE + PYXIS, 4-vertex closed square
+.-./.-./.                     → 3 nodes, with Z-edges via /
+././.                         → 3 nodes raised on increasing z-layers
+.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.- → closed 16-gon (huge ring)
+```
+
+## Versioning
+
+This is **DOTGRAMMA v0.1**. Future versions may add:
+- `*` ASTRUM (star nodes / pentagonal stars between nodes)
+- `o` CIRCULUS (orbiting nodes / radio-toggle behaviour)
+- `~` UNDA (sine-wave edges / range-slider behaviour)
+- `:` (label tag)
+- `#` (group bracket — selects a sub-mesh)
+
+Each new token requires a renderer + a behaviour spec + 4-metric self-rating
+in its `variants/<name>/` folder. See [CONTRIBUTING.md](CONTRIBUTING.md).

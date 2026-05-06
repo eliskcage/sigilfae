@@ -1,0 +1,780 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>THE GODMESH · DOTGRAMMA · interactive · 3D · funny as its nature</title>
+<style>
+  :root{
+    --bg:#0a0a0a; --fg:#e8e2d4; --amber:#d4a544; --amber-glow:#ffc04a;
+    --cream:#f3e8c8; --network:#b9a4f5;
+    --done:#52a86b; --in-progress:#ff7a30;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{background:#0a0a0a;color:var(--fg);font-family:'Courier New',monospace;min-height:100vh;overflow-x:hidden}
+  body{padding:30px 20px;background:radial-gradient(ellipse at top,#1a1a1a 0%,#000 60%)}
+
+  .header{text-align:center;margin-bottom:20px}
+  .header .crown{color:var(--amber);font-size:24px;letter-spacing:0.5em}
+  .header h1{font-size:13px;letter-spacing:0.4em;color:var(--amber);text-transform:uppercase;margin-top:6px}
+  .header .sub{font-size:10px;color:#666;letter-spacing:0.2em;margin-top:6px}
+  .header .legend{font-size:11px;color:#aaa;margin-top:14px;font-family:Georgia,serif;font-style:italic}
+  .header .legend code{background:#0d0d0d;border:1px solid var(--amber);color:var(--amber);padding:2px 8px;border-radius:3px;font-style:normal;font-family:monospace}
+
+  .container{max-width:1100px;margin:0 auto}
+
+  .stage{
+    position:relative;width:100%;height:520px;
+    background:radial-gradient(ellipse at center,rgba(212,165,68,0.08) 0%,transparent 70%),linear-gradient(180deg,#0d0d0d,#000);
+    border:1px solid rgba(212,165,68,0.3);border-radius:14px;
+    overflow:hidden;margin-bottom:24px;
+    box-shadow:0 0 60px rgba(212,165,68,0.1);
+    perspective:900px
+  }
+  .stage svg.edges{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+
+  .shape-badge{
+    position:absolute;top:14px;left:14px;
+    background:rgba(0,0,0,0.7);border:1px solid var(--amber);border-radius:20px;
+    padding:6px 14px;font-size:11px;color:var(--amber);letter-spacing:0.16em;
+    z-index:6;pointer-events:none
+  }
+  .shape-badge b{color:#fff}
+
+  .blood-badge{
+    position:absolute;top:14px;right:14px;
+    background:rgba(0,0,0,0.7);border:1px solid var(--amber);border-radius:20px;
+    padding:6px 12px;display:flex;align-items:center;gap:10px;
+    z-index:6;font-family:monospace;font-size:11px
+  }
+  .blood-badge .vial{display:inline-block;width:6px;height:9px;border-radius:50% 50% 50% 50% / 70% 70% 30% 30%;margin-right:4px;vertical-align:middle}
+  .blood-badge .v.white{background:linear-gradient(180deg,#fff,#dcd8c8)}
+  .blood-badge b{color:#fff}
+
+  /* Fairy = clickable, draggable, state-aware */
+  .fairy{position:absolute;width:36px;height:54px;will-change:transform,left,top;
+    transition:left 0.5s cubic-bezier(0.34,1.56,0.64,1),top 0.5s cubic-bezier(0.34,1.56,0.64,1),transform 0.3s;
+    cursor:grab;user-select:none;touch-action:none}
+  .fairy.dragging{cursor:grabbing;transition:none;z-index:20}
+  .fairy.popping{transition:transform 0.3s ease-out, opacity 0.35s}
+  .fairy.complete .pent{background:var(--done);box-shadow:0 0 16px var(--done),0 0 32px rgba(82,168,107,0.5);animation:none}
+  .fairy.in-progress .pent{background:var(--in-progress);box-shadow:0 0 16px var(--in-progress);animation:pentBig 0.4s infinite alternate}
+  @keyframes pentBig{0%{transform:translateX(-50%) scale(1)}100%{transform:translateX(-50%) scale(1.4)}}
+
+  .fairy .body{position:absolute;left:50%;top:18%;transform:translateX(-50%);width:18px;height:30px;background:linear-gradient(180deg,var(--cream),#d8c89a);border-radius:50% 50% 40% 40%;border:1px solid rgba(0,0,0,0.4)}
+  .fairy .head{position:absolute;left:50%;top:0;transform:translateX(-50%);width:14px;height:14px;background:var(--cream);border-radius:50%;border:1px solid rgba(0,0,0,0.3)}
+  .fairy .eye{position:absolute;top:5px;width:1.8px;height:1.8px;background:#000;border-radius:50%}
+  .fairy .eye.l{left:4px}.fairy .eye.r{right:4px}
+  .fairy .pent{position:absolute;left:50%;top:38%;transform:translateX(-50%);width:7px;height:7px;background:var(--amber);clip-path:polygon(50% 0,100% 38%,82% 100%,18% 100%,0 38%);box-shadow:0 0 10px var(--amber-glow);animation:pentPulse 2s infinite ease-in-out}
+  @keyframes pentPulse{0%,100%{box-shadow:0 0 8px var(--amber-glow)}50%{box-shadow:0 0 16px var(--amber-glow)}}
+  .fairy .wing{position:absolute;top:24%;width:16px;height:24px;background:rgba(255,255,255,0.18);border:1px solid rgba(255,255,255,0.3);border-radius:50% 50% 50% 50% / 60% 60% 40% 40%;animation:wf 0.4s infinite alternate}
+  .fairy .wing.l{left:-10px;transform:rotate(-22deg)}
+  .fairy .wing.r{right:-10px;transform:rotate(22deg) scaleX(-1)}
+  @keyframes wf{0%{filter:brightness(1)}100%{filter:brightness(1.4)}}
+  .fairy.bob{animation:fairyBob 2.4s ease-in-out infinite}
+  @keyframes fairyBob{0%,100%{margin-top:0}50%{margin-top:-6px}}
+  .fairy.purple .body{background:linear-gradient(180deg,#d8c8f5,#a890d8)}
+  .fairy.purple .head{background:#d8c8f5}
+  .fairy.purple .pent{background:var(--network);box-shadow:0 0 10px var(--network)}
+  .fairy.purple .wing{background:rgba(185,164,245,0.2);border-color:rgba(185,164,245,0.4)}
+
+  /* SIGILFAE PYXIS = real upload form */
+  .fairy .pyxis-box{
+    position:absolute;left:50%;top:32%;transform:translateX(-50%);
+    width:14px;height:14px;border:1.5px solid var(--network);background:rgba(185,164,245,0.15);
+    box-shadow:0 0 8px var(--network);border-radius:1px;cursor:pointer;
+    display:flex;align-items:flex-end;justify-content:center;
+  }
+  .fairy .pyxis-box::before{
+    content:'';position:absolute;left:50%;top:2px;transform:translateX(-50%);
+    width:0;height:0;border-left:3px solid transparent;border-right:3px solid transparent;
+    border-bottom:4px solid var(--network);
+  }
+  .fairy .pyxis-box::after{
+    content:'';position:absolute;left:50%;top:6px;transform:translateX(-50%);
+    width:1.5px;height:5px;background:var(--network);
+  }
+  .fairy.has-file .pyxis-box{background:rgba(82,168,107,0.3);border-color:var(--done);box-shadow:0 0 12px var(--done)}
+  .fairy.has-file .pyxis-box::before{border-bottom-color:var(--done)}
+  .fairy.has-file .pyxis-box::after{background:var(--done)}
+
+  /* SIGILFAE CRUX = 3D z-marker */
+  .fairy.crux .pent{background:#9be0d4;box-shadow:0 0 12px #9be0d4;clip-path:polygon(20% 0,80% 0,100% 30%,100% 70%,80% 100%,20% 100%,0 70%,0 30%)}
+
+  /* Pop particles */
+  .pop-particle{
+    position:absolute;width:4px;height:4px;background:var(--amber-glow);
+    border-radius:50%;box-shadow:0 0 6px var(--amber-glow);
+    pointer-events:none;animation:popOut 0.8s ease-out forwards
+  }
+  @keyframes popOut{
+    0%{opacity:1;transform:translate(0,0) scale(1)}
+    100%{opacity:0;transform:translate(var(--tx,0),var(--ty,0)) scale(0.2)}
+  }
+
+  /* State indicator badge under each fairy */
+  .state-tag{position:absolute;bottom:-18px;left:50%;transform:translateX(-50%);font-size:8px;letter-spacing:0.16em;color:#888;font-family:monospace;pointer-events:none;white-space:nowrap}
+  .fairy.in-progress .state-tag{color:var(--in-progress)}
+  .fairy.complete .state-tag{color:var(--done)}
+
+  /* hidden file input attached to PYXIS fairies */
+  .pyxis-input{display:none}
+
+  .input-zone{display:grid;grid-template-columns:1fr 280px;gap:20px;align-items:start}
+  .input-zone textarea{
+    width:100%;background:#000;border:1px solid #333;border-radius:8px;padding:18px;
+    color:var(--amber);font-family:'Courier New',monospace;font-size:24px;line-height:1.5;min-height:120px;
+    resize:vertical;letter-spacing:0.16em;transition:all 0.3s
+  }
+  .input-zone textarea:focus{outline:none;border-color:var(--amber);box-shadow:0 0 24px rgba(212,165,68,0.4)}
+  .input-zone .controls{display:flex;flex-direction:column;gap:10px}
+  .input-zone label{font-size:10px;color:#888;letter-spacing:0.18em;margin-bottom:6px;display:block}
+  .stat{padding:10px 12px;background:rgba(212,165,68,0.06);border:1px solid rgba(212,165,68,0.2);border-radius:4px;font-size:11px;color:var(--amber);font-family:monospace;line-height:1.6}
+  .stat b{color:var(--amber-glow)}
+  .btn-amber{padding:14px;background:linear-gradient(180deg,var(--amber-glow),var(--amber));color:#000;font-weight:bold;font-size:12px;letter-spacing:0.2em;border:none;cursor:pointer;border-radius:4px;font-family:inherit;text-transform:uppercase;box-shadow:0 0 20px rgba(212,165,68,0.3)}
+  .btn-amber:hover{box-shadow:0 0 32px rgba(255,200,80,0.6)}
+  .btn-grey{padding:11px;background:#1a1a1a;color:#888;border:1px solid #333;cursor:pointer;border-radius:4px;font-family:inherit;font-size:10px;letter-spacing:0.18em;text-transform:uppercase}
+  .btn-grey:hover{color:#bbb;border-color:#555}
+
+  .demos{display:flex;gap:6px;margin-top:14px;flex-wrap:wrap}
+  .demo-pill{padding:6px 12px;background:#000;border:1px solid #333;color:#888;cursor:pointer;font-family:monospace;font-size:13px;letter-spacing:0.1em;border-radius:3px;transition:all 0.2s}
+  .demo-pill:hover{border-color:var(--amber);color:var(--amber)}
+  .demo-pill .sub{display:block;font-size:9px;color:#444;letter-spacing:0.18em;margin-top:3px}
+
+  .doctrine{margin-top:30px;padding:14px 18px;background:rgba(212,165,68,0.04);border-left:3px solid var(--amber);border-radius:6px;font-size:11px;line-height:1.6;color:#aaa}
+  .doctrine b{color:var(--amber)}
+  .doctrine code{background:#000;color:var(--amber);padding:2px 6px;border-radius:3px;font-family:monospace}
+
+  .modes{display:flex;gap:6px;margin-bottom:14px}
+  .mode{flex:1;padding:8px;text-align:center;font-size:10px;border:1px solid #333;background:#000;color:#888;border-radius:3px;letter-spacing:0.14em;cursor:pointer;transition:all 0.2s}
+  .mode.active{border-color:var(--amber);background:rgba(212,165,68,0.15);color:var(--amber);font-weight:bold}
+
+  .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#000;border:1px solid var(--amber);padding:10px 18px;color:var(--amber);font-size:11px;letter-spacing:0.1em;z-index:99;box-shadow:0 0 30px rgba(212,165,68,0.4);font-family:monospace}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="crown">▲ ▲ ▲</div>
+  <h1>The Godmesh · DOTGRAMMA</h1>
+  <div class="sub">click · drag · complete · pop · earn blood · funny as its nature</div>
+  <div class="legend">
+    <code>.</code> NOTAE node ·
+    <code>,</code> PYXIS upload-form ·
+    <code>/</code> CRUX 3rd dimension ·
+    <code>-</code> 2D edge ·
+    <span style="color:#aaa">click any node → cycle state · drag → free move · POP on complete</span>
+  </div>
+</div>
+
+<div class="container">
+
+  <div class="modes">
+    <div class="mode active" onclick="setMode('build')">▲ BUILD MODE</div>
+    <div class="mode" onclick="setMode('overlay')">◆ OVERLAY (transparent)</div>
+  </div>
+
+  <div class="stage" id="stage">
+    <div class="shape-badge" id="shapeBadge">SHAPE: <b id="shapeName">none</b></div>
+    <div class="blood-badge"><span class="v white"></span><span>WHITE: <b id="whiteCount">0</b></span></div>
+    <svg class="edges" id="edgesSvg"></svg>
+  </div>
+
+  <div class="input-zone">
+    <div>
+      <label>DOTGRAMMA · type a string · click pills · or PLAY DEMO</label>
+      <textarea id="fixText" placeholder=". = node · , = form · / = 3D · - = edge" spellcheck="false">.-.-.-</textarea>
+      <div class="demos">
+        <span class="demo-pill" onclick="ghostType('....')">....<span class="sub">4 dance</span></span>
+        <span class="demo-pill" onclick="ghostType('.-.-.-')">.-.-.-<span class="sub">closed △</span></span>
+        <span class="demo-pill" onclick="ghostType('.-.-.-.-')">.-.-.-.-<span class="sub">closed □</span></span>
+        <span class="demo-pill" onclick="ghostType('.-.-.-.-.-')">.-.-.-.-.-<span class="sub">closed ⬠</span></span>
+        <span class="demo-pill" style="border-color:#b9a4f5;color:#b9a4f5" onclick="ghostType(',-,-,-,-')">,-,-,-,-<span class="sub">PYXIS forms</span></span>
+        <span class="demo-pill" style="border-color:#9be0d4;color:#9be0d4" onclick="ghostType('.-./.-./.')">.-./.-./.<span class="sub">CRUX 3D</span></span>
+        <span class="demo-pill" onclick="ghostType('.-,-.-,-.-,-')">.-,-.-,-.-,-<span class="sub">mixed</span></span>
+      </div>
+    </div>
+    <div class="controls">
+      <div class="stat" id="statBox">
+        nodes: <b id="nodeCount">0</b><br>
+        edges: <b id="edgeCount">0</b><br>
+        shape: <b id="statShape">—</b><br>
+        complete: <b id="completeCount">0</b><br>
+        white blood: <b id="whiteStat">0</b>
+      </div>
+      <button class="btn-amber" id="playDemoBtn" onclick="playDemoCycle()">▶ PLAY DEMO</button>
+      <button class="btn-amber" onclick="completeAll()" style="background:#0d0d0d;color:var(--done);border:1px solid var(--done);box-shadow:none">▲ COMPLETE ALL → POP</button>
+      <button class="btn-grey" onclick="clearStage()">[clear]</button>
+    </div>
+  </div>
+
+  <div class="doctrine">
+    <b>THE GODMESH:</b> the empire's visual descriptor for organising ShortFactory jobs. Every Sigilfae node is interactive — <b>click</b> to cycle state (open → in-progress → complete → POP), <b>drag</b> to move freely, <b>complete</b> to explode and earn white blood. Tokens declare BEHAVIOUR, not just visuals — <code>,</code> spawns a real file-upload form, <code>/</code> declares the 3rd dimension (Z-edge / depth-shift). Funny as its nature: pop = synth pop + comedic scream + particle burst + blood grant + toast.<br>
+    <b>NEXT:</b> push to <code>github.com/shortfactory/sigilfae</code> so GPT, Grok, and other AIs can develop variants. Empire owns / markets / implements every accepted offspring.
+  </div>
+
+</div>
+
+<audio id="popSound" preload="auto"></audio>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+// THE GODMESH · DOTGRAMMA + interactive nodes + state + pop
+// ═══════════════════════════════════════════════════════════════
+
+const STAGE = document.getElementById('stage');
+const TEXTAREA = document.getElementById('fixText');
+const EDGES_SVG = document.getElementById('edgesSvg');
+
+let fairies = [];   // [{el, idx, sp, z, state, x, y, hasFile}]
+let mode = 'build';
+let whiteBlood = parseInt(localStorage.getItem('sf_godmesh_white') || '0', 10);
+let completeCount = 0;
+
+const SHAPE_NAMES = {
+  0:'none', 1:'point', 2:'line', 3:'triangle', 4:'square', 5:'pentagon',
+  6:'hexagon', 7:'heptagon', 8:'octagon', 9:'nonagon', 10:'decagon',
+  11:'hendecagon', 12:'dodecagon'
+};
+function shapeName(n){ return SHAPE_NAMES[n] || (n + '-gon'); }
+
+const STAGE_W = () => STAGE.clientWidth;
+const STAGE_H = () => STAGE.clientHeight;
+
+function setMode(m){
+  mode = m;
+  document.querySelectorAll('.mode').forEach((el,i) => {
+    el.classList.toggle('active', (i===0 && m==='build') || (i===1 && m==='overlay'));
+  });
+  if (m === 'overlay'){
+    STAGE.style.background = 'transparent';
+    STAGE.style.borderStyle = 'dashed';
+  } else {
+    STAGE.style.background = 'radial-gradient(ellipse at center,rgba(212,165,68,0.08) 0%,transparent 70%),linear-gradient(180deg,#0d0d0d,#000)';
+    STAGE.style.borderStyle = 'solid';
+  }
+}
+
+// ─── DOTGRAMMA parser ─────────────────────────────────────
+// Tokens: . = NOTAE node · , = PYXIS form node · / = CRUX 3D node-or-edge · - = 2D edge
+function parseShape(s){
+  const tokens = s.replace(/[^.,/\-]/g, '').split('');
+  const nodes = [];      // {sp, z}
+  const edges = [];      // {a, b, z?}
+  let pendingDash = false;
+  let pendingZ = 0;       // accumulates / before next node
+  let zEdgePending = false; // / between two nodes = z-edge
+  for (let i=0; i<tokens.length; i++){
+    const c = tokens[i];
+    if (c === '.' || c === ','){
+      const newIdx = nodes.length;
+      nodes.push({
+        sp: c === ',' ? 'pyxis' : 'notae',
+        z: pendingZ
+      });
+      pendingZ = 0;
+      if (newIdx > 0){
+        if (zEdgePending){
+          edges.push({a: newIdx-1, b: newIdx, z: true});
+          zEdgePending = false;
+        } else if (pendingDash){
+          edges.push({a: newIdx-1, b: newIdx, z: false});
+        }
+      }
+      pendingDash = false;
+    } else if (c === '-'){
+      pendingDash = true;
+      zEdgePending = false;
+    } else if (c === '/'){
+      // / between nodes: z-edge. Or trailing : raises next node z.
+      if (pendingDash){
+        // dash then slash then node = z-edge override
+        zEdgePending = true;
+        pendingDash = false;
+      } else if (nodes.length > 0 && !pendingDash){
+        // standalone / : raise next node's z
+        pendingZ++;
+      } else {
+        pendingZ++;
+      }
+    }
+  }
+  let closed = false;
+  if (pendingDash && nodes.length >= 2){
+    edges.push({a: nodes.length-1, b: 0, z: false});
+    closed = true;
+  } else if (zEdgePending && nodes.length >= 2){
+    edges.push({a: nodes.length-1, b: 0, z: true});
+    closed = true;
+  }
+  return {nodes, edges, closed};
+}
+
+function polygonVertices(n, cx, cy, R){
+  if (n === 0) return [];
+  if (n === 1) return [{x: cx, y: cy}];
+  if (n === 2) return [{x: cx-R*0.6, y: cy}, {x: cx+R*0.6, y: cy}];
+  const verts = [];
+  for (let i=0; i<n; i++){
+    const angle = (i/n) * Math.PI * 2 - Math.PI/2;
+    verts.push({x: cx + R*Math.cos(angle), y: cy + R*Math.sin(angle)});
+  }
+  return verts;
+}
+
+// ─── Sound synthesis (Web Audio) ──────────────────────────
+let audioCtx = null;
+function getAudio(){
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  return audioCtx;
+}
+function playPopSound(){
+  const ctx = getAudio();
+  const t0 = ctx.currentTime;
+  // 1. Joyful pop chord (rapid 3-note rising arpeggio)
+  [440, 660, 880].forEach((freq, i) => {
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.frequency.value = freq;
+    osc.type = 'triangle';
+    gain.gain.setValueAtTime(0, t0 + i*0.04);
+    gain.gain.linearRampToValueAtTime(0.12, t0 + i*0.04 + 0.01);
+    gain.gain.exponentialRampToValueAtTime(0.001, t0 + i*0.04 + 0.18);
+    osc.connect(gain).connect(ctx.destination);
+    osc.start(t0 + i*0.04);
+    osc.stop(t0 + i*0.04 + 0.2);
+  });
+  // 2. Comedic scream (rising pitched-wail with formant)
+  setTimeout(() => {
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    const filt = ctx.createBiquadFilter();
+    filt.type = 'bandpass';
+    filt.frequency.value = 1200;
+    filt.Q.value = 4;
+    const t1 = ctx.currentTime;
+    osc.frequency.setValueAtTime(180, t1);
+    osc.frequency.exponentialRampToValueAtTime(1400, t1 + 0.25);
+    osc.frequency.exponentialRampToValueAtTime(220, t1 + 0.45);
+    osc.type = 'sawtooth';
+    gain.gain.setValueAtTime(0, t1);
+    gain.gain.linearRampToValueAtTime(0.08, t1 + 0.02);
+    gain.gain.exponentialRampToValueAtTime(0.001, t1 + 0.5);
+    osc.connect(filt).connect(gain).connect(ctx.destination);
+    osc.start(t1);
+    osc.stop(t1 + 0.5);
+  }, 150);
+}
+
+// ─── Spawn ────────────────────────────────────────────────
+function spawnFairy(node, idx, x, y){
+  const el = document.createElement('div');
+  const isPyxis = node.sp === 'pyxis';
+  const purple = isPyxis || idx % 3 === 1;
+  el.className = 'fairy bob' + (purple ? ' purple' : '');
+  el.dataset.species = node.sp;
+  el.dataset.z = node.z;
+  el.style.animationDelay = (idx * 0.18) + 's';
+  // depth scale + opacity
+  const zScale = 1 / (1 + node.z * 0.18);
+  const zOpacity = 1 / (1 + node.z * 0.25);
+  el.style.transform = `scale(${zScale.toFixed(2)})`;
+  el.style.opacity = zOpacity.toFixed(2);
+  el.style.zIndex = String(10 - node.z);
+  const chestHTML = isPyxis ? `<div class="pyxis-box"></div>` : `<div class="pent"></div>`;
+  el.innerHTML = `
+    <div class="wing l"></div><div class="wing r"></div>
+    <div class="body"></div>
+    <div class="head"><div class="eye l"></div><div class="eye r"></div></div>
+    ${chestHTML}
+    <div class="state-tag">▼ open</div>
+  `;
+  el.style.left = (x) + 'px';
+  el.style.top = (STAGE_H() + 30) + 'px';
+  STAGE.appendChild(el);
+  const f = {el, idx, sp: node.sp, z: node.z, state: 'open', x, y, hasFile: false, fileName: null, dragOffset: null};
+  fairies.push(f);
+  // hidden file input for PYXIS
+  if (isPyxis){
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.className = 'pyxis-input';
+    input.dataset.fairyIdx = idx;
+    input.addEventListener('change', e => onFileChosen(f, e.target.files[0]));
+    el.appendChild(input);
+  }
+  // wire interactions
+  attachInteractions(f);
+  // animate to target
+  requestAnimationFrame(() => {
+    el.style.left = (x - 18) + 'px';
+    el.style.top = (y - 27) + 'px';
+  });
+}
+
+function attachInteractions(f){
+  // CLICK = cycle state. But suppress click after drag.
+  let downPos = null;
+  let dragging = false;
+  f.el.addEventListener('pointerdown', e => {
+    if (f.state === 'popped') return;
+    downPos = {x: e.clientX, y: e.clientY};
+    dragging = false;
+    // For PYXIS, click on the box opens file picker (special-case)
+    if (f.sp === 'pyxis' && e.target.classList.contains('pyxis-box')){
+      const input = f.el.querySelector('.pyxis-input');
+      if (input) input.click();
+      e.stopPropagation();
+      return;
+    }
+  });
+  f.el.addEventListener('pointermove', e => {
+    if (!downPos) return;
+    const dx = e.clientX - downPos.x;
+    const dy = e.clientY - downPos.y;
+    if (!dragging && (Math.abs(dx) > 5 || Math.abs(dy) > 5)){
+      dragging = true;
+      f.el.classList.add('dragging');
+      f.el.setPointerCapture(e.pointerId);
+    }
+    if (dragging){
+      const rect = STAGE.getBoundingClientRect();
+      f.x = e.clientX - rect.left;
+      f.y = e.clientY - rect.top;
+      f.el.style.left = (f.x - 18) + 'px';
+      f.el.style.top = (f.y - 27) + 'px';
+      redrawEdges();
+    }
+  });
+  f.el.addEventListener('pointerup', e => {
+    if (!downPos) return;
+    if (!dragging){
+      // Click — cycle state
+      cycleState(f);
+    } else {
+      f.el.classList.remove('dragging');
+    }
+    downPos = null;
+    dragging = false;
+  });
+}
+
+function cycleState(f){
+  if (f.state === 'open'){
+    f.state = 'in-progress';
+    f.el.classList.remove('complete');
+    f.el.classList.add('in-progress');
+    f.el.querySelector('.state-tag').textContent = '◆ in progress';
+  } else if (f.state === 'in-progress'){
+    f.state = 'complete';
+    f.el.classList.remove('in-progress');
+    f.el.classList.add('complete');
+    f.el.querySelector('.state-tag').textContent = '▲ complete · pop?';
+    showToast('▲ complete · click again to POP');
+  } else if (f.state === 'complete'){
+    popFairy(f);
+  }
+  updateStats();
+}
+
+function popFairy(f){
+  f.state = 'popped';
+  // particle burst
+  for (let i=0; i<14; i++){
+    const p = document.createElement('div');
+    p.className = 'pop-particle';
+    const ang = (i/14) * Math.PI * 2;
+    const dist = 50 + Math.random()*40;
+    p.style.setProperty('--tx', (Math.cos(ang)*dist) + 'px');
+    p.style.setProperty('--ty', (Math.sin(ang)*dist) + 'px');
+    p.style.left = (f.x) + 'px';
+    p.style.top = (f.y) + 'px';
+    STAGE.appendChild(p);
+    setTimeout(() => p.remove(), 800);
+  }
+  // pop animation on the fairy
+  f.el.classList.add('popping');
+  f.el.style.transform = 'scale(1.6)';
+  f.el.style.opacity = '0';
+  // sound
+  playPopSound();
+  // grant white blood
+  const reward = 5;
+  whiteBlood += reward;
+  localStorage.setItem('sf_godmesh_white', String(whiteBlood));
+  completeCount++;
+  // empire-jobs integration: fire window.IDF if available in opener
+  try {
+    if (window.opener && window.opener.IDF){
+      window.opener.IDF.logJobCompletion({
+        jobId: 'godmesh-pop',
+        whiteBlood: reward,
+        networkBloodPct: 51,
+        parentSoul: 'SF-GODMESH',
+        childSoul: 'SF-FAIRY-' + f.idx
+      });
+    }
+  } catch(e){}
+  // toast
+  showToast('▲ POP · +' + reward + ' white blood');
+  // remove fairy after animation
+  setTimeout(() => {
+    f.el.remove();
+    fairies = fairies.filter(x => x !== f);
+    redrawEdges();
+    updateStats();
+  }, 400);
+}
+
+// ─── Edges ────────────────────────────────────────────────
+function drawEdges(edges){
+  EDGES_SVG.innerHTML = `
+    <defs>
+      <linearGradient id="edge-grad" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0" stop-color="#d4a544" stop-opacity="0.4"/>
+        <stop offset="0.5" stop-color="#ffc04a" stop-opacity="1"/>
+        <stop offset="1" stop-color="#d4a544" stop-opacity="0.4"/>
+      </linearGradient>
+      <linearGradient id="edge-z" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0" stop-color="#9be0d4" stop-opacity="0.5"/>
+        <stop offset="1" stop-color="#9be0d4" stop-opacity="0.9"/>
+      </linearGradient>
+    </defs>
+  `;
+  edges.forEach(e => {
+    const a = fairies[e.a], b = fairies[e.b];
+    if (!a || !b) return;
+    const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    line.setAttribute('x1', a.x);
+    line.setAttribute('y1', a.y);
+    line.setAttribute('x2', b.x);
+    line.setAttribute('y2', b.y);
+    if (e.z){
+      line.setAttribute('stroke', 'url(#edge-z)');
+      line.setAttribute('stroke-dasharray', '6 4');
+      line.setAttribute('stroke-width', '2');
+    } else {
+      line.setAttribute('stroke', 'url(#edge-grad)');
+      line.setAttribute('stroke-width', '2.5');
+    }
+    line.setAttribute('stroke-linecap', 'round');
+    EDGES_SVG.appendChild(line);
+  });
+}
+
+let currentEdges = [];
+function redrawEdges(){ drawEdges(currentEdges); }
+
+// ─── Render ───────────────────────────────────────────────
+function moveFairies(verts){
+  fairies.forEach((f, i) => {
+    const v = verts[i];
+    if (!v) return;
+    f.x = v.x; f.y = v.y;
+    f.el.style.left = (v.x - 18) + 'px';
+    f.el.style.top = (v.y - 27) + 'px';
+  });
+}
+
+function killFairies(fromIdx){
+  while (fairies.length > fromIdx){
+    const f = fairies.pop();
+    if (f && f.el){
+      f.el.style.transition = 'all 0.4s';
+      f.el.style.opacity = '0';
+      f.el.style.top = (STAGE_H() + 30) + 'px';
+      const e = f.el; setTimeout(() => e.remove(), 500);
+    }
+  }
+}
+
+function renderShape(){
+  const s = TEXTAREA.value;
+  const {nodes, edges, closed} = parseShape(s);
+  const cx = STAGE_W()/2, cy = STAGE_H()/2;
+  const R = Math.min(STAGE_W(), STAGE_H()) * 0.35;
+  const verts = polygonVertices(nodes.length, cx, cy, R);
+  // apply z-shift to vertex positions (foreground = closer to centre top)
+  nodes.forEach((n, i) => {
+    if (verts[i] && n.z > 0){
+      // foreground nodes pushed up + slightly larger circle
+      verts[i].y -= n.z * 24;
+      verts[i].x += n.z * 8;
+    }
+  });
+
+  // species or count change → respawn (because chest icon differs)
+  let needRespawn = false;
+  if (fairies.length === nodes.length){
+    for (let i=0; i<nodes.length; i++){
+      if (fairies[i].sp !== nodes[i].sp || fairies[i].z !== nodes[i].z){ needRespawn = true; break; }
+    }
+  }
+  if (needRespawn){
+    killFairies(0);
+    fairies = [];
+  }
+
+  if (fairies.length < nodes.length){
+    for (let i=fairies.length; i<nodes.length; i++){
+      spawnFairy(nodes[i], i, verts[i].x, verts[i].y);
+    }
+  } else if (fairies.length > nodes.length){
+    killFairies(nodes.length);
+  }
+  moveFairies(verts);
+
+  currentEdges = edges;
+  drawEdges(edges);
+
+  document.getElementById('nodeCount').textContent = nodes.length;
+  document.getElementById('edgeCount').textContent = edges.length + (closed ? ' (closed)' : '');
+  document.getElementById('statShape').textContent = shapeName(nodes.length);
+  document.getElementById('shapeName').textContent = shapeName(nodes.length) + (edges.length ? ' · ' + edges.length + ' edges' : '') + (closed ? ' (closed)' : '');
+  updateStats();
+}
+
+function updateStats(){
+  document.getElementById('whiteCount').textContent = whiteBlood;
+  document.getElementById('whiteStat').textContent = whiteBlood;
+  document.getElementById('completeCount').textContent = completeCount;
+}
+
+TEXTAREA.addEventListener('input', () => renderShape());
+
+function onFileChosen(f, file){
+  if (!file) return;
+  f.hasFile = true;
+  f.fileName = file.name;
+  f.el.classList.add('has-file');
+  const tag = f.el.querySelector('.state-tag');
+  if (tag) tag.textContent = '📎 ' + file.name.slice(0, 16);
+  showToast('▲ file attached: ' + file.name);
+  // Auto-progress state to in-progress
+  if (f.state === 'open'){
+    f.state = 'in-progress';
+    f.el.classList.add('in-progress');
+  }
+}
+
+// ─── Ghost typing ─────────────────────────────────────────
+let ghostTyping = false;
+function ghostType(s, delayMs=120, onDone){
+  if (ghostTyping) return;
+  ghostTyping = true;
+  TEXTAREA.value = '';
+  renderShape();
+  let i = 0;
+  function tick(){
+    if (i >= s.length){ ghostTyping = false; if (onDone) onDone(); return; }
+    TEXTAREA.value += s[i];
+    renderShape();
+    i++;
+    setTimeout(tick, delayMs);
+  }
+  tick();
+}
+
+const DEMO_SEQUENCE = [
+  '....',
+  '.-.-.-',
+  '.-.-.-.-',
+  ',-,-,-,-',
+  '.-./.-./.',
+  '.-,-.-,-.-,-',
+  '.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-'
+];
+let demoIdx = 0;
+function playDemoCycle(){
+  if (ghostTyping) return;
+  const s = DEMO_SEQUENCE[demoIdx % DEMO_SEQUENCE.length];
+  demoIdx++;
+  setTimeout(() => {
+    ghostType(s, 140, () => {
+      setTimeout(() => {
+        if (demoIdx < DEMO_SEQUENCE.length) playDemoCycle();
+      }, 1800);
+    });
+  }, 200);
+}
+
+function completeAll(){
+  // mark every fairy complete then pop them in sequence
+  fairies.forEach((f, i) => {
+    setTimeout(() => {
+      if (f.state !== 'complete' && f.state !== 'popped'){
+        f.state = 'complete';
+        f.el.classList.remove('in-progress');
+        f.el.classList.add('complete');
+      }
+      setTimeout(() => popFairy(f), 200);
+    }, i * 180);
+  });
+}
+
+function clearStage(){
+  TEXTAREA.value = '';
+  renderShape();
+}
+
+function showToast(msg){
+  const t = document.createElement('div');
+  t.className = 'toast';
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 2000);
+}
+
+// Cross-product API (kept compatible with empire_jobs.html call site)
+window.FairyCoder = {
+  invoke({text='', target=null, duration=4000, onComplete=null}){
+    if (!target) target = STAGE;
+    const tw = target.clientWidth, th = target.clientHeight;
+    const burst = document.createElement('div');
+    burst.style.cssText = 'position:absolute;inset:0;pointer-events:none;overflow:hidden';
+    if (getComputedStyle(target).position === 'static') target.style.position = 'relative';
+    target.appendChild(burst);
+    const {nodes, edges} = parseShape(text);
+    const cx = tw/2, cy = th/2, R = Math.min(tw, th) * 0.35;
+    const verts = polygonVertices(nodes.length, cx, cy, R);
+    nodes.forEach((n, i) => {
+      const v = verts[i]; if (!v) return;
+      const f = document.createElement('div');
+      f.className = 'fairy bob' + (i%3===1 || n.sp==='pyxis' ? ' purple' : '');
+      f.style.cssText = `position:absolute;left:${v.x-18}px;top:${th+30}px;transition:top ${duration*0.5}ms cubic-bezier(0.34,1.56,0.64,1)`;
+      const chest = n.sp==='pyxis' ? '<div class="pyxis-box"></div>' : '<div class="pent"></div>';
+      f.innerHTML = `<div class="wing l"></div><div class="wing r"></div><div class="body"></div><div class="head"><div class="eye l"></div><div class="eye r"></div></div>${chest}`;
+      burst.appendChild(f);
+      setTimeout(() => { f.style.top = (v.y-27) + 'px'; }, 50 + i*60);
+    });
+    setTimeout(() => { burst.remove(); if (onComplete) onComplete({nodes: nodes.length, edges: edges.length, text}); }, duration);
+    return {ok: true, nodes: nodes.length, edges: edges.length};
+  },
+  ghostType, parseShape, setMode, clear: clearStage, completeAll
+};
+
+// URL params / init
+(function(){
+  const params = new URLSearchParams(window.location.search);
+  const text = params.get('text');
+  const problem = params.get('problem');
+  if (text){
+    if (problem){
+      const banner = document.createElement('div');
+      banner.style.cssText = 'text-align:center;font-size:11px;color:var(--amber);letter-spacing:0.16em;margin:0 0 16px';
+      banner.innerHTML = `▲ FIXING: <b style="color:#fff">${problem}</b>`;
+      document.querySelector('.container').insertBefore(banner, document.querySelector('.modes'));
+    }
+    setTimeout(() => ghostType(text, 80), 600);
+  } else {
+    renderShape();
+  }
+  updateStats();
+})();
+
+console.log('▲ THE GODMESH · click any fairy to cycle state · drag to move · POP earns blood');
+console.log('▲ DOTGRAMMA tokens: . , / -');
+</script>
+
+</body>
+</html>
