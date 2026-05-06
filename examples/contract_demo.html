@@ -289,6 +289,33 @@
   .bake-btn .l1{font-size:11px;letter-spacing:0.22em}
   .bake-btn .l2{font-size:8px;letter-spacing:0.16em;margin-top:2px;opacity:0.8}
   .bake-btn:active{transform:scale(0.99)}
+  .bake-btn .bake-lbl{transition:color 0.18s}
+
+  /* FAIRY DETAILS MENU — tap any non-paying fairy to open its input form */
+  .fairy-card{
+    background:#0a0a0a;border:2px solid var(--green);border-radius:12px;
+    width:100%;padding:18px;font-family:monospace;color:var(--fg);
+    box-shadow:0 0 40px rgba(82,168,107,0.4);position:relative;text-align:center
+  }
+  .fairy-card.purple{border-color:#7e6cff;box-shadow:0 0 40px rgba(126,108,255,0.4)}
+  .fairy-card.gold{border-color:#ffd700;box-shadow:0 0 40px rgba(255,215,0,0.4)}
+  .fairy-card.amber{border-color:var(--amber);box-shadow:0 0 40px rgba(212,165,68,0.4)}
+  .fairy-card .x{position:absolute;top:6px;right:12px;cursor:pointer;color:#888;font-size:20px}
+  .fairy-card .h{font-size:13px;color:inherit;letter-spacing:0.3em;margin-bottom:5px;font-weight:bold}
+  .fairy-card .h2{font-size:9px;color:#aaa;letter-spacing:0.14em;font-style:italic;margin-bottom:14px;font-family:Georgia,serif;line-height:1.5}
+  .fairy-card input[type="text"], .fairy-card input[type="file"]{
+    width:100%;padding:10px;background:#000;border:1px solid #333;border-radius:5px;
+    color:var(--green);font-family:monospace;font-size:11px;outline:none;letter-spacing:0.06em;
+    margin-bottom:10px
+  }
+  .fairy-card input[type="text"]:focus{border-color:var(--green);box-shadow:0 0 10px rgba(82,168,107,0.3)}
+  .fairy-card .fbtn{
+    width:100%;padding:11px;background:linear-gradient(180deg,var(--green-glow),var(--green));
+    color:#000;border:none;border-radius:5px;font-family:inherit;font-size:11px;
+    letter-spacing:0.22em;font-weight:bold;cursor:pointer
+  }
+  .fairy-card .fbtn:active{transform:scale(0.98)}
+  .fairy-card .preview{font-size:8px;color:#888;letter-spacing:0.12em;line-height:1.6;margin-top:10px;padding-top:10px;border-top:1px dashed #333}
 
   /* BAKE QR MODAL */
   .bake-card{background:#0a0a0a;border:2px solid var(--gold);border-radius:12px;width:100%;padding:18px;font-family:monospace;color:var(--fg);box-shadow:0 0 40px rgba(255,215,0,0.4);position:relative;text-align:center}
@@ -378,6 +405,16 @@
     </div>
     <div style="text-align:center;font-size:8px;color:#555;letter-spacing:0.18em;margin-top:6px;font-family:monospace">
       tap stage to <b style="color:#888">📷 snap</b> · hold to <b style="color:#888">▼ clear</b>
+    </div>
+  </div>
+
+  <!-- FAIRY DETAILS MENU · species-specific input -->
+  <div class="pay-overlay" id="fairyOverlay">
+    <div class="fairy-card" id="fairyCard" style="max-width:300px">
+      <span class="x" onclick="closeFairyMenu()">×</span>
+      <div class="h" id="fairyTitle">▲ FAIRY</div>
+      <div class="h2" id="fairySub">requires:</div>
+      <div id="fairyContent"></div>
     </div>
   </div>
 
@@ -1149,13 +1186,18 @@ function spawnFairy(node, idx, x, y){
   el.addEventListener('pointerup', e => {
     cancelHold();
     if (holdFired){ holdFired = false; return; }
-    // Quick tap → pay flow if this fairy is on the paying side.
-    // For multi-user split bills (::), ANY user can tap to pay for the group.
+    e.stopPropagation();
+    // Empire/user fairy on the active paying side → pay modal (white blood for empire,
+    // attached tokens for user). Tap on the OTHER side opens the same role-aware menu.
     if (f.contract && f.contractRole){
       const empirePays = payerDirection === 'empire-to-user' && f.contractRole === 'empire';
       const userPays = payerDirection === 'user-to-empire' && f.contractRole === 'user';
-      if (empirePays || userPays){ e.stopPropagation(); openPay(f); return; }
+      if (empirePays || userPays){ openPay(f); return; }
     }
+    // Every other fairy opens its species-specific input menu — Dan: "clicking on
+    // the fairys, should be the menu for the details that perticular fairy
+    // requires as input. obviously."
+    openFairyMenu(f);
   });
   el.addEventListener('pointerleave', cancelHold);
   el.addEventListener('pointercancel', cancelHold);
@@ -1237,6 +1279,140 @@ function openPay(payer){
   playSound('pay-open');
 }
 function closePay(){ document.getElementById('payOverlay').classList.remove('show'); }
+
+// ─── FAIRY DETAILS MENU · species-aware input ───────────────────────
+// Dan: "clicking on the fairys, should be the menu for the details that
+// perticular fairy requires as input. obviously."
+const FAIRY_MENU_BY_SP = {
+  panis: {
+    title: '▲ PANIS · BISCUIT',
+    sub: 'load capital into this biscuit · thumbprint locks it in escrow',
+    border: 'amber',
+    action: f => { closeFairyMenu(); document.getElementById('loadOverlay').classList.add('show'); }
+  },
+  fiscus: {
+    title: '▲ FISCUS · ESCROW',
+    sub: 'load funds into the escrow pot · auto-releases on commit, refunds on default',
+    border: 'amber',
+    action: f => { closeFairyMenu(); document.getElementById('loadOverlay').classList.add('show'); }
+  },
+  anima: {
+    title: '▲ ANIMA · SOUL',
+    sub: 'paste your SFT soul ID · binds the contract — and your white blood — to your soul',
+    border: 'purple',
+    inputPlaceholder: 'SF-SIG-… or your soul cookie',
+    inputPrefill: () => localStorage.getItem('sf_demo_soul') || '',
+    confirmLabel: '▲ BIND SOUL',
+    confirm: (f, val) => {
+      if (val){
+        localStorage.setItem('sf_demo_soul', val);
+        toast(`▲ soul bound · ${val.slice(0, 18)}${val.length > 18 ? '…' : ''}`);
+      } else {
+        toast('▼ no soul ID entered');
+      }
+    }
+  },
+  tessera: {
+    title: '▲ TESSERA · KINGDOM',
+    sub: 'paste a kingdom-piece QR string from shortfactory.shop/q/...',
+    border: 'gold',
+    inputPlaceholder: '2a83bf48ff_U2XWY5',
+    confirmLabel: '▲ ATTACH KINGDOM',
+    confirm: (f, val) => toast(val ? '▲ kingdom attached · ' + val.slice(0, 18) : '▼ no QR string')
+  },
+  quadra: {
+    title: '▲ QUADRA · BASE',
+    sub: 'paste your SIGILFAE base-page QR string · empire signature',
+    border: 'gold',
+    inputPlaceholder: 'QUADRA · sigilfae base',
+    confirmLabel: '▲ ATTACH BASE',
+    confirm: (f, val) => toast(val ? '▲ base attached · ' + val.slice(0, 18) : '▼ no QR string')
+  },
+  pyxis: {
+    title: '▲ PYXIS · UPLOAD',
+    sub: 'choose a file · proof, contract, asset',
+    border: 'purple',
+    fileInput: true,
+    confirmLabel: '▲ ATTACH FILE',
+    confirm: (f, val, fileName) => toast(fileName ? '▲ file attached · ' + fileName : '▼ no file chosen')
+  },
+  testis: {
+    title: '▲ TESTIS · WITNESS',
+    sub: 'neutral observer · earns a small fee for watching this contract',
+    border: '',
+    confirmLabel: '▲ CONFIRM WITNESS',
+    confirm: () => toast('▲ witness confirmed · contract auditable')
+  },
+  apis: {
+    title: '▲ APIS · QUID-PRO-QUO',
+    sub: 'declare what you offer in trade — the bee unblocks when both sides agree',
+    border: '',
+    inputPlaceholder: 'what do you offer?',
+    confirmLabel: '▲ DECLARE TRADE',
+    confirm: (f, val) => toast(val ? '▲ trade declared · ' + val.slice(0, 24) : '▼ trade empty')
+  },
+  opera: {
+    title: '▲ OPERA · JOBS',
+    sub: 'jobs scroll bearer · click the fairy on a base-page to open the jobs list',
+    border: '',
+    confirmLabel: '▲ OK',
+    confirm: () => {}
+  },
+  notae: {
+    title: '▲ NOTAE · NODE',
+    sub: 'a base node in the mesh',
+    border: '',
+    confirmLabel: '▲ OK',
+    confirm: () => {}
+  }
+};
+function openFairyMenu(f){
+  const cfg = FAIRY_MENU_BY_SP[f.sp] || FAIRY_MENU_BY_SP.notae;
+  if (cfg.action){ cfg.action(f); return; }   // direct-action species (panis/fiscus → load modal)
+
+  const card = document.getElementById('fairyCard');
+  card.classList.remove('purple','gold','amber');
+  if (cfg.border) card.classList.add(cfg.border);
+  document.getElementById('fairyTitle').textContent = cfg.title;
+  document.getElementById('fairySub').textContent = cfg.sub;
+
+  const content = document.getElementById('fairyContent');
+  let html = '';
+  if (cfg.fileInput){
+    html += `<input type="file" id="fairyInput">`;
+  } else if (cfg.inputPlaceholder !== undefined){
+    const prefill = cfg.inputPrefill ? cfg.inputPrefill() : '';
+    html += `<input type="text" id="fairyInput" placeholder="${cfg.inputPlaceholder}" value="${prefill.replace(/"/g,'&quot;')}">`;
+  }
+  html += `<button class="fbtn" onclick="confirmFairyInput('${f.sp}')">${cfg.confirmLabel}</button>`;
+  if (f.contract){
+    const role = f.contractRole ? `${f.contractRole}-side` : 'in contract';
+    html += `<div class="preview">▲ this fairy is currently <b>${role}</b></div>`;
+  }
+  content.innerHTML = html;
+  document.getElementById('fairyOverlay').classList.add('show');
+  playSound('pay-open');
+  // Auto-focus the input if present
+  setTimeout(() => { const inp = document.getElementById('fairyInput'); if (inp && inp.type === 'text') inp.focus(); }, 80);
+}
+function closeFairyMenu(){ document.getElementById('fairyOverlay').classList.remove('show'); }
+function confirmFairyInput(species){
+  const cfg = FAIRY_MENU_BY_SP[species];
+  if (!cfg) return closeFairyMenu();
+  const inp = document.getElementById('fairyInput');
+  let value = '', fileName = '';
+  if (inp){
+    if (inp.type === 'file'){
+      fileName = inp.files && inp.files[0] ? inp.files[0].name : '';
+      value = fileName;
+    } else {
+      value = (inp.value || '').trim();
+    }
+  }
+  closeFairyMenu();
+  if (cfg.confirm) cfg.confirm(null, value, fileName);
+  playSound('honour');
+}
 function payVia(token, label){
   // ─── EMPIRE PAYS IN WHITE BLOOD · the demo's reward currency ───
   // Accumulates in localStorage[sf_demo_white]. Link an SFT soul (via the
@@ -1604,6 +1780,10 @@ function setBakeProbability(p){
     : p >= 40
       ? 'linear-gradient(90deg,#52a86b 0%,#ffaa3a 100%)'
       : 'linear-gradient(90deg,#52a86b 0%,#d4243f 100%)';
+  // Text contrast: black when fill is wide enough to back the text, else
+  // bright cream so it stays visible against the exposed dark button base.
+  const lbl = _bakeBtn.querySelector('.bake-lbl');
+  if (lbl) lbl.style.color = p >= 50 ? '#000' : '#ffeb70';
 }
 const _bakeBtn = document.getElementById('bakeBtn');
 let _bakeStart = null, _bakeStartProb = 100, _bakeMoved = false;
