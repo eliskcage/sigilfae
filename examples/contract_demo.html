@@ -950,12 +950,20 @@ function render(){
   drawEdges(edges);
 }
 
-// ─── STUDIO MIGRATION · stub ───
-// Future: opens shortfactory.shop/studio with the contract string serialised in URL.
-// Multi-contract organiser. Today: surface the intent, play a tone, toast.
+// ─── STUDIO MIGRATION · subdomain target ───
+// Lives at smartcontract.shortfactory.shop · sibling to cortex/lens/biscuit/etc.
+// Future: /studio path opens the desktop multi-contract organiser, with the
+// current contract string serialised in the URL hash so phone → desktop is one tap.
+const STUDIO_URL = 'https://smartcontract.shortfactory.shop/studio/';
 function openStudio(){
   playSound('pay-open');
-  toast('▲ desktop contract studio · in build · stay on phone for now');
+  // Serialise the current contract into the hash so the studio (when live) can pick it up
+  const carry = encodeURIComponent(TXT.value || '');
+  const target = STUDIO_URL + (carry ? '#contract=' + carry : '');
+  // For now the subdomain may not be live yet — surface intent + open in new tab so
+  // user keeps their phone session while the desktop loads (or shows a placeholder).
+  toast('▲ opening desktop studio · ' + (carry ? 'carrying contract' : 'fresh session'));
+  window.open(target, '_blank', 'noopener');
   const banner = document.getElementById('studioBanner');
   if (banner) banner.style.transform = 'scale(0.94)';
   setTimeout(() => { if (banner) banner.style.transform = ''; }, 200);
