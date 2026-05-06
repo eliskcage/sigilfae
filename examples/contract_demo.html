@@ -817,32 +817,72 @@ function render(){
   const empIdx = nodes.findIndex(n => n.contractRole === 'empire');
   const userIndices = nodes.map((n,i) => n.contractRole === 'user' ? i : -1).filter(i => i >= 0);
   const verts = new Array(nodes.length);
+  // Smart-contract inference from headcount:
+  //   1 user  → vertical pair (the canonical pact)
+  //   N≥2     → regular (N+1)-gon, empire at top vertex, users clockwise
+  // A horizontal row is reserved for an explicit :guarantee scenario (one
+  // party paid by many in a queue) — not yet wired; detect via guaranteeMode
+  // when a future `:g` token or guarantee flag arrives.
+  const guaranteeMode = false;
   if (empIdx >= 0 && userIndices.length > 0){
-    verts[empIdx] = {x:cx, y:cy - H*0.22};
-    // Fan out users horizontally at the bottom — N users equally spaced
-    const userY = cy + H*0.22;
-    const userSpread = Math.min(W*0.6, userIndices.length * 60);
-    userIndices.forEach((uIdx, j) => {
-      const t = userIndices.length === 1 ? 0.5 : j / (userIndices.length - 1);
-      const x = cx - userSpread/2 + t * userSpread;
-      verts[uIdx] = {x, y: userY};
-    });
+    const total = 1 + userIndices.length;
+    if (guaranteeMode){
+      // ROW · queue-of-payers around the guarantor (empire on top, users below in a line)
+      verts[empIdx] = {x:cx, y:cy - H*0.22};
+      const userY = cy + H*0.22;
+      const userSpread = Math.min(W*0.6, userIndices.length * 60);
+      userIndices.forEach((uIdx, j) => {
+        const t = userIndices.length === 1 ? 0.5 : j / (userIndices.length - 1);
+        verts[uIdx] = {x: cx - userSpread/2 + t * userSpread, y: userY};
+      });
+    } else if (total === 2){
+      // Bare pact · empire on top, single user below
+      verts[empIdx] = {x:cx, y:cy - H*0.22};
+      verts[userIndices[0]] = {x:cx, y:cy + H*0.22};
+    } else {
+      // (N+1)-gon · empire at top vertex (-π/2), users distributed clockwise
+      const R = Math.min(W, H) * 0.28;
+      const empAngle = -Math.PI/2;
+      verts[empIdx] = {x: cx + R*Math.cos(empAngle), y: cy + R*Math.sin(empAngle)};
+      userIndices.forEach((uIdx, j) => {
+        const angle = empAngle + ((j+1) / total) * Math.PI * 2;
+        verts[uIdx] = {x: cx + R*Math.cos(angle), y: cy + R*Math.sin(angle)};
+      });
+    }
+    // Species attached around the polygon — keep their semantic positions:
     const others = nodes.map((n,i)=>i).filter(i => i!==empIdx && !userIndices.includes(i));
     const testis = others.filter(i => nodes[i].sp === 'testis');
     const fiscus = others.filter(i => nodes[i].sp === 'fiscus');
     const rest   = others.filter(i => nodes[i].sp !== 'testis' && nodes[i].sp !== 'fiscus');
-    fiscus.forEach((idx,j) => { verts[idx] = {x: cx + (j - (fiscus.length-1)/2) * 30, y: cy}; });
-    testis.forEach((idx,j) => { verts[idx] = {x: cx - W*0.32 - j*22, y: cy + (j%2 ? H*0.05 : -H*0.05)}; });
+    // FISCUS sits at the centroid of empire+users (the literal middle holding funds)
+    const coreXs = [verts[empIdx].x, ...userIndices.map(i => verts[i].x)];
+    const coreYs = [verts[empIdx].y, ...userIndices.map(i => verts[i].y)];
+    const coreCx = coreXs.reduce((a,b)=>a+b,0) / coreXs.length;
+    const coreCy = coreYs.reduce((a,b)=>a+b,0) / coreYs.length;
+    fiscus.forEach((idx,j) => { verts[idx] = {x: coreCx + (j - (fiscus.length-1)/2) * 30, y: coreCy}; });
+    // TESTIS sits to the LEFT of the contract — neutral observer
+    testis.forEach((idx,j) => { verts[idx] = {x: cx - W*0.34 - j*22, y: cy + (j%2 ? H*0.05 : -H*0.05)}; });
+    // Other attached species (PANIS, ANIMA, QUADRA, TESSERA, etc.) ride along the RIGHTMOST user
+    let anchorIdx = userIndices[0];
+    userIndices.forEach(i => { if (verts[i].x > verts[anchorIdx].x) anchorIdx = i; });
+    const anchor = verts[anchorIdx] || {x:cx, y:cy + H*0.22};
     rest.forEach((idx,j) => {
-      // Attached pay-options arc to the right of the rightmost user
-      const lastUserX = userIndices.length > 0 ? verts[userIndices[userIndices.length-1]].x : cx;
-      const aR = W*0.16;
-      const angle = rest.length === 1 ? 0 : (j/(rest.length-1)) * Math.PI - Math.PI/2;
-      verts[idx] = {x: lastUserX + aR + j*8, y: userY + aR * Math.sin(angle) * 0.55};
-      if (rest.length === 1) verts[idx] = {x: lastUserX + W*0.13, y: userY};
+      verts[idx] = {x: anchor.x + W*0.13 + j*14, y: anchor.y + (j%2 ? -16 : 16)};
     });
   } else {
-    nodes.forEach((n,i) => { verts[i] = {x: cx + (i - (nodes.length-1)/2) * 36, y: cy}; });
+    // Non-contract mode (no `:`) — original fairy-shape language: N dots → regular N-gon
+    if (nodes.length === 1){
+      verts[0] = {x:cx, y:cy};
+    } else if (nodes.length === 2){
+      verts[0] = {x: cx - W*0.18, y: cy};
+      verts[1] = {x: cx + W*0.18, y: cy};
+    } else {
+      const R = Math.min(W, H) * 0.28;
+      nodes.forEach((n,i) => {
+        const angle = (i/nodes.length) * Math.PI * 2 - Math.PI/2;
+        verts[i] = {x: cx + R*Math.cos(angle), y: cy + R*Math.sin(angle)};
+      });
+    }
   }
 
   nodes.forEach((n,i) => spawnFairy(n, i, verts[i].x, verts[i].y));
