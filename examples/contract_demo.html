@@ -256,6 +256,50 @@
   .pop-particle{position:absolute;width:4px;height:4px;background:var(--amber-glow);border-radius:50%;box-shadow:0 0 6px var(--amber-glow);pointer-events:none;animation:po 0.8s ease-out forwards}
   @keyframes po{0%{opacity:1;transform:translate(0,0) scale(1)}100%{opacity:0;transform:translate(var(--tx,0),var(--ty,0)) scale(0.2)}}
 
+  /* SIDE COMMAND MENU — right edge of stage · thumb-scrollable · tap to insert */
+  .cmd-menu{
+    position:absolute;top:8px;right:6px;bottom:8px;width:46px;
+    background:rgba(0,0,0,0.7);border:1px solid rgba(82,168,107,0.22);
+    border-radius:8px;z-index:7;overflow-y:auto;overflow-x:hidden;
+    scrollbar-width:none;display:flex;flex-direction:column;gap:1px;padding:4px 2px
+  }
+  .cmd-menu::-webkit-scrollbar{display:none}
+  .cmd{
+    flex-shrink:0;display:flex;flex-direction:column;align-items:center;
+    padding:6px 2px;background:transparent;border:none;border-radius:4px;
+    cursor:pointer;font-family:monospace;color:#aaa;line-height:1
+  }
+  .cmd:active{background:rgba(82,168,107,0.22)}
+  .cmd .gly{font-size:13px;color:var(--green-glow);font-weight:bold;margin-bottom:3px;letter-spacing:-0.04em}
+  .cmd .lbl{font-size:6.5px;color:#777;letter-spacing:0.04em;text-align:center;line-height:1.1}
+
+  /* BAKE BUTTON — replaces WALK · tap=bake · horizontal swipe sets probability */
+  .bake-btn{
+    position:relative;flex:1;padding:11px 12px;border:1px solid var(--green);
+    border-radius:6px;font-family:inherit;color:#000;background:#0a0a0a;
+    overflow:hidden;cursor:pointer;touch-action:none;
+    user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent
+  }
+  .bake-btn .fill{
+    position:absolute;left:0;top:0;bottom:0;
+    background:linear-gradient(90deg,#52a86b 0%,#ffd700 70%,#ffeb70 100%);
+    width:100%;transition:width 0.16s ease-out,background 0.3s;z-index:0
+  }
+  .bake-btn .bake-lbl{position:relative;z-index:1;text-align:center;color:#000;font-weight:bold}
+  .bake-btn .l1{font-size:11px;letter-spacing:0.22em}
+  .bake-btn .l2{font-size:8px;letter-spacing:0.16em;margin-top:2px;opacity:0.8}
+  .bake-btn:active{transform:scale(0.99)}
+
+  /* BAKE QR MODAL */
+  .bake-card{background:#0a0a0a;border:2px solid var(--gold);border-radius:12px;width:100%;padding:18px;font-family:monospace;color:var(--fg);box-shadow:0 0 40px rgba(255,215,0,0.4);position:relative;text-align:center}
+  .bake-card .x{position:absolute;top:6px;right:12px;cursor:pointer;color:#888;font-size:20px}
+  .bake-card .h{font-size:13px;color:var(--gold);letter-spacing:0.32em;margin-bottom:4px}
+  .bake-card .h2{font-size:9px;color:#aaa;letter-spacing:0.14em;font-style:italic;margin-bottom:14px;font-family:Georgia,serif}
+  .bake-card .qr{width:230px;height:230px;background:#fff;border-radius:6px;margin:8px auto;display:block}
+  .bake-card .url{color:#52a86b;word-break:break-all;font-size:9px;text-decoration:none;display:block;margin-top:6px;letter-spacing:0.04em}
+  .bake-card .stamp{font-size:8px;color:#666;letter-spacing:0.18em;margin-top:14px;border-top:1px dashed #333;padding-top:10px;line-height:1.6}
+  .bake-card .stamp b{color:var(--gold)}
+
   /* responsive: scale phone slightly down on narrow screens */
   @media (max-width:420px){
     body{padding:10px 0}
@@ -317,16 +361,40 @@
       </div>
     </div>
     <svg class="edges" id="edges"></svg>
+    <div class="cmd-menu" id="cmdMenu"></div>
   </div>
 
   <div class="drawer">
     <textarea id="txt" spellcheck="false" placeholder=":variety syntax · e.g. :w-e-s-Q.0030">:</textarea>
     <div class="pill-row" id="pills"></div>
     <div class="actions">
-      <button class="action-btn primary" onclick="walkDemo()">▶ WALK</button>
+      <button id="bakeBtn" class="bake-btn">
+        <div class="fill" id="bakeFill"></div>
+        <div class="bake-lbl">
+          <div class="l1">▲ BAKE QR · <span id="bakePct">100%</span></div>
+          <div class="l2"><span id="bakeKind">GUARANTEED</span> · swipe ← to lower commitment</div>
+        </div>
+      </button>
     </div>
     <div style="text-align:center;font-size:8px;color:#555;letter-spacing:0.18em;margin-top:6px;font-family:monospace">
       tap stage to <b style="color:#888">📷 snap</b> · hold to <b style="color:#888">▼ clear</b>
+    </div>
+  </div>
+
+  <!-- BAKE QR MODAL -->
+  <div class="pay-overlay" id="bakeOverlay">
+    <div class="bake-card" style="max-width:300px">
+      <span class="x" onclick="closeBake()">×</span>
+      <div class="h">▲ BAKED</div>
+      <div class="h2"><span id="bakeContractStr">:</span> · <b id="bakeProbStr" style="color:var(--gold)">100% GUARANTEED</b></div>
+      <img class="qr" id="bakeQR" alt="qr">
+      <div style="font-size:9px;color:#888;letter-spacing:0.12em;line-height:1.6;margin-top:10px">
+        scan with another phone to load this contract
+        <a class="url" id="bakeUrl" href="#" target="_blank" rel="noopener">…</a>
+      </div>
+      <div class="stamp">
+        <b>▲ probability</b> locks into your soul file<br>accuracy = trust · honour what you bake
+      </div>
     </div>
   </div>
 
@@ -862,9 +930,11 @@ function render(){
 
   if (nodes.length === 0) return;
 
-  // layout
+  // layout — usable width excludes the cmd-menu strip on the right
+  const CMD_MENU_W = 52;
   const W = stage.clientWidth, H = stage.clientHeight;
-  const cx = W/2, cy = H/2;
+  const usableW = W - CMD_MENU_W;
+  const cx = usableW / 2, cy = H/2;
   const empIdx = nodes.findIndex(n => n.contractRole === 'empire');
   const userIndices = nodes.map((n,i) => n.contractRole === 'user' ? i : -1).filter(i => i >= 0);
   const verts = new Array(nodes.length);
@@ -883,9 +953,9 @@ function render(){
     // requiredR: small enough N → low; large N → grows so neighbours stay apart
     const requiredR = ((FAIRY_CLEARANCE / 2) / Math.sin(Math.PI / total)) * 1.15;
     // niceR: comfortable default for small polygons (triangle, square, pentagon)
-    const niceR = Math.min(W, H) * 0.28;
-    // maxR: hard ceiling from stage size
-    const maxR = Math.min(W * 0.42 - STAGE_PAD, H * 0.34 - STAGE_PAD);
+    const niceR = Math.min(usableW, H) * 0.28;
+    // maxR: hard ceiling from usable stage size (excludes cmd-menu strip)
+    const maxR = Math.min(usableW * 0.42 - STAGE_PAD, H * 0.34 - STAGE_PAD);
     return Math.min(maxR, Math.max(niceR, requiredR));
   }
   if (empIdx >= 0 && userIndices.length > 0){
@@ -945,13 +1015,15 @@ function render(){
 
   // ─── HARD CLAMP · fairies must remain on-stage (interactable) ───
   // A fairy off the edge is an unreachable contract node. Clamp + flag.
+  // Right edge accounts for the cmd-menu strip — fairies can't disappear under it.
   let overflow = false;
+  const rightLimit = W - STAGE_PAD - CMD_MENU_W;
   for (let i = 0; i < verts.length; i++){
     const v = verts[i]; if (!v) continue;
-    if (v.x < STAGE_PAD)         { v.x = STAGE_PAD;         overflow = true; }
-    else if (v.x > W - STAGE_PAD){ v.x = W - STAGE_PAD;     overflow = true; }
-    if (v.y < STAGE_PAD)         { v.y = STAGE_PAD;         overflow = true; }
-    else if (v.y > H - STAGE_PAD){ v.y = H - STAGE_PAD;     overflow = true; }
+    if (v.x < STAGE_PAD)        { v.x = STAGE_PAD;     overflow = true; }
+    else if (v.x > rightLimit)  { v.x = rightLimit;    overflow = true; }
+    if (v.y < STAGE_PAD)        { v.y = STAGE_PAD;     overflow = true; }
+    else if (v.y > H - STAGE_PAD){ v.y = H - STAGE_PAD; overflow = true; }
   }
 
   // ─── COMPLEXITY GATE · "this contract has outgrown the phone" ───
@@ -1405,6 +1477,120 @@ stage.addEventListener('pointercancel', () => {
   if (_bgPressTimer){ clearTimeout(_bgPressTimer); _bgPressTimer = null; }
   _bgPressStart = null; _bgPressFired = false;
 });
+
+// ─── SIDE COMMAND MENU · right edge · thumb-scrollable · tap to insert ───
+const COMMANDS = [
+  {gly:':',    lbl:'GUARANT.', tok:':',     hint:'1 user · empire guarantees pay'},
+  {gly:'::',   lbl:'BILL × 2', tok:'::',    hint:'2-way bill split'},
+  {gly:':::',  lbl:'BILL × 3', tok:':::',   hint:'3-way bill split'},
+  {gly:'.',    lbl:'+ USER',   tok:'.',     hint:'add another participant'},
+  {gly:'-',    lbl:'BOND',     tok:'-',     hint:'visual edge'},
+  {gly:'b',    lbl:'BISCUIT',  tok:'b',     hint:'PANIS · loaded biscuit'},
+  {gly:'s',    lbl:'SOUL',     tok:'s',     hint:'ANIMA · soul-bond'},
+  {gly:'Q',    lbl:'BASE',     tok:'Q',     hint:'QUADRA · empire square'},
+  {gly:'t',    lbl:'KINGDOM',  tok:'t',     hint:'TESSERA · triangle QR'},
+  {gly:'w',    lbl:'WITNESS',  tok:'w',     hint:'TESTIS · neutral observer'},
+  {gly:'e',    lbl:'ESCROW',   tok:'e',     hint:'FISCUS · escrow pot'},
+  {gly:',',    lbl:'UPLOAD',   tok:',',     hint:'PYXIS · file form'},
+  {gly:'q',    lbl:'BEE',      tok:'q',     hint:'APIS · quid-pro-quo'},
+  {gly:'.30',  lbl:'30s',      tok:'.0030', hint:'30-second countdown'},
+  {gly:'.45',  lbl:'45s',      tok:'.0045', hint:'45-second countdown'},
+  {gly:'.60',  lbl:'1m',       tok:'.0060', hint:'1-minute countdown'},
+];
+function renderCmdMenu(){
+  const m = document.getElementById('cmdMenu');
+  m.innerHTML = COMMANDS.map((c,i) =>
+    `<button class="cmd" onclick="cmdInsert(${i})" title="${c.hint}"><span class="gly">${c.gly}</span><span class="lbl">${c.lbl}</span></button>`
+  ).join('');
+}
+function cmdInsert(i){
+  const c = COMMANDS[i];
+  TXT.value += c.tok;
+  render();
+  TXT.setSelectionRange(TXT.value.length, TXT.value.length);
+  tone(660 + i*30, 0.05, 'sine', 0.04);
+}
+renderCmdMenu();
+
+// ─── BAKE BUTTON · tap = bake QR · horizontal swipe = adjust probability ───
+let bakeProbability = 100;
+function setBakeProbability(p){
+  p = Math.max(0, Math.min(100, Math.round(p / 10) * 10));
+  bakeProbability = p;
+  document.getElementById('bakePct').textContent = p + '%';
+  document.getElementById('bakeFill').style.width = p + '%';
+  const label = p >= 100 ? 'GUARANTEED' :
+                p >= 70  ? 'PROBABLE'  :
+                p >= 40  ? 'GAMBLE'    :
+                p >= 10  ? 'MOONSHOT'  : 'BLUFF';
+  document.getElementById('bakeKind').textContent = label;
+  // Tint the fill: green at 100, gold midrange, dim at low
+  const fill = document.getElementById('bakeFill');
+  fill.style.background = p >= 70
+    ? 'linear-gradient(90deg,#52a86b 0%,#ffd700 70%,#ffeb70 100%)'
+    : p >= 40
+      ? 'linear-gradient(90deg,#52a86b 0%,#ffaa3a 100%)'
+      : 'linear-gradient(90deg,#52a86b 0%,#d4243f 100%)';
+}
+const _bakeBtn = document.getElementById('bakeBtn');
+let _bakeStart = null, _bakeStartProb = 100, _bakeMoved = false;
+_bakeBtn.addEventListener('pointerdown', e => {
+  e.preventDefault();
+  try { _bakeBtn.setPointerCapture(e.pointerId); } catch(err){}
+  _bakeStart = {x: e.clientX, y: e.clientY};
+  _bakeStartProb = bakeProbability;
+  _bakeMoved = false;
+});
+_bakeBtn.addEventListener('pointermove', e => {
+  if (!_bakeStart) return;
+  const dx = e.clientX - _bakeStart.x;
+  if (Math.abs(dx) > 6) _bakeMoved = true;
+  if (_bakeMoved){
+    const w = _bakeBtn.offsetWidth || 240;
+    const delta = (dx / w) * 100;  // full-width swipe = 100% range
+    setBakeProbability(_bakeStartProb + delta);
+  }
+});
+_bakeBtn.addEventListener('pointerup', () => {
+  if (_bakeStart && !_bakeMoved) bakeQR();
+  _bakeStart = null;
+});
+_bakeBtn.addEventListener('pointercancel', () => { _bakeStart = null; });
+setBakeProbability(100);
+
+function bakeQR(){
+  const contract = (TXT.value || ':').trim();
+  const url = `https://smartcontract.shortfactory.shop/?contract=${encodeURIComponent(contract)}&p=${bakeProbability}`;
+  // External QR generator for v1 — TODO: move to api.shortfactory.shop/qr empire worker
+  const qrSrc = `https://api.qrserver.com/v1/create-qr-code/?size=460x460&margin=8&data=${encodeURIComponent(url)}`;
+  document.getElementById('bakeContractStr').textContent = contract;
+  document.getElementById('bakeProbStr').textContent =
+    bakeProbability + '% ' + document.getElementById('bakeKind').textContent;
+  document.getElementById('bakeQR').src = qrSrc;
+  const a = document.getElementById('bakeUrl');
+  a.href = url; a.textContent = url;
+  document.getElementById('bakeOverlay').classList.add('show');
+  // Soul file: log the bake — accuracy score will compare declared probability vs actual outcome
+  const bakes = JSON.parse(localStorage.getItem('sf_demo_bakes') || '[]');
+  bakes.push({contract, p: bakeProbability, ts: new Date().toISOString()});
+  localStorage.setItem('sf_demo_bakes', JSON.stringify(bakes.slice(-100)));
+  playSound('honour');
+}
+function closeBake(){ document.getElementById('bakeOverlay').classList.remove('show'); }
+
+// ─── INBOUND CONTRACT · pick up ?contract=…&p=… (e.g. scanned QR) ───
+(function loadFromUrl(){
+  const params = new URLSearchParams(location.search);
+  if (params.has('contract')){
+    TXT.value = params.get('contract');
+    if (params.has('p')){
+      const p = parseInt(params.get('p'), 10);
+      if (!isNaN(p)) setBakeProbability(p);
+    }
+    render();
+    toast('▲ contract loaded from QR');
+  }
+})();
 
 // init
 render();
