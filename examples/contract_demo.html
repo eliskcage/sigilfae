@@ -317,6 +317,25 @@
   .fairy-card .fbtn:active{transform:scale(0.98)}
   .fairy-card .preview{font-size:8px;color:#888;letter-spacing:0.12em;line-height:1.6;margin-top:10px;padding-top:10px;border-top:1px dashed #333}
 
+  /* FAIRY-SPLAINING SUBTITLE — voice + bubble during play */
+  .fairy-bubble{
+    position:absolute;bottom:90px;left:6px;
+    display:none;align-items:flex-end;gap:6px;z-index:25;
+    pointer-events:none;max-width:64%
+  }
+  .fairy-bubble.show{display:flex;animation:fbIn 0.3s}
+  @keyframes fbIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+  .fairy-bubble .fb-emoji{font-size:22px;filter:drop-shadow(0 0 6px var(--amber-glow));flex-shrink:0;animation:fbWig 2.4s infinite ease-in-out}
+  @keyframes fbWig{0%,100%{transform:rotate(-4deg)}50%{transform:rotate(6deg)}}
+  .fairy-bubble .fb-text{
+    background:rgba(0,0,0,0.88);border:1px solid var(--amber);
+    border-radius:12px;padding:7px 11px;
+    color:var(--amber-glow);font-size:9px;line-height:1.5;letter-spacing:0.06em;
+    font-family:monospace;box-shadow:0 0 18px rgba(255,193,74,0.3)
+  }
+  #fairyToggle{cursor:pointer;font-size:14px;line-height:1;user-select:none;-webkit-user-select:none}
+  #fairyToggle:active{transform:scale(0.92)}
+
   /* BAKE QR MODAL */
   .bake-card{background:#0a0a0a;border:2px solid var(--gold);border-radius:12px;width:100%;padding:18px;font-family:monospace;color:var(--fg);box-shadow:0 0 40px rgba(255,215,0,0.4);position:relative;text-align:center}
   .bake-card .x{position:absolute;top:6px;right:12px;cursor:pointer;color:#888;font-size:20px}
@@ -353,6 +372,7 @@
       <span class="black-mark">●<b id="blackCnt">0</b></span>
       <span style="color:#ffd700;margin-left:6px;letter-spacing:0.1em">▲ <b id="treasuryCnt" style="color:#ffd700">£0</b></span>
       <span style="color:#52a86b;margin-left:6px;cursor:pointer" onclick="openLeaderboard()" title="leaderboard">🏆<b id="winsCnt" style="color:#52a86b">0</b></span>
+      <span id="fairyToggle" onclick="toggleFairyVoice()" title="fairy voice on/off · she fairysplains every move">🧚‍♀️</span>
     </span>
   </div>
 
@@ -389,6 +409,10 @@
     </div>
     <svg class="edges" id="edges"></svg>
     <div class="cmd-menu" id="cmdMenu"></div>
+    <div class="fairy-bubble" id="fairyBubble">
+      <span class="fb-emoji">🧚‍♀️</span>
+      <span class="fb-text"></span>
+    </div>
   </div>
 
   <div class="drawer">
@@ -653,7 +677,8 @@ async function toggleCamera(){
       v.style.display = 'block'; cv.style.display = 'none'; camFrozen = false;
       btn.textContent = '📸 SNAP IT';
       tone(660, 0.08, 'sine', 0.05);
-    } catch(e){ toast('▼ camera denied — check permissions'); }
+      fairySay('camera on. tap again to freeze a real-world thing as your contract backdrop.');
+    } catch(e){ toast('▼ camera denied — check permissions'); fairySay('camera denied. check your permissions.'); }
   } else if (!camFrozen){
     // Snap: freeze the current video frame to a canvas
     cv.width = v.videoWidth || 480; cv.height = v.videoHeight || 640;
@@ -665,10 +690,12 @@ async function toggleCamera(){
     btn.textContent = '✕ CLEAR';
     playSound('pay');
     toast('▲ snapped · contract overlays on top');
+    fairySay('snapped! the contract sits on top of your photo. that composite is your win as art.');
   } else {
     cv.style.display = 'none'; camFrozen = false;
     btn.textContent = '📷 SNAP';
     toast('snapshot cleared');
+    fairySay('snapshot cleared.');
   }
 }
 
@@ -734,6 +761,7 @@ function triggerWin(stringSnapshot){
   overlay.style.display = 'flex';
   // Play fanfare
   playSound('win');
+  fairySay(`you won! score ${score}! that was a complex contract honoured. snap a photo and share your win as art.`);
   // Confetti burst
   for (let i=0; i<60; i++){
     setTimeout(() => {
@@ -781,11 +809,28 @@ function renderPills(){
 }
 renderPills();
 
+function fairySayForString(s){
+  if (!s) return;
+  const colonCount = (s.match(/:/g) || []).length;
+  // Count dots that are NOT part of a time anchor (.NNNN)
+  const stripped = s.replace(/\.\d+/g, '');
+  const dotCount = (stripped.match(/\./g) || []).length;
+  const userCount = Math.max(colonCount, dotCount);
+  const parts = [];
+  if (userCount === 1)      parts.push('a guaranteed payment between you and the empire.');
+  else if (userCount === 2) parts.push('a two-way bill split.');
+  else if (userCount >= 3)  parts.push('a ' + userCount + '-way bill split.');
+  if (s.includes('w'))      parts.push('with a witness watching.');
+  if (s.includes('e'))      parts.push('escrow holding the funds.');
+  if (s.includes('b'))      parts.push('and a biscuit to load.');
+  if (s.includes('s'))      parts.push('soul bonded.');
+  if (parts.length) fairySay(parts.join(' '));
+}
 function ghostType(s){
   TXT.value = '';
   let i = 0;
   const tick = () => {
-    if (i >= s.length) return;
+    if (i >= s.length){ fairySayForString(s); return; }
     TXT.value += s[i]; i++;
     render();
     setTimeout(tick, 75);
@@ -1122,6 +1167,7 @@ function openStudio(){
   // For now the subdomain may not be live yet — surface intent + open in new tab so
   // user keeps their phone session while the desktop loads (or shows a placeholder).
   toast('▲ opening desktop studio · ' + (carry ? 'carrying contract' : 'fresh session'));
+  fairySay('opening the desktop studio. complex contracts breathe better there.');
   window.open(target, '_blank', 'noopener');
   const banner = document.getElementById('studioBanner');
   if (banner) banner.style.transform = 'scale(0.94)';
@@ -1261,6 +1307,7 @@ function swapPayer(){
   drawEdges(currentEdges);
   playSound('swap');
   toast('▲ payer swapped · ' + (payerDirection === 'empire-to-user' ? 'EMPIRE pays USER' : 'USER pays EMPIRE'));
+  fairySay(payerDirection === 'empire-to-user' ? 'flow flipped! the empire pays the user now.' : 'flow flipped! the user pays the empire now.');
 }
 
 // ─── PAY ───
@@ -1307,8 +1354,10 @@ const FAIRY_MENU_BY_SP = {
       if (val){
         localStorage.setItem('sf_demo_soul', val);
         toast(`▲ soul bound · ${val.slice(0, 18)}${val.length > 18 ? '…' : ''}`);
+        fairySay('soul bound! your white blood is yours forever now. it follows you into the empire.');
       } else {
         toast('▼ no soul ID entered');
+        fairySay('no soul yet. paste your sft id to lock in your blood.');
       }
     }
   },
@@ -1428,6 +1477,7 @@ function payVia(token, label){
     refreshStats();
     toast(`▲ EMPIRE PAID · +${award} WHITE BLOOD · contract honoured`);
     playSound('pay');
+    fairySay(`shortfactory paid you ${award} white blood! you are amassing. link your soul to keep it forever.`);
     EDGES.querySelectorAll('line[stroke="url(#ec)"]').forEach(l => l.setAttribute('stroke', '#ffffff'));
     // Sparkle white particles from empire fairy outward — visualise the gift
     const empF = fairies.find(f => f.contractRole === 'empire');
@@ -1461,9 +1511,10 @@ function closeLoad(){ document.getElementById('loadOverlay').classList.remove('s
 
 function loadAmount(amount){
   amount = parseInt(amount, 10);
-  if (!amount || amount <= 0){ toast('▼ invalid amount'); return; }
+  if (!amount || amount <= 0){ toast('▼ invalid amount'); fairySay('that amount is not valid. pick again.'); return; }
   pendingLoadAmount = amount;
   closeLoad();
+  fairySay(`loading ${amount} pounds. now use your thumbprint to lock it.`);
   runThumbprintScan(amount);
 }
 
@@ -1507,12 +1558,14 @@ function attachPaymentToken(token, label, amount){
     }
     whiteBlood += 1; localStorage.setItem('sf_demo_white', String(whiteBlood)); refreshStats();
     toast(`▲ STAKED £${amount} · streaming · biscuit drains as time runs · unstreamed forfeits on collapse`);
+    fairySay(`${amount} pounds staked in the biscuit! it streams as time runs. unstreamed forfeits if the deal collapses.`);
   } else {
     // Non-biscuit pay-options HONOUR the deal
     contractPaid = true;
     whiteBlood += 3; localStorage.setItem('sf_demo_white', String(whiteBlood)); refreshStats();
     toast('▲ paid via ' + label + ' · contract honoured');
     playSound('pay');
+    fairySay(label.split('·')[0].trim().toLowerCase() + ' attached. deal honoured. plus three white blood for you.');
     // bond stroke amber → gold visually
     EDGES.querySelectorAll('line[stroke="url(#ec)"]').forEach(l => l.setAttribute('stroke', '#ffd700'));
   }
@@ -1537,8 +1590,10 @@ function selfDelete(){
     if (totalLoaded > 0){
       toast(`♛ HONOURED · £${totalStreamed} streamed + £${totalUnstreamed} released · +5 white`);
       loadedFairies.forEach(f => spawnGoldStream(f.x, f.y, stage.clientWidth/2, stage.clientHeight - 40, '#ffd700'));
+      fairySay('the deal is honoured! all that capital releases. plus five white blood for you.');
     } else {
       toast('♛ DEAL HONOURED · +5 white');
+      fairySay('the deal is honoured! white blood for everyone.');
     }
     refreshStats();
     playSound('honour');
@@ -1606,8 +1661,10 @@ function selfDelete(){
     playSound('collapse');
     if (totalLoaded > 0){
       toast(`▼ COLLAPSED · streamed £${totalStreamed} kept · unstreamed £${totalUnstreamed}: empire +£${toEmpire} / wronged +£${toWronged} · +1 BLACK MARK`);
+      fairySay('uh oh! the deal collapsed. unstreamed funds split: fifty-one to the empire, the rest to the wronged side. plus a black mark on the defaulter.');
     } else {
       toast('▼ DEAL COLLAPSED · +1 BLACK MARK · others may proceed');
+      fairySay('the deal collapsed. that is a black mark on the defaulter. others can still proceed.');
     }
     refreshStats();
     setTimeout(() => { TXT.value = TXT.value.replace(/:.*$/,'').replace(/\.\d+/g,'').trim(); render(); }, 1200);
@@ -1640,6 +1697,7 @@ function linkP2(channel){
   if (p2InviteInterval){ clearInterval(p2InviteInterval); p2InviteInterval = null; }
   playSound('link-' + channel);
   toast(`▲ Player 2 linked via ${channel.toUpperCase()} · contract activates`);
+  fairySay(`player two linked by ${channel}! the contract begins.`);
   // Re-render so pending users become active and main timer starts
   render();
   // Visual flourish: gold sparkle particles around the now-active fairies
@@ -1681,6 +1739,62 @@ function toast(msg){
   setTimeout(() => t.remove(), 2000);
 }
 
+// ─── FAIRY VOICE · she fairysplains every move · toggle in topbar ───
+// Web Speech API · female / high pitch · localStorage persist · OFF for vets.
+let fairyVoiceOn = localStorage.getItem('sf_fairy_voice') !== 'off';
+let _fairyVoice = null;
+function _selectFairyVoice(){
+  if (!('speechSynthesis' in window)) return null;
+  const voices = speechSynthesis.getVoices();
+  if (!voices.length) return null;
+  const femaleNames = /samantha|karen|moira|tessa|veena|fiona|kate|allison|ava|susan|zira|hazel|female|google.*english.*female/i;
+  return voices.find(v => femaleNames.test(v.name) && v.lang.startsWith('en'))
+      || voices.find(v => femaleNames.test(v.name))
+      || voices.find(v => v.lang.startsWith('en'))
+      || voices[0];
+}
+function fairySay(text){
+  if (!fairyVoiceOn) return;
+  const bub = document.getElementById('fairyBubble');
+  if (bub){
+    bub.querySelector('.fb-text').textContent = text;
+    bub.classList.add('show');
+    clearTimeout(bub._timer);
+    bub._timer = setTimeout(() => bub.classList.remove('show'), 3500 + text.length*22);
+  }
+  if ('speechSynthesis' in window){
+    try { speechSynthesis.cancel(); } catch(e){}
+    const u = new SpeechSynthesisUtterance(text);
+    if (!_fairyVoice) _fairyVoice = _selectFairyVoice();
+    if (_fairyVoice) u.voice = _fairyVoice;
+    u.pitch = 1.8; u.rate = 1.05; u.volume = 0.85;
+    u.onend = () => { if (bub) bub.classList.remove('show'); };
+    try { speechSynthesis.speak(u); } catch(e){}
+  }
+}
+function toggleFairyVoice(){
+  fairyVoiceOn = !fairyVoiceOn;
+  localStorage.setItem('sf_fairy_voice', fairyVoiceOn ? 'on' : 'off');
+  const tog = document.getElementById('fairyToggle');
+  if (tog) tog.textContent = fairyVoiceOn ? '🧚‍♀️' : '🤐';
+  if (fairyVoiceOn){
+    fairySay('back, ready to fairysplain everything!');
+  } else {
+    if ('speechSynthesis' in window){ try { speechSynthesis.cancel(); } catch(e){} }
+    const bub = document.getElementById('fairyBubble');
+    if (bub) bub.classList.remove('show');
+  }
+}
+// Reflect saved state on first paint
+(function(){
+  const tog = document.getElementById('fairyToggle');
+  if (tog) tog.textContent = fairyVoiceOn ? '🧚‍♀️' : '🤐';
+})();
+if ('speechSynthesis' in window){
+  speechSynthesis.onvoiceschanged = () => { _fairyVoice = _selectFairyVoice(); };
+  setTimeout(() => { _fairyVoice = _selectFairyVoice(); }, 100);
+}
+
 // ─── BACKGROUND GESTURES · tap = snap cycle · long-press = full clear ───
 function fullReset(){
   TXT.value = '';
@@ -1694,6 +1808,7 @@ function fullReset(){
   }
   playSound('reset');
   toast('▼ cleared');
+  fairySay('cleared! fresh contract.');
   render();
 }
 function _isStageBackground(t){
@@ -1752,12 +1867,31 @@ function renderCmdMenu(){
     `<button class="cmd" onclick="cmdInsert(${i})" title="${c.hint}"><span class="gly">${c.gly}</span><span class="lbl">${c.lbl}</span></button>`
   ).join('');
 }
+const CMD_FAIRY = {
+  ':':     'wow! a guaranteed payment! one of you has the money to pay.',
+  '::':    'a two-way bill split! both of you chipping in.',
+  ':::':   'a three-way bill split! the empire holds the bond between all three.',
+  '.':     'one more user added.',
+  '-':     'a bond between participants.',
+  'b':     'a biscuit! tap it to load real capital.',
+  's':     'a soul bond! tap the soul fairy to bind your SFT.',
+  'Q':     'your sigilfae base, empire signature on the deal.',
+  't':     'a kingdom piece attached.',
+  'w':     'a witness! the deal is auditable now.',
+  'e':     'an escrow pot, funds held safe while the deal runs.',
+  ',':     'a pyxis. attach a file as proof.',
+  'q':     'an angry bee! quid pro quo demanded.',
+  '.0030': 'thirty seconds on the clock.',
+  '.0045': 'forty-five seconds.',
+  '.0060': 'one minute. tight window.'
+};
 function cmdInsert(i){
   const c = COMMANDS[i];
   TXT.value += c.tok;
   render();
   TXT.setSelectionRange(TXT.value.length, TXT.value.length);
   tone(660 + i*30, 0.05, 'sine', 0.04);
+  if (CMD_FAIRY[c.tok]) fairySay(CMD_FAIRY[c.tok]);
 }
 renderCmdMenu();
 
@@ -1828,6 +1962,8 @@ function bakeQR(){
   bakes.push({contract, p: bakeProbability, ts: new Date().toISOString()});
   localStorage.setItem('sf_demo_bakes', JSON.stringify(bakes.slice(-100)));
   playSound('honour');
+  const probLabel = document.getElementById('bakeKind').textContent.toLowerCase();
+  fairySay(`baked! committed at ${bakeProbability} percent ${probLabel}. share that q r. anyone who scans gets the same contract.`);
 }
 function closeBake(){ document.getElementById('bakeOverlay').classList.remove('show'); }
 
